@@ -425,11 +425,11 @@ module _ (DWA : DUAType ℓ ℓ' ℓ'') (DQA : DUAType ℓ ℓ' ℓ'') where
   open MBree
   
   rr : AC.Hom[ DWA , DQA ] → ⟨ WR ⟩ → ⟨ QR ⟩
-  rr f r = rec QSRI.is-set (λ x → [ l1 x ]) l12 r where
+  rr f r = rec QSRI.is-set (λ x → [ l1 x ]) (λ a b r → (eq/ _ _ (l12 a b r))) r where
     l1 : WMB.Bree → QMB.Bree
     l1 ∅ = ∅
-    l1 (` (x , y)) = ` rec2 (isSetΣ squash/ (λ _ → squash/)) l11 l12 l13 x y where
-
+    l1 (` (x , y)) = ` l14 module L1 where
+     
       l11 : Tree ⟨ DWM ⟩ → Tree ⟨ DWA ⟩ → QMB.C
       l11 x y = [ thom (fst (snd (fst f))) x ] , [ thom (fst (fst f)) y ]
 
@@ -449,12 +449,33 @@ module _ (DWA : DUAType ℓ ℓ' ℓ'') (DQA : DUAType ℓ ℓ' ℓ'') where
         l131 .(x · y) .(y · x) (comm x y) f = comm _ _
         l131 .(_ · c) .(_ · c) (·c c r) f = ·c _ (l131 _ _ r f)
 
+      l14 = rec2 (isSetΣ squash/ (λ _ → squash/)) l11 l12 l13 x y
     l1 (ƛ_ {B} f) = ƛ (λ x → l1 (f x))
     l1 (e1 ∪ e2) = l1 e1 ∪ l1 e2
     l1 (e1 · e2) = l1 e1 · l1 e2
 
-    l12 : (a b : WMB.Bree) → WMB.S a b → [ l1 a ] ≡ [ l1 b ]
-    l12 a b r = {!!}
+    l12 : (a b : WMB.Bree) → WMB.S a b → QMB.S (l1 a) (l1 b)
+    l12 .(x WMB.∪ y WMB.∪ z) .((x WMB.∪ y) WMB.∪ z) (assoc x y z) = assoc _ _ _
+    l12 .(b WMB.∪ WMB.∅) b (rid .b) = rid _
+    l12 .(x WMB.∪ y) .(y WMB.∪ x) (comm x y) = comm _ _
+    l12 .(_ WMB.∪ c) .(_ WMB.∪ c) (∪c c r) = ∪c _ (l12 _ _ r)
+    l12 .(b WMB.∪ b) b (idem .b) = idem _
+    l12 .(x WMB.· y WMB.· z) .((x WMB.· y) WMB.· z) (assoc· x y z) = assoc· _ _ _
+    l12 .(b WMB.· WMB.` Q.ε ·WCom) b (rid· .b) = rid· _
+    l12 .(_ WMB.· c) .(_ WMB.· c) (·c c r) = ·c _ (l12 _ _ r)
+    l12 .(x WMB.· y) .(y WMB.· x) (comm· x y) = comm· _ _
+    l12 .(x WMB.· WMB.∅) .WMB.∅ (def∅· x) = def∅· _
+    l12 .(WMB.` (x1 , x2) WMB.· WMB.` (y1 , y2)) .(WMB.` (·WCom Q.· (x1 , x2)) (y1 , y2)) (def· (x1 , x2) (y1 , y2)) = J (λ y eq → QMB.S (QMB.` L1.l14 x1 x2 QMB.· QMB.` L1.l14 y1 y2)
+     (QMB.` y)) (def· _ _) (sym l121) where
+      l121 : L1.l14 (x1 * y1) (x2 * y2) ≡ (L1.l14 x1 x2) QMB.Q.· (L1.l14 y1 y2)
+      l121 = elimProp4 {P = λ x1 y1 x2 y2 → L1.l14 (x1 * y1) (x2 * y2) ≡ (L1.l14 x1 x2) QMB.Q.· (L1.l14 y1 y2)}
+               (λ x y z t → isSetΣ squash/ (λ _ → squash/) _ _) (λ a b c d → refl) x1 y1 x2 y2
+    l12 .(x WMB.· (WMB.ƛ y)) .(WMB.ƛ (λ q → x WMB.· y q)) (defƛ· x y) = defƛ· _ _
+    l12 .(x WMB.· (y WMB.∪ z)) .(x WMB.· y WMB.∪ x WMB.· z) (dist` x y z) = dist` _ _ _
+    l12 .(WMB.ƛ (λ c → x c WMB.∪ y c)) .((WMB.ƛ x) WMB.∪ (WMB.ƛ y)) (distƛ∪ x y) = distƛ∪ _ _
+    l12 .(WMB.ƛ (λ c → x c WMB.· y c)) .((WMB.ƛ x) WMB.· (WMB.ƛ y)) (distƛ· x y) = distƛ· _ _
+    l12 .(WMB.ƛ y) b (remƛ .b y eq) = remƛ _ _ λ i z → l1 (eq i z)
+    l12 .(WMB.ƛ _) .(WMB.ƛ _) (ƛS f) = ƛS λ c → l12 _ _ (f c)
     
 --   qq : (WM → QM) → (WA → QA) → ⟨ WR ⟩ → ⟨ QR ⟩
 --   qq f g x = rec QSRI.is-set {!WA!} {!!} x where
