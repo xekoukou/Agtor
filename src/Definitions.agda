@@ -6,9 +6,11 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Structure
 open import Cubical.Foundations.HLevels
 open import Cubical.Algebra.Monoid
+open import Cubical.Foundations.Function
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Data.Sigma
+open import Cubical.Data.Sum hiding (rec)
 open import Cubical.Data.Maybe hiding (rec)
 open import Cubical.Codata.Stream
 open import Cubical.Data.Nat hiding (_·_ ; _+_)
@@ -325,10 +327,11 @@ record ActorT (DPRM : DUMType ℓ ℓ') (UAType : Type ℓ'') : Type (ℓ-max �
     UMType = ⟨ DPRM ⟩
 
   field
-    P : UMType → Type
+    P       : UMType → Type
+    P-isSet : (x : UMType) → isSet (P x) 
     decP  : ∀ A → Dec (P A)
-    image : ∀ {A} → { p : P A } →  fst ⟦ A ⟧  → Tree UMType
-    next  : ∀ {A} → { p : P A } →  fst ⟦ A ⟧  → Tree UAType
+    image : ∀ {A} → { p : P A } →  ⟨ ⟦ A ⟧ ⟩  → Tree UMType
+    next  : ∀ {A} → { p : P A } →  ⟨ ⟦ A ⟧ ⟩  → Tree UAType
 
 
 
@@ -342,81 +345,119 @@ module QQ (DA DB : DUMType ℓ ℓ') where
   module MA = ProjStr (snd DA)
   module MB = ProjStr (snd DB)
   
-  record ActorHom {U1 U2 : Type ℓ''} (f : U1 → U2)
+  record ActorHom {U1 U2 : Type ℓ''}
                   (hm : CM.Hom[ DA , DB ] )
                   (act1 : ActorT DA U1)
                   (act2 : ActorT DB U2) : Type (ℓ-max (ℓ-max ℓ' ℓ'') ℓ) where
     constructor actorhom
     field
       CP : {A : UMA} → act1 .P A → act2 .P (fst hm A)
-      cimage : (A : UMA) → (p : act1 .P A) → (x : fst MA.⟦ A ⟧)
-               → thom (fst hm) (act1 .image {A} {p} x) ≡ act2 .image {fst hm A} {CP p} (snd hm A x)
-      cnext : (A : UMA) → (p : act1 .P A) → (x : fst MA.⟦ A ⟧)
-              → thom f (act1 .next {A} {p} x) ≡ act2 .next {fst hm A} {CP p} (snd hm A x)
+
+  actorHom-isSet : {U1 U2 : Type ℓ''} → ∀{hm} → {act1 : ActorT DA U1} → {act2 : ActorT DB U2}
+                   → isSet (ActorHom hm act1 act2)
+  actorHom-isSet {act2 = act2}
+    = isSetRetract ActorHom.CP actorhom (λ _ → refl) (isSetImplicitΠ λ _ → isSetΠ (λ _ → act2 .P-isSet _))
 
 module EE (ℓ ℓ' : _) where
 
-  open Category
+  open Category hiding (_∘_)
   module CM = Category (DUMTypeC ℓ ℓ')
 
-  record ProjStr' (U : Type ℓ'') : Type (ℓ-max (ℓ-suc ℓ) (ℓ-max (ℓ-suc ℓ') ℓ'')) where
+  record DUATypeStr (U : Type ℓ'') : Type (ℓ-max (ℓ-suc ℓ) (ℓ-max (ℓ-suc ℓ') ℓ'')) where
     inductive
     field
       D : DUMType ℓ ℓ'
       ⟦_⟧ : U → ActorT D U
       is-set : isSet U
 
-  open ProjStr'
+  open DUATypeStr
   
-  Proj' : ∀ ℓ'' → Type (ℓ-max (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) (ℓ-suc ℓ''))
-  Proj' ℓ'' = TypeWithStr ℓ'' ProjStr'
+  DUAType : ∀ ℓ'' → Type (ℓ-max (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) (ℓ-suc ℓ''))
+  DUAType ℓ'' = TypeWithStr ℓ'' DUATypeStr
 
-  Proj'C : ∀ ℓ'' → Category (ℓ-max (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) (ℓ-suc ℓ'')) (ℓ-max (ℓ-max ℓ ℓ') ℓ'')
-  ob (Proj'C ℓ'') = Proj' ℓ''
-  Hom[_,_] (Proj'C ℓ'') DA DB
+  DUATypeC : ∀ ℓ'' → Category (ℓ-max (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) (ℓ-suc ℓ'')) (ℓ-max (ℓ-max ℓ ℓ') ℓ'')
+  ob (DUATypeC ℓ'') = DUAType ℓ''
+  Hom[_,_] (DUATypeC ℓ'') DA DB
     = Σ ((⟨ DA ⟩ → ⟨ DB ⟩) × CM.Hom[ D (snd DA) , D (snd DB) ]) λ (f , hm)
-      → ∀ x → QQ.ActorHom _ _ f hm (snd DA .⟦_⟧ x) (snd DB .⟦_⟧ (f x))
-  id (Proj'C ℓ'') {x} = ((λ x → x) , CM.id {D (snd x)}) , λ y → QQ.actorhom (λ x → x) (λ _ _ _ → thom-id _) (λ _ _ _ → thom-id _)
-  _⋆_ (Proj'C ℓ'') = {!!}
-  ⋆IdL (Proj'C ℓ'') = {!!}
-  ⋆IdR (Proj'C ℓ'') = {!!}
-  ⋆Assoc (Proj'C ℓ'') = {!!}
-  isSetHom (Proj'C ℓ'') = {!!}
+      → ∀ x → QQ.ActorHom _ _ hm (snd DA .⟦_⟧ x) (snd DB .⟦_⟧ (f x))
+  id (DUATypeC ℓ'') {x} = ((λ x → x) , CM.id {D (snd x)}) , λ y → QQ.actorhom (λ x → x)
+  _⋆_ (DUATypeC ℓ'') {x} {y} {z} ((f1 , g1) , e1) ((f2 , g2) , e2)
+    = (f2 ∘ f1 , (CM._⋆_ {D (snd x)} {D (snd y)} {D (snd z)} g1 g2))
+      , λ q → QQ.actorhom (λ r → QQ.ActorHom.CP (e2 (f1 q)) (QQ.ActorHom.CP (e1 q) r))
+  ⋆IdL (DUATypeC ℓ'') f = refl
+  ⋆IdR (DUATypeC ℓ'') f = refl
+  ⋆Assoc (DUATypeC ℓ'') f g h = ΣPathP ((ΣPathP (refl , refl)) , funExt (λ x → refl))
+  isSetHom (DUATypeC ℓ'') {x} {y}
+    = isSetΣ (isSetΣ (isSetΠ (λ _ → (snd y) .is-set)) λ _ → CM.isSetHom {D (snd x)} {D (snd y)})
+             λ _ → isSetΠ λ _ → QQ.actorHom-isSet _ _
   
--- DUATypeStr : DUMType ℓ ℓ' → Type ℓ'' → Type _
--- DUATypeStr DPRM UAType = ProjStr (WW.ActorT DPRM UAType) UAType
-
--- DUAType : (ℓ'' : Level) → DUMType ℓ ℓ' → Type _
--- DUAType ℓ'' DPRM = Σ (Type ℓ'') (DUATypeStr DPRM)
-
--- module _ (DWM DQM : DUMType ℓ ℓ') (DWA : DUAType ℓ'' DWM) (DQA : DUAType ℓ'' DQM) where
-
---   WM = ⟨ DWM ⟩
---   QM = ⟨ DQM ⟩
-
---   WA = ⟨ DWA ⟩
---   QA = ⟨ DQA ⟩
-
---   ·WCom = TCommMonoid {_} {_} {WM} {WA}
---   ·QCom = TCommMonoid {_} {_} {QM} {QA}
-
---   module WMB = MBree ·WCom
---   module QMB = MBree ·QCom
-
---   WR = WMB.BSemiRing
---   QR = QMB.BSemiRing
-
---   module WSR = SemiRingStr (snd WR)
---   module QSR = SemiRingStr (snd QR)
-
---   module WSRI = IsSemiRing WSR.isSemiRing
---   module QSRI = IsSemiRing QSR.isSemiRing
 
 
---   open MBree
+open EE
+
+module _ (DWA : DUAType ℓ ℓ' ℓ'') (DQA : DUAType ℓ ℓ' ℓ'') where
+
+  module AC = Category (DUATypeC ℓ ℓ' ℓ'')
+  module MC = Category (DUMTypeC ℓ ℓ')
+
+  open DUATypeStr
+
+  DWM = D (snd DWA)
+  DQM = D (snd DQA)
+
+
+  ·WCom = TCommMonoid {_} {_} {⟨ DWM ⟩} {⟨ DWA ⟩}
+  ·QCom = TCommMonoid {_} {_} {⟨ DQM ⟩} {⟨ DQA ⟩}
+
+  module WMB = MBree ·WCom
+  module QMB = MBree ·QCom
+
+  WR = WMB.BSemiRing
+  QR = QMB.BSemiRing
+
+  module WSR = SemiRingStr (snd WR)
+  module QSR = SemiRingStr (snd QR)
+
+  module WSRI = IsSemiRing WSR.isSemiRing
+  module QSRI = IsSemiRing QSR.isSemiRing
+
+
+  open MBree
   
+  rr : AC.Hom[ DWA , DQA ] → ⟨ WR ⟩ → ⟨ QR ⟩
+  rr f r = rec QSRI.is-set (λ x → [ l1 x ]) l12 r where
+    l1 : WMB.Bree → QMB.Bree
+    l1 ∅ = ∅
+    l1 (` (x , y)) = ` rec2 (isSetΣ squash/ (λ _ → squash/)) l11 l12 l13 x y where
+
+      l11 : Tree ⟨ DWM ⟩ → Tree ⟨ DWA ⟩ → QMB.C
+      l11 x y = [ thom (fst (snd (fst f))) x ] , [ thom (fst (fst f)) y ]
+
+      l12 : (a b : Tree ⟨ DWM ⟩) → (c : Tree ⟨ DWA ⟩) → R a b → l11 a c ≡ l11 b c
+      l12 a b c r = ΣPathP ((eq/ _ _ (l121 a b r _)) , refl) where
+        l121 : ∀ a b → (r : R a b) → ∀ f → R (thom f a) (thom f b)
+        l121 .(x · (y · z)) .((x · y) · z) (assoc x y z) f = assoc _ _ _
+        l121 .(b · ε) b (rid .b) f = rid _
+        l121 .(x · y) .(y · x) (comm x y) f = comm _ _
+        l121 .(_ · c) .(_ · c) (·c c r) f = ·c _ (l121 _ _ r f)
+
+      l13 : (c : Tree ⟨ DWM ⟩) → (a b : Tree ⟨ DWA ⟩) → R a b → l11 c a ≡ l11 c b
+      l13 c a b r = ΣPathP (refl , (eq/ _ _ (l131 a b r _))) where
+        l131 : ∀ a b → (r : R a b) → ∀ f → R (thom f a) (thom f b)
+        l131 .(x · (y · z)) .((x · y) · z) (assoc x y z) f = assoc _ _ _
+        l131 .(b · ε) b (rid .b) f = rid _
+        l131 .(x · y) .(y · x) (comm x y) f = comm _ _
+        l131 .(_ · c) .(_ · c) (·c c r) f = ·c _ (l131 _ _ r f)
+
+    l1 (ƛ_ {B} f) = ƛ (λ x → l1 (f x))
+    l1 (e1 ∪ e2) = l1 e1 ∪ l1 e2
+    l1 (e1 · e2) = l1 e1 · l1 e2
+
+    l12 : (a b : WMB.Bree) → WMB.S a b → [ l1 a ] ≡ [ l1 b ]
+    l12 a b r = {!!}
+    
 --   qq : (WM → QM) → (WA → QA) → ⟨ WR ⟩ → ⟨ QR ⟩
---   qq f g x = rec QSRI.is-set {!!} {!!} x where
+--   qq f g x = rec QSRI.is-set {!WA!} {!!} x where
 --     l1 : WMB.Bree → ⟨ QR ⟩
 --     l1 ∅       = QSR.0r
 --     l1 (` (x , y))   = {!!}
