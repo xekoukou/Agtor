@@ -1,27 +1,16 @@
 {-# OPTIONS --cubical #-}
 
-module DUniverse where
+module Projection where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Structure
 open import Cubical.Foundations.HLevels
-import Cubical.Data.Bool as B
-import Cubical.Data.List as L
--- open import Cubical.Data.String
-import Cubical.Data.Unit as U
-import Cubical.Data.Nat as N
 open import Cubical.Data.Sigma
-open import Cubical.Data.Maybe
 open import Cubical.Categories.Category
-open import Cubical.Categories.Functor
-open import Cubical.Categories.Instances.Sets
-
-open import Cubical.Relation.Nullary
 
 private
   variable
     ℓ ℓ' ℓ'' : Level
-
 
 module _ where
 
@@ -49,14 +38,9 @@ module _ where
       in q , λ x → _⋆_ ctg ((snd f) x) ((snd g) (fst f x))
   ⋆IdL (ProjC _ ctg) f = ΣPathP (refl , funExt (λ x → ⋆IdL ctg (snd f x)))
   ⋆IdR (ProjC _ ctg) f = ΣPathP (refl , funExt (λ x → ⋆IdR ctg (snd f x)))
-  ⋆Assoc (ProjC _ ctg) f g h = ΣPathP (refl , (funExt (λ x → ⋆Assoc ctg (snd f x) (snd g (fst f x)) (snd h (fst g (fst f x))))))
+  ⋆Assoc (ProjC _ ctg) f g h
+    = ΣPathP (refl , (funExt (λ x → ⋆Assoc ctg (snd f x) (snd g (fst f x)) (snd h (fst g (fst f x))))))
   isSetHom (ProjC _ ctg) {A} {B} = isSetΣ (isSetΠ (λ _ → is-set (snd B)))  λ f → isSetΠ (λ _ → isSetHom ctg)
-
-DUMType : ∀ ℓ ℓ' → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ'))
-DUMType ℓ ℓ' = Proj ℓ (SET ℓ')
-
-DUMTypeC : ∀ ℓ ℓ' → Category (ℓ-max (ℓ-max (ℓ-suc ℓ) ℓ') (ℓ-suc ℓ')) (ℓ-max ℓ ℓ')
-DUMTypeC ℓ ℓ' = ProjC ℓ (SET ℓ')
 
 
 -- postulate

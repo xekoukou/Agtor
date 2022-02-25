@@ -12,7 +12,7 @@ open import Cubical.HITs.SetQuotients
 
 open import SemiRing
 
-module MBree {ℓ} (·monoid : CommMonoid ℓ) where
+module MBree {ℓ} {·monoid : CommMonoid ℓ} where
 
 private
   variable
