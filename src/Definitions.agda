@@ -476,15 +476,18 @@ module _ (DWA : DUAType ℓ ℓ' ℓ'') (DQA : DUAType ℓ ℓ' ℓ'') where
     l12 .(WMB.ƛ (λ c → x c WMB.· y c)) .((WMB.ƛ x) WMB.· (WMB.ƛ y)) (distƛ· x y) = distƛ· _ _
     l12 .(WMB.ƛ y) b (remƛ .b y eq) = remƛ _ _ λ i z → l1 (eq i z)
     l12 .(WMB.ƛ _) .(WMB.ƛ _) (ƛS f) = ƛS λ c → l12 _ _ (f c)
-    
---   qq : (WM → QM) → (WA → QA) → ⟨ WR ⟩ → ⟨ QR ⟩
---   qq f g x = rec QSRI.is-set {!WA!} {!!} x where
---     l1 : WMB.Bree → ⟨ QR ⟩
---     l1 ∅       = QSR.0r
---     l1 (` (x , y))   = {!!}
---     l1 (ƛ x)   = [ ƛ (λ q → {!x q!}) ]
---     l1 (x ∪ y) = (l1 x) QSR.+ l1 y
---     l1 (x · y) = (l1 x) QSR.⋆ l1 y
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 -- -- p1 : T A B → T A B
