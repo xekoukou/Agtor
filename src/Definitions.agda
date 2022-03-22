@@ -21,7 +21,7 @@ open import Projection
 open import SemiRing
 open import ProductCommMonoid
 open import MTree
-open import MBree
+import MBree
 
 private
   variable
@@ -196,6 +196,8 @@ module _ {ℓ ℓ' : _} where
         l2 .(ƛ (λ c → x c · y c)) .((ƛ x) · (ƛ y)) (distƛ· x y) = distƛ· _ _
         l2 .(ƛ y) b (remƛ .b y eq) = remƛ _ _ λ i z → l1 (eq i z)
         l2 .(ƛ _) .(ƛ _) (ƛS f) = ƛS λ c → l2 _ _ (f c)
+        l2 x y (rel-sym r) = rel-sym (l2 _ _ r)
+        l2 x y (rel-trans r1 r2) = rel-trans (l2 _ _ r1) (l2 _ _ r2)
 
       open IsSemiRingHom
       module W = SemiRingStr (WR .snd)
@@ -208,8 +210,6 @@ module _ {ℓ ℓ' : _} where
       pres· (r-hom h) = elimProp2 (λ x y → qisSet (sr-hom h (x W.⋆ y)) (sr-hom h x Q.⋆ sr-hom h y)) λ a b → refl
     
     
-  
-  
   
   
 
@@ -259,3 +259,15 @@ module _ {ℓ ℓ' : _} where
 -- -- -- --   defδᶜ   : (x1 x2 : Tree UType / R) (y1 y2 : Tree ActorT / R) → S (δᶜ (` (x1 , y1)) (` (x2 , y2)) ) (δ (` (x1 , y2)) · (` (x2 , y1)) ∪ (` (x1 , y2)) · δ (` (x2 , y1)))
 
 
+{-
+
+(a1 | b1 + a2 | b2 + a3 | b3) ( c1 | z1 + c2 | z2) = a1 | z1 + a1 | z2
+                                                     a2 | z1 + a2 | z2 
+                                                     a3 | z1 + z3 | z2
+
+                                                     c1 | b1 + c1 | b2 + c1 | b3
+                                                     c2 | b1 + c2 | b2 + c2 | b3
+
+
+
+-}

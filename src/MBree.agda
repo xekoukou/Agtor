@@ -3,13 +3,15 @@
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Structure
 open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Isomorphism
 open import Cubical.Algebra.Monoid
 open import Cubical.Foundations.Function
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Data.Sigma
 open import Cubical.HITs.SetQuotients
-
+import Cubical.Relation.Binary
+import Cubical.HITs.PropositionalTruncation 
 open import SemiRing
 
 module MBree {ℓ} {·monoid : CommMonoid ℓ} where
@@ -55,6 +57,38 @@ data S : Bree → Bree → Type (ℓ-suc ℓ) where
   distƛ·  : ∀{C} → (x y : C → Bree) → S (ƛ λ c → (x c · y c)) (ƛ x · ƛ y)
   remƛ    : ∀{C} → (x : Bree) → (y : C → Bree) → y ≡ (λ _ → x) → S (ƛ y) x
   ƛS      : ∀{C} → {x y : C → Bree} → ((c : C) → S (x c) (y c)) → S (ƛ x) (ƛ y)
+  rel-refl   : ∀{x} → S x x
+  rel-sym   : ∀{x y} → S x y → S y x
+  rel-trans : ∀{x y z} → S x y → S y z → S x z
+
+
+
+
+module _ where
+
+  module Tr = Cubical.HITs.PropositionalTruncation
+  open Cubical.Relation.Binary
+  open BinaryRelation
+
+  ∥S∥ : ∀ a b → Type (ℓ-suc ℓ)
+  ∥S∥ a b = Tr.∥ S a b ∥
+
+  ∥S∥isPropValued : isPropValued ∥S∥
+  ∥S∥isPropValued a b x y = Tr.squash x y
+
+  SisEquivRel : isEquivRel S
+  isEquivRel.reflexive SisEquivRel a = rel-refl
+  isEquivRel.symmetric SisEquivRel a b r = rel-sym r
+  isEquivRel.transitive SisEquivRel a b c r z = rel-trans r z
+
+  ∥S∥isEquivRel : isEquivRel ∥S∥
+  isEquivRel.reflexive ∥S∥isEquivRel a = Tr.∣ rel-refl ∣
+  isEquivRel.symmetric ∥S∥isEquivRel a b r = Tr.elim (λ x → Tr.squash) (λ x →  Tr.∣ rel-sym x ∣) r
+  isEquivRel.transitive ∥S∥isEquivRel a b c r z = Tr.elim2 (λ x y → Tr.squash) (λ a b → Tr.∣ rel-trans a b ∣) r z
+
+  IsoEqS : ∀ (a b : Bree) → Iso ([ a ] ≡ [ b ]) (∥S∥ a b)
+  IsoEqS a b = isEquivRel→effectiveIso ∥S∥isPropValued ∥S∥isEquivRel a b
+
 
 ∪c≡ : {a b : Bree} → (c : Bree) → S a b → Path (Bree / S) [ a ∪ c ] [ b ∪ c ]
 ∪c≡ c r = eq/ _ _ (∪c c r)

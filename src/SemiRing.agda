@@ -70,4 +70,57 @@ record IsSemiRingHom {A : Type ℓ} {B : Type ℓ'} (Q : SemiRingStr A) (f : A �
 SemiRingHom : (L : SemiRing ℓ) (M : SemiRing ℓ') → Type _
 SemiRingHom L M = Σ[ f ∈ (⟨ L ⟩ → ⟨ M ⟩) ] IsSemiRingHom (L .snd) f (M .snd)
 
+-- Derivation ?????
+record IsSemiRingDer {A : Type ℓ} (Q : SemiRingStr A) (f : A → A)
+  : Type ℓ
+  where
+  
+  open SemiRingStr Q
 
+  field
+    pres0 : f 0r ≡ 0r
+    pres1 : f 1r ≡ 0r
+    pres+ : (x y : A) → f (x + y) ≡ f x + f y
+    pres· : (x y : A) → f (x ⋆ y) ≡ (f x ⋆ y) + (x ⋆ f y)
+
+SemiRingDer : (L : SemiRing ℓ) → Type _
+SemiRingDer L = Σ[ f ∈ (⟨ L ⟩ → ⟨ L ⟩) ] IsSemiRingDer (L .snd) f
+
+
+-- Bi-Derivation
+record IsSemiRingBiDer {A : Type ℓ} (Q : SemiRingStr A) (f : A → A → A)
+  : Type ℓ
+  where
+  
+  open SemiRingStr Q
+
+  field
+    pres0l : (z : A) → f 0r z ≡ 0r
+    pres1l : (z : A) → f 1r z ≡ 0r
+    pres0r : (x : A) → f x 0r ≡ 0r
+    pres1r : (x : A) → f x 1r ≡ 0r
+    pres+l : (x y z : A) → f (x + y) z ≡ f x z + f y z
+    pres+r : (x y z : A) → f z (x + y) ≡ f z x + f z y
+    pres·l : (x y z : A) → f (x ⋆ y) z ≡ (f x z ⋆ y) + (x ⋆ f y z)
+    pres·r : (x y z : A) → f z (x ⋆ y) ≡ (f z x ⋆ y) + (x ⋆ f z y)
+
+SemiRingBiDer : (L : SemiRing ℓ) → Type _
+SemiRingBiDer L = Σ[ f ∈ (⟨ L ⟩ → ⟨ L ⟩ → ⟨ L ⟩) ] IsSemiRingBiDer (L .snd) f
+
+
+-- Bi-Derivation
+record IsMonoidBiDer {A : Type ℓ} {C : Type ℓ'} (W : CommMonoidStr C) (Q : SemiRingStr A) (f : C → C → A)
+  (id : C → A) : Type (ℓ-max ℓ ℓ')
+  where
+  
+  module MW = CommMonoidStr W
+  module MQ = SemiRingStr Q
+
+  field
+    pres1l : (z : C) → f MW.ε z ≡ MQ.0r
+    pres1r : (x : C) → f x MW.ε ≡ MQ.0r
+    pres·l : (x y z : C) → f (x MW.· y) z ≡ (f x z MQ.⋆ id y) MQ.+ (id x MQ.⋆ f y z)
+    pres·r : (x y z : C) → f z (x MW.· y) ≡ (f z x MQ.⋆ id y) MQ.+ (id x MQ.⋆ f z y)
+
+MonoidBiDer : (L : CommMonoid ℓ) (M : SemiRing ℓ') (id : ⟨ L ⟩ → ⟨ M ⟩) → Type _
+MonoidBiDer L M id = Σ[ f ∈ (⟨ L ⟩ → ⟨ L ⟩ → ⟨ M ⟩) ] IsMonoidBiDer (L .snd) (M .snd) f id
