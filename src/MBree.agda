@@ -9,9 +9,9 @@ open import Cubical.Foundations.Function
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Data.Sigma
-open import Cubical.HITs.SetQuotients
+open import Cubical.HITs.SetQuotients as Sq
 import Cubical.Relation.Binary
-import Cubical.HITs.PropositionalTruncation 
+open import Cubical.HITs.PropositionalTruncation as Tr
 open import SemiRing
 
 module MBree {ℓ} {·monoid : CommMonoid ℓ} where
@@ -66,7 +66,6 @@ data S : Bree → Bree → Type (ℓ-suc ℓ) where
 
 module _ where
 
-  module Tr = Cubical.HITs.PropositionalTruncation
   open Cubical.Relation.Binary
   open BinaryRelation
 
@@ -90,43 +89,47 @@ module _ where
   IsoEqS a b = isEquivRel→effectiveIso ∥S∥isPropValued ∥S∥isEquivRel a b
 
 
-∪c≡ : {a b : Bree} → (c : Bree) → S a b → Path (Bree / S) [ a ∪ c ] [ b ∪ c ]
-∪c≡ c r = eq/ _ _ (∪c c r)
+∪c≡' : {a b : Bree} → (c : Bree) → S a b → Path (Bree / ∥S∥) [ a ∪ c ] [ b ∪ c ]
+∪c≡' c r = eq/ _ _ (∣ ∪c c r ∣)
 
-c∪≡ : {a b : Bree} → (c : Bree) → S a b → [ c ∪ a ] ≡ [ c ∪ b ]
-c∪≡ c r = eq/ _ _ (comm _ _) ∙∙ ∪c≡ c r ∙∙ eq/ _ _ (comm _ _)
 
-∪≡ : {a1 a2 b1 b2 : Bree} → S a1 a2 → S b1 b2 → Path (Bree / S) [ a1 ∪ b1 ] [ a2 ∪ b2 ]
+∪c≡ : {a b : Bree} → (c : Bree) → ∥S∥ a b → Path (Bree / ∥S∥) [ a ∪ c ] [ b ∪ c ]
+∪c≡ c r = Tr.elim (λ _ → squash/ _ _) (∪c≡' c) r
+
+c∪≡ : {a b : Bree} → (c : Bree) → ∥S∥ a b → [ c ∪ a ] ≡ [ c ∪ b ]
+c∪≡ c r = eq/ _ _ (∣ comm _ _ ∣) ∙∙ ∪c≡ c r ∙∙ eq/ _ _ (∣ comm _ _ ∣)
+
+∪≡ : {a1 a2 b1 b2 : Bree} → ∥S∥ a1 a2 → ∥S∥ b1 b2 → Path (Bree / ∥S∥) [ a1 ∪ b1 ] [ a2 ∪ b2 ]
 ∪≡ r1 r2 = ∪c≡ _ r1 ∙ c∪≡ _ r2 
 
 private
-  _⋃_ : Bree / S → Bree / S → Bree / S
-  _⋃_ a b = rec2 squash/ (λ a b → [ a ∪ b ]) (λ _ _ → ∪c≡) (λ c _ _ → c∪≡ c) a b
+  _⋃_ : Bree / ∥S∥ → Bree / ∥S∥ → Bree / ∥S∥
+  _⋃_ a b = Sq.rec2 squash/ (λ a b → [ a ∪ b ]) (λ _ _ → ∪c≡) (λ c _ _ → c∪≡ c) a b
   
   
   
-  assoc⋃ : (x y z : Bree / S) → (x ⋃ (y ⋃ z)) ≡ ((x ⋃ y) ⋃ z)
+  assoc⋃ : (x y z : Bree / ∥S∥) → (x ⋃ (y ⋃ z)) ≡ ((x ⋃ y) ⋃ z)
   assoc⋃ = elimProp3 (λ x y z → squash/ ((x ⋃ (y ⋃ z))) (((x ⋃ y) ⋃ z)))
-                     (λ x y z → eq/ _ _ (assoc x y z))
+                     (λ x y z → eq/ _ _ (∣ assoc x y z ∣))
   
-  rid⋃ : (x : Bree / S) → (x ⋃ [ ∅ ]) ≡ x
+  rid⋃ : (x : Bree / ∥S∥) → (x ⋃ [ ∅ ]) ≡ x
   rid⋃ = elimProp (λ x → squash/ (x ⋃ [ ∅ ]) x)
-                  (λ x → eq/ _ _ (rid x))
+                  (λ x → eq/ _ _ (∣ rid x ∣))
   
-  comm⋃ : (x y : Bree / S) → (x ⋃ y) ≡ (y ⋃ x)
+  comm⋃ : (x y : Bree / ∥S∥) → (x ⋃ y) ≡ (y ⋃ x)
   comm⋃ = elimProp2 (λ x y → squash/ _ _)
-                  (λ x y → eq/ _ _ (comm x y))
+                  (λ x y → eq/ _ _ (∣ comm x y ∣))
   
   
-  idem⋃ : (x : Bree / S) → (x ⋃ x) ≡ x
-  idem⋃ = elimProp (λ x → squash/ (x ⋃ x) x) λ a → eq/ _ _ (idem a)
+  idem⋃ : (x : Bree / ∥S∥) → (x ⋃ x) ≡ x
+  idem⋃ = elimProp (λ x → squash/ (x ⋃ x) x) λ a → eq/ _ _ (∣ idem a ∣)
   
     
 BCommMonoid : CommMonoid _
 BCommMonoid = makeCommMonoid [ ∅ ] _⋃_ squash/ assoc⋃ rid⋃ (λ x → comm⋃ _ x ∙ rid⋃ x)  comm⋃
 
 BSemillatice : Semilattice _
-fst BSemillatice = Bree / S
+fst BSemillatice = Bree / ∥S∥
 SemilatticeStr.ε (snd BSemillatice) = [ ∅ ]
 SemilatticeStr._·_ (snd BSemillatice) = _⋃_
 IsSemilattice.isCommMonoid (SemilatticeStr.isSemilattice (snd BSemillatice))
@@ -134,44 +137,44 @@ IsSemilattice.isCommMonoid (SemilatticeStr.isSemilattice (snd BSemillatice))
 IsSemilattice.idem (SemilatticeStr.isSemilattice (snd BSemillatice)) = idem⋃
 
 
-·c≡ : {a b : Bree} → (c : Bree) → S a b → Path (Bree / S) [ a · c ] [ b · c ]
-·c≡ c r = eq/ _ _ (·c c r)
+·c≡ : {a b : Bree} → (c : Bree) → ∥S∥ a b → Path (Bree / ∥S∥) [ a · c ] [ b · c ]
+·c≡ c r = Tr.elim (λ a → squash/ _ _) (λ x → eq/ _ _ (∣ ·c c x ∣) ) r
 
-c·≡ : {a b : Bree} → (c : Bree) → S a b → [ c · a ] ≡ [ c · b ]
-c·≡ c r = eq/ _ _ (comm· _ _) ∙∙ ·c≡ c r ∙∙ eq/ _ _ (comm· _ _)
+c·≡ : {a b : Bree} → (c : Bree) → ∥S∥ a b → [ c · a ] ≡ [ c · b ]
+c·≡ c r = eq/ _ _ (∣ comm· _ _ ∣) ∙∙ ·c≡ c r ∙∙ eq/ _ _ (∣ comm· _ _ ∣)
 
-·≡ : {a1 a2 b1 b2 : Bree} → S a1 a2 → S b1 b2 → Path (Bree / S) [ a1 · b1 ] [ a2 · b2 ]
+·≡ : {a1 a2 b1 b2 : Bree} → ∥S∥ a1 a2 → ∥S∥ b1 b2 → Path (Bree / ∥S∥) [ a1 · b1 ] [ a2 · b2 ]
 ·≡ r1 r2 = ·c≡ _ r1 ∙ c·≡ _ r2 
 
 private
-  _··_ : Bree / S → Bree / S → Bree / S
-  _··_ a b = rec2 squash/ (λ a b → [ a · b ]) (λ _ _ → ·c≡) (λ c _ _ → c·≡ c) a b
+  _··_ : Bree / ∥S∥ → Bree / ∥S∥ → Bree / ∥S∥
+  _··_ a b = Sq.rec2 squash/ (λ a b → [ a · b ]) (λ _ _ → ·c≡) (λ c _ _ → c·≡ c) a b
   
-  ι : Bree / S
+  ι : Bree / ∥S∥
   ι = [ ` Q.ε ]
   
-  assoc·· : (x y z : Bree / S) → (x ·· (y ·· z)) ≡ ((x ·· y) ·· z)
+  assoc·· : (x y z : Bree / ∥S∥) → (x ·· (y ·· z)) ≡ ((x ·· y) ·· z)
   assoc·· = elimProp3 (λ x y z → squash/ ((x ·· (y ·· z))) (((x ·· y) ·· z)))
-                     (λ x y z → eq/ _ _ (assoc· x y z))
+                     (λ x y z → eq/ _ _ (∣ assoc· x y z ∣))
   
-  rid·· : (x : Bree / S) → (x ··  ι) ≡ x
+  rid·· : (x : Bree / ∥S∥) → (x ··  ι) ≡ x
   rid·· = elimProp (λ x → squash/ (x ··  ι ) x)
-                  (λ x → eq/ _ _ (rid· x))
+                  (λ x → eq/ _ _ (∣ rid· x ∣))
   
-  comm·· : (x y : Bree / S) → (x ·· y) ≡ (y ·· x)
+  comm·· : (x y : Bree / ∥S∥) → (x ·· y) ≡ (y ·· x)
   comm·· = elimProp2 (λ x y → squash/ _ _)
-                  (λ x y → eq/ _ _ (comm· x y))
+                  (λ x y → eq/ _ _ (∣ comm· x y ∣))
   
   
-  dist·· : (a b c : Bree / S) → (a ·· (b ⋃ c)) ≡ (a ·· b) ⋃ (a ·· c)
+  dist·· : (a b c : Bree / ∥S∥) → (a ·· (b ⋃ c)) ≡ (a ·· b) ⋃ (a ·· c)
   dist·· = elimProp3 (λ x y z → squash/ (x ·· (y ⋃ z)) ((x ·· y) ⋃ (x ·· z)))
-                     λ a b c → eq/ _ _ (dist` _ _ _) 
+                     λ a b c → eq/ _ _ (∣ dist` _ _ _ ∣) 
   
 B·CommMonoid : CommMonoid _
 B·CommMonoid = makeCommMonoid ι _··_ squash/ assoc·· rid·· (λ x → comm·· _ x ∙ rid·· x)  comm··
 
 BSemiRing : SemiRing _
-fst BSemiRing = Bree / S
+fst BSemiRing = Bree / ∥S∥
 SemiRingStr.0r (snd BSemiRing) = [ ∅ ]
 SemiRingStr.1r (snd BSemiRing) =  ι
 SemiRingStr._+_ (snd BSemiRing) = _⋃_

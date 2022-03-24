@@ -12,6 +12,7 @@ open import Cubical.Algebra.Semilattice
 open import Cubical.Data.Sigma
 open import Cubical.Data.Nat hiding (_·_ ; _+_)
 open import Cubical.HITs.SetQuotients
+import Cubical.HITs.PropositionalTruncation as Tr
 open import Cubical.Relation.Binary
 open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Categories.Category
@@ -144,7 +145,7 @@ module _ {ℓ ℓ' : _} where
       wisSet = IsSemiRing.is-set (SemiRingStr.isSemiRing (snd WR))
 
       sr-hom : AC.Hom[ DWA , DQA ] → ⟨ WR ⟩ → ⟨ QR ⟩
-      sr-hom f r = rec qisSet (λ x → [ l1 x ]) (λ a b r → (eq/ _ _ (l2 a b r))) r where
+      sr-hom f r = rec qisSet (λ x → [ l1 x ]) (λ a b r → (eq/ _ _ (Tr.elim (λ a → Tr.squash) (λ x → ∣ l2 a b x ∣) r))) r where
         l1 : WB.Bree → QB.Bree
         l1 ∅ = ∅
         l1 (` (x , y)) = ` l14 module L1 where
@@ -198,6 +199,7 @@ module _ {ℓ ℓ' : _} where
         l2 .(ƛ _) .(ƛ _) (ƛS f) = ƛS λ c → l2 _ _ (f c)
         l2 x y (rel-sym r) = rel-sym (l2 _ _ r)
         l2 x y (rel-trans r1 r2) = rel-trans (l2 _ _ r1) (l2 _ _ r2)
+        l2 x y (rel-refl) = rel-refl
 
       open IsSemiRingHom
       module W = SemiRingStr (WR .snd)
