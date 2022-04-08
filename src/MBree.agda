@@ -8,54 +8,57 @@ open import Cubical.Algebra.Monoid
 open import Cubical.Foundations.Function
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
+open import Cubical.Relation.Nullary
 open import Cubical.Data.Sigma
+import Cubical.Data.List as L
 open import Cubical.HITs.SetQuotients as Sq
 import Cubical.Relation.Binary
 open import Cubical.HITs.PropositionalTruncation as Tr
 open import SemiRing
+open import Common
 
-module MBree {ℓ} {·monoid : CommMonoid ℓ} where
 
-private
-  variable
-    ℓ' ℓ'' : Level
 
-  C = ⟨ ·monoid ⟩
-  module Q = CommMonoidStr (snd ·monoid)
-  module E = IsCommMonoid Q.isCommMonoid
+module MBree {ℓ ℓ'} {C : Type ℓ}  {D : Type ℓ'} where
 
-data Bree : Type (ℓ-suc ℓ) where
-  ∅    : Bree
-  `_   : C → Bree
-  ƛ_    : {B : Type} → (B → Bree) → Bree
+data Bree : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
+  0b   : Bree
+  1b   : Bree
+  _←_  : C → D → Bree
+  ƛ_   : {B : Type} → (B → Bree) → Bree
   _∪_  : Bree → Bree → Bree 
   _·_  : Bree → Bree → Bree
 
 infixr 5 _∪_
 infixr 7 _·_
-infixr 10 `_
+infixr 10 _←_
 
-data S : Bree → Bree → Type (ℓ-suc ℓ) where
+
+data S : Bree → Bree → Type (ℓ-suc (ℓ-max ℓ ℓ')) where
   assoc   : (x y z : Bree) → S (x ∪ (y ∪ z)) ((x ∪ y) ∪ z)
-  rid     : (x : Bree) → S (x ∪ ∅) x
+  rid     : (x : Bree) → S (x ∪ 0b) x
   comm    : (x y : Bree) → S (x ∪ y) (y ∪ x)
   ∪c      : {x y : Bree} → (c : Bree) → S x y → S (x ∪ c) (y ∪ c)
   
   idem    : (x : Bree) → S (x ∪ x) x
 
+  perm    : ∀{x1 y1 x2 y2} → S ((x1 ← y1) · (x2 ← y2)) ((x1 ← y2) · (x2 ← y1))
   assoc·   : (x y z : Bree) → S (x · (y · z)) ((x · y) · z)
-  rid·     : (x : Bree) → S (x · ` Q.ε) x
+  rid·     : (x : Bree) → S (x · 1b) x
   ·c      : {x y : Bree} → (c : Bree) → S x y → S (x · c) (y · c)
   comm·   : (x y : Bree) → S (x · y) (y · x)
 
-  def∅·   : (x : Bree) → S (x · ∅) ∅
-  def·    : (x y : C) → S ((` x) · (` y)) (` (x Q.· y))
+  def∅·   : (x : Bree) → S (x · 0b) 0b
   defƛ·   : ∀{C} → (x : Bree) → (y : C → Bree) → S (x · (ƛ y)) (ƛ λ q → x · (y q))
   dist`   : (x y z : Bree) → S (x · (y ∪ z)) ((x · y) ∪ (x · z))
 
   distƛ∪  : ∀{C} → (x y : C → Bree) → S (ƛ λ c → (x c ∪ y c)) (ƛ x ∪ ƛ y)
   distƛ·  : ∀{C} → (x y : C → Bree) → S (ƛ λ c → (x c · y c)) (ƛ x · ƛ y)
-  remƛ    : ∀{C} → (x : Bree) → (y : C → Bree) → y ≡ (λ _ → x) → S (ƛ y) x
+  -- More involved equaility on lambdas.
+  -- Maybe instead of doing this, we introduce an equality that considers cases between open terms and closed terms.
+  remƛ    : ∀{C}→ (x : Bree) → (y : C → Bree)
+            → (∀ z → y z ≡ x)
+            → S (ƛ y) x
   ƛS      : ∀{C} → {x y : C → Bree} → ((c : C) → S (x c) (y c)) → S (ƛ x) (ƛ y)
   rel-refl   : ∀{x} → S x x
   rel-sym   : ∀{x y} → S x y → S y x
@@ -69,7 +72,7 @@ module _ where
   open Cubical.Relation.Binary
   open BinaryRelation
 
-  ∥S∥ : ∀ a b → Type (ℓ-suc ℓ)
+  ∥S∥ : ∀ a b → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ'))
   ∥S∥ a b = Tr.∥ S a b ∥
 
   ∥S∥isPropValued : isPropValued ∥S∥
@@ -112,8 +115,8 @@ private
   assoc⋃ = elimProp3 (λ x y z → squash/ ((x ⋃ (y ⋃ z))) (((x ⋃ y) ⋃ z)))
                      (λ x y z → eq/ _ _ (∣ assoc x y z ∣))
   
-  rid⋃ : (x : Bree / ∥S∥) → (x ⋃ [ ∅ ]) ≡ x
-  rid⋃ = elimProp (λ x → squash/ (x ⋃ [ ∅ ]) x)
+  rid⋃ : (x : Bree / ∥S∥) → (x ⋃ [ 0b ]) ≡ x
+  rid⋃ = elimProp (λ x → squash/ (x ⋃ [ 0b ]) x)
                   (λ x → eq/ _ _ (∣ rid x ∣))
   
   comm⋃ : (x y : Bree / ∥S∥) → (x ⋃ y) ≡ (y ⋃ x)
@@ -126,11 +129,11 @@ private
   
     
 BCommMonoid : CommMonoid _
-BCommMonoid = makeCommMonoid [ ∅ ] _⋃_ squash/ assoc⋃ rid⋃ (λ x → comm⋃ _ x ∙ rid⋃ x)  comm⋃
+BCommMonoid = makeCommMonoid [ 0b ] _⋃_ squash/ assoc⋃ rid⋃ (λ x → comm⋃ _ x ∙ rid⋃ x)  comm⋃
 
 BSemillatice : Semilattice _
 fst BSemillatice = Bree / ∥S∥
-SemilatticeStr.ε (snd BSemillatice) = [ ∅ ]
+SemilatticeStr.ε (snd BSemillatice) = [ 0b ]
 SemilatticeStr._·_ (snd BSemillatice) = _⋃_
 IsSemilattice.isCommMonoid (SemilatticeStr.isSemilattice (snd BSemillatice))
   = BCommMonoid .snd .CommMonoidStr.isCommMonoid
@@ -151,7 +154,7 @@ private
   _··_ a b = Sq.rec2 squash/ (λ a b → [ a · b ]) (λ _ _ → ·c≡) (λ c _ _ → c·≡ c) a b
   
   ι : Bree / ∥S∥
-  ι = [ ` Q.ε ]
+  ι = [ 1b ]
   
   assoc·· : (x y z : Bree / ∥S∥) → (x ·· (y ·· z)) ≡ ((x ·· y) ·· z)
   assoc·· = elimProp3 (λ x y z → squash/ ((x ·· (y ·· z))) (((x ·· y) ·· z)))
@@ -175,7 +178,7 @@ B·CommMonoid = makeCommMonoid ι _··_ squash/ assoc·· rid·· (λ x → com
 
 BSemiRing : SemiRing _
 fst BSemiRing = Bree / ∥S∥
-SemiRingStr.0r (snd BSemiRing) = [ ∅ ]
+SemiRingStr.0r (snd BSemiRing) = [ 0b ]
 SemiRingStr.1r (snd BSemiRing) =  ι
 SemiRingStr._+_ (snd BSemiRing) = _⋃_
 SemiRingStr._⋆_ (snd BSemiRing) = _··_

@@ -1,4 +1,4 @@
-{-# OPTIONS  --confluence-check --sized-types --cubical #-}
+{-# OPTIONS  --sized-types --cubical #-}
 
 module Definitions where
 
@@ -10,6 +10,7 @@ open import Cubical.Foundations.Function
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Data.Sigma
+import Cubical.Data.List as L
 open import Cubical.Data.Nat hiding (_·_ ; _+_)
 open import Cubical.HITs.SetQuotients
 import Cubical.HITs.PropositionalTruncation as Tr
@@ -18,6 +19,7 @@ open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Categories.Category
 open import Cubical.Categories.Instances.Sets
 
+open import Common
 open import Projection 
 open import SemiRing
 open import ProductCommMonoid
@@ -118,84 +120,44 @@ module _ {ℓ ℓ' : _} where
       DWM = prM (snd DWA)
       DQM = prM (snd DQA)
   
-      ·WM' = TreeCommMonoid ⟨ DWM ⟩
-      ·WA' = TreeCommMonoid ⟨ DWA ⟩
-    
-      ·QM' = TreeCommMonoid ⟨ DQM ⟩
-      ·QA' = TreeCommMonoid ⟨ DQA ⟩
-    
-      ·WP' = ProductCommMonoid ·WM' ·WA'
-      ·QP' = ProductCommMonoid ·QM' ·QA'
-  
-      module WB = MBree {_} {·WP'}
-      module QB = MBree {_} {·QP'}
+      module WB = MBree {_} {_} {⟨ DWA ⟩} {⟨ DWM ⟩}
+      module QB = MBree {_} {_} {⟨ DQA ⟩} {⟨ DQM ⟩}
 
       open MBree
 
       WR = WB.BSemiRing
       QR = QB.BSemiRing
   
-      module ·WM = CommMonoidStr (snd ·WM')
-      module ·WA = CommMonoidStr (snd ·WA')
-    
-      module ·WP = CommMonoidStr (snd ·WP')
-      module ·QP = CommMonoidStr (snd ·QP')
-
       qisSet = IsSemiRing.is-set (SemiRingStr.isSemiRing (snd QR))
       wisSet = IsSemiRing.is-set (SemiRingStr.isSemiRing (snd WR))
 
       sr-hom : AC.Hom[ DWA , DQA ] → ⟨ WR ⟩ → ⟨ QR ⟩
-      sr-hom f r = rec qisSet (λ x → [ l1 x ]) (λ a b r → (eq/ _ _ (Tr.elim (λ a → Tr.squash) (λ x → ∣ l2 a b x ∣) r))) r where
+      sr-hom ((f , g) , _) r = rec qisSet (λ x → [ l1 x ]) (λ a b r → (eq/ _ _ (Tr.elim (λ a → Tr.squash) (λ x → ∣ l2 a b x ∣) r))) r where
         l1 : WB.Bree → QB.Bree
-        l1 ∅ = ∅
-        l1 (` (x , y)) = ` l14 module L1 where
-         
-          l11 : Tree ⟨ DWM ⟩ → Tree ⟨ DWA ⟩ → ⟨ ·QP' ⟩
-          l11 x y = [ map (fst (snd (fst f))) x ] , [ map (fst (fst f)) y ]
-    
-          l12 : (a b : Tree ⟨ DWM ⟩) → (c : Tree ⟨ DWA ⟩) → R a b → l11 a c ≡ l11 b c
-          l12 a b c r = ΣPathP ((eq/ _ _ (l121 a b r _)) , refl) where
-            l121 : ∀ a b → (r : R a b) → ∀ f → R (map f a) (map f b)
-            l121 .(x · (y · z)) .((x · y) · z) (assoc x y z) f = assoc _ _ _
-            l121 .(b · ε) b (rid .b) f = rid _
-            l121 .(x · y) .(y · x) (comm x y) f = comm _ _
-            l121 .(_ · c) .(_ · c) (·c c r) f = ·c _ (l121 _ _ r f)
-    
-          l13 : (c : Tree ⟨ DWM ⟩) → (a b : Tree ⟨ DWA ⟩) → R a b → l11 c a ≡ l11 c b
-          l13 c a b r = ΣPathP (refl , (eq/ _ _ (l131 a b r _))) where
-            l131 : ∀ a b → (r : R a b) → ∀ f → R (map f a) (map f b)
-            l131 .(x · (y · z)) .((x · y) · z) (assoc x y z) f = assoc _ _ _
-            l131 .(b · ε) b (rid .b) f = rid _
-            l131 .(x · y) .(y · x) (comm x y) f = comm _ _
-            l131 .(_ · c) .(_ · c) (·c c r) f = ·c _ (l131 _ _ r f)
-    
-          l14 = rec2 (isSetΣ squash/ (λ _ → squash/)) l11 l12 l13 x y
+        l1 0b = 0b
+        l1 1b = 1b
+        l1 (y ← x) = f y ← (g .fst x)
         l1 (ƛ_ {B} f) = ƛ (λ x → l1 (f x))
         l1 (e1 ∪ e2) = l1 e1 ∪ l1 e2
         l1 (e1 · e2) = l1 e1 · l1 e2
     
         l2 : (a b : WB.Bree) → WB.S a b → QB.S (l1 a) (l1 b)
+        l2 ((x1 ← y1) · (x2 ← y2)) ((.x1 ← .y2) · (.x2 ← .y1)) perm = perm
         l2 .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (assoc x y z) = assoc _ _ _
-        l2 .(b ∪ ∅) b (rid .b) = rid _
+        l2 .(b ∪ 0b) b (rid .b) = rid _
         l2 .(x ∪ y) .(y ∪ x) (comm x y) = comm _ _
         l2 .(_ ∪ c) .(_ ∪ c) (∪c c r) = ∪c _ (l2 _ _ r)
         l2 .(b ∪ b) b (idem .b) = idem _
         l2 .(x · y · z) .((x · y) · z) (assoc· x y z) = assoc· _ _ _
-        l2 .(b · ` ·WP.ε) b (rid· .b) = rid· _
+        l2 .(b · 1b) b (rid· .b) = rid· _
         l2 .(_ · c) .(_ · c) (·c c r) = ·c _ (l2 _ _ r)
         l2 .(x · y) .(y · x) (comm· x y) = comm· _ _
-        l2 .(x · ∅) .∅ (def∅· x) = def∅· _
-        l2 .(` (x1 , x2) · ` (y1 , y2)) .(` (((x1 , x2)) ·WP.· (y1 , y2))) (def· (x1 , x2) (y1 , y2))
-          = J (λ y eq → QB.S (` L1.l14 x1 x2 · ` L1.l14 y1 y2)
-            (` y)) (def· _ _) (sym l121) where
-          l121 : L1.l14 (x1 ·WM.· y1) (x2 ·WA.· y2) ≡ (L1.l14 x1 x2) ·QP.· (L1.l14 y1 y2)
-          l121 = elimProp4 {P = λ x1 y1 x2 y2 → L1.l14 (x1 ·WM.· y1) (x2 ·WA.· y2) ≡ (L1.l14 x1 x2) ·QP.· (L1.l14 y1 y2)}
-                   (λ x y z t → isSetΣ squash/ (λ _ → squash/) _ _) (λ a b c d → refl) x1 y1 x2 y2
+        l2 .(x · 0b) .0b (def∅· x) = def∅· _
         l2 .(x · (ƛ y)) .(ƛ (λ q → x · y q)) (defƛ· x y) = defƛ· _ _
         l2 .(x · (y ∪ z)) .(x · y ∪ x · z) (dist` x y z) = dist` _ _ _
         l2 .(ƛ (λ c → x c ∪ y c)) .((ƛ x) ∪ (ƛ y)) (distƛ∪ x y) = distƛ∪ _ _
         l2 .(ƛ (λ c → x c · y c)) .((ƛ x) · (ƛ y)) (distƛ· x y) = distƛ· _ _
-        l2 .(ƛ y) b (remƛ .b y eq) = remƛ _ _ λ i z → l1 (eq i z)
+        l2 .(ƛ y) .x (remƛ x y eq) = remƛ (l1 x) (λ z → l1 (y z)) λ z i → l1 (eq z i)
         l2 .(ƛ _) .(ƛ _) (ƛS f) = ƛS λ c → l2 _ _ (f c)
         l2 x y (rel-sym r) = rel-sym (l2 _ _ r)
         l2 x y (rel-trans r1 r2) = rel-trans (l2 _ _ r1) (l2 _ _ r2)
@@ -212,7 +174,6 @@ module _ {ℓ ℓ' : _} where
       pres· (r-hom h) = elimProp2 (λ x y → qisSet (sr-hom h (x W.⋆ y)) (sr-hom h x Q.⋆ sr-hom h y)) λ a b → refl
     
     
-  
   
 
 

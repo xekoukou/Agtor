@@ -107,7 +107,7 @@ record IsSemiRingBiDer {A : Type ℓ} (Q : SemiRingStr A) (f : A → A → A)
 SemiRingBiDer : (L : SemiRing ℓ) → Type _
 SemiRingBiDer L = Σ[ f ∈ (⟨ L ⟩ → ⟨ L ⟩ → ⟨ L ⟩) ] IsSemiRingBiDer (L .snd) f
 
-
+-- ? Necessary not
 -- Bi-Derivation
 record IsMonoidBiDer {A : Type ℓ} {C : Type ℓ'} (W : CommMonoidStr C) (Q : SemiRingStr A) (f : C → C → A)
   (id : C → A) : Type (ℓ-max ℓ ℓ')
