@@ -123,55 +123,41 @@ module _ {ℓ ℓ' : _} where
       module WB = MBree {_} {_} {⟨ DWA ⟩} {⟨ DWM ⟩}
       module QB = MBree {_} {_} {⟨ DQA ⟩} {⟨ DQM ⟩}
 
-      open MBree
-
-      WR = WB.BSemiRing
-      QR = QB.BSemiRing
-  
-      qisSet = IsSemiRing.is-set (SemiRingStr.isSemiRing (snd QR))
-      wisSet = IsSemiRing.is-set (SemiRingStr.isSemiRing (snd WR))
-
-      sr-hom : AC.Hom[ DWA , DQA ] → ⟨ WR ⟩ → ⟨ QR ⟩
-      sr-hom ((f , g) , _) r = rec qisSet (λ x → [ l1 x ]) (λ a b r → (eq/ _ _ (Tr.elim (λ a → Tr.squash) (λ x → ∣ l2 a b x ∣) r))) r where
-        l1 : WB.Bree → QB.Bree
-        l1 0b = 0b
-        l1 1b = 1b
-        l1 (y ← x) = f y ← (g .fst x)
-        l1 (ƛ_ {B} f) = ƛ (λ x → l1 (f x))
-        l1 (e1 ∪ e2) = l1 e1 ∪ l1 e2
-        l1 (e1 · e2) = l1 e1 · l1 e2
-    
-        l2 : (a b : WB.Bree) → WB.S a b → QB.S (l1 a) (l1 b)
-        l2 ((x1 ← y1) · (x2 ← y2)) ((.x1 ← .y2) · (.x2 ← .y1)) perm = perm
-        l2 .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (assoc x y z) = assoc _ _ _
-        l2 .(b ∪ 0b) b (rid .b) = rid _
-        l2 .(x ∪ y) .(y ∪ x) (comm x y) = comm _ _
-        l2 .(_ ∪ c) .(_ ∪ c) (∪c c r) = ∪c _ (l2 _ _ r)
-        l2 .(b ∪ b) b (idem .b) = idem _
-        l2 .(x · y · z) .((x · y) · z) (assoc· x y z) = assoc· _ _ _
-        l2 .(b · 1b) b (rid· .b) = rid· _
-        l2 .(_ · c) .(_ · c) (·c c r) = ·c _ (l2 _ _ r)
-        l2 .(x · y) .(y · x) (comm· x y) = comm· _ _
-        l2 .(x · 0b) .0b (def∅· x) = def∅· _
-        l2 .(x · (ƛ y)) .(ƛ (λ q → x · y q)) (defƛ· x y) = defƛ· _ _
-        l2 .(x · (y ∪ z)) .(x · y ∪ x · z) (dist` x y z) = dist` _ _ _
-        l2 .(ƛ (λ c → x c ∪ y c)) .((ƛ x) ∪ (ƛ y)) (distƛ∪ x y) = distƛ∪ _ _
-        l2 .(ƛ (λ c → x c · y c)) .((ƛ x) · (ƛ y)) (distƛ· x y) = distƛ· _ _
-        l2 .(ƛ y) .x (remƛ x y eq) = remƛ (l1 x) (λ z → l1 (y z)) λ z i → l1 (eq z i)
-        l2 .(ƛ _) .(ƛ _) (ƛS f) = ƛS λ c → l2 _ _ (f c)
-        l2 x y (rel-sym r) = rel-sym (l2 _ _ r)
-        l2 x y (rel-trans r1 r2) = rel-trans (l2 _ _ r1) (l2 _ _ r2)
-        l2 x y (rel-refl) = rel-refl
+      sr-hom : AC.Hom[ DWA , DQA ] → WB.Bree → QB.Bree
+      sr-hom hom@((f , g) , e) q
+        = WB.Rec.f
+           QB.squash
+           QB.0b
+           QB.1b
+           (λ y x → f y QB.← (g .fst x))
+           (λ q w → QB.ƛ w)
+           (λ x y → x QB.∪ y)
+           (λ x y → x QB.· y)
+           (λ bx by bz i → QB.assoc {bx} {by} {bz} i)
+           (λ b i → QB.rid {b} i)
+           (λ bx by i → QB.comm {bx} {by} i)
+           (λ b i → QB.idem {b} i)
+           (λ {x1} {y1} {x2} {y2} i → QB.perm {f x1} {g .fst y1} {f x2} {g .fst y2} i)
+           (λ bx by bz i → QB.assoc· {bx} {by} {bz} i)
+           (λ b i → QB.rid· {b} i)
+           (λ bx by i → QB.comm· {bx} {by} i)
+           (λ bx i → QB.def∅· {bx} i)
+           (λ bx by bz i → QB.dist {bx} {by} {bz} i)
+           (λ {C} {x} {y} {fx} {fy} i → QB.distƛ∪ {C} {fx} {fy} i)
+           (λ {C} {x} {y} {fx} {fy} i → QB.distƛ· {C} {fx} {fy} i)
+           (λ {C} {x} {y} {eq} {fy} b eqb i → QB.remƛ {C} b fy eqb i)
+           (λ {C} {D} f fb → QB.commƛ {C} {D} {!!})
+           q
 
       open IsSemiRingHom
-      module W = SemiRingStr (WR .snd)
-      module Q = SemiRingStr (QR .snd)
+      module WS = SemiRingStr (WB.BreeSemiRing .snd)
+      module QS = SemiRingStr (QB.BreeSemiRing .snd)
 
-      r-hom : (h : AC.Hom[ DWA , DQA ]) → IsSemiRingHom (WR .snd) (sr-hom h) (QR .snd)
+      r-hom : (h : AC.Hom[ DWA , DQA ]) → IsSemiRingHom (WB.BreeSemiRing .snd) (sr-hom h) (QB.BreeSemiRing .snd)
       pres0 (r-hom h) = refl
       pres1 (r-hom h) = refl
-      pres+ (r-hom h) = elimProp2 (λ x y → qisSet (sr-hom h (x W.+ y)) (sr-hom h x Q.+ sr-hom h y)) λ a b → refl
-      pres· (r-hom h) = elimProp2 (λ x y → qisSet (sr-hom h (x W.⋆ y)) (sr-hom h x Q.⋆ sr-hom h y)) λ a b → refl
+      pres+ (r-hom h) x y = refl
+      pres· (r-hom h) x y = refl
     
     
   
