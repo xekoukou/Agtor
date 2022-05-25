@@ -64,4 +64,4 @@ private
                   (λ x y → eq/ _ _ (comm x y))
   
 TreeCommMonoid : (A : Type ℓ) → CommMonoid _
-TreeCommMonoid {_} A = makeCommMonoid [ ε {_} {A} ] _*_ squash/ assoc* rid* (λ x → comm* _ x ∙ rid* x) comm*
+TreeCommMonoid {_} A = makeCommMonoid [ ε {_} {A} ] _*_ squash/ assoc* rid* comm*

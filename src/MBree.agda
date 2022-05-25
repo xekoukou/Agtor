@@ -41,7 +41,7 @@ data Bree : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
   comm    : {x y : Bree} → x ∪ y ≡ y ∪ x
   idem    : {x : Bree} → x ∪ x ≡ x
 
-  perm     : ∀{x1 y1 x2 y2} → (x1 ← y1) · (x2 ← y2) ≡ (x1 ← y2) · (x2 ← y1)
+  perm     : ∀{x1 y1 x2 y2} → x1 ← y1 · x2 ← y2 ≡ x1 ← y2 · x2 ← y1
   assoc·   : {x y z : Bree} → x · (y · z) ≡ (x · y) · z
   rid·     : {x : Bree} → x · 1b ≡ x
   comm·    : {x y : Bree} → x · y ≡ y · x
@@ -49,13 +49,14 @@ data Bree : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
   def∅·   : {x : Bree} → x · 0b ≡ 0b
   dist    : {x y z : Bree} → x · (y ∪ z) ≡ (x · y) ∪ (x · z)
 
-  distƛ∪  : ∀{C} → {x y : C → Bree} → (ƛ λ c → (x c ∪ y c)) ≡ ((ƛ x) ∪ (ƛ y))
-  distƛ·  : ∀{C} → {x y : C → Bree} → (ƛ λ c → (x c · y c)) ≡ ((ƛ x) · (ƛ y))
-
-  remƛ    : ∀{C}→ (x : Bree) → (y : C → Bree)
-            → (∀ z → y z ≡ x)
-             → (ƛ y) ≡ x
+  distƛ∪  : ∀{C} → {x y : C → Bree} → (ƛ λ c → (x c ∪ y c)) ≡ (ƛ x) ∪ (ƛ y)
+  distƛ·  : ∀{C} → {x : C → Bree} {y : Bree} → (ƛ λ c → (x c · y)) ≡ (ƛ x) · y
+  remƛ    : ∀{C} → (x : Bree)
+            → (ƛ_ {C} λ z → x) ≡ x
   commƛ  : {B D : Type} → (f : B → D → Bree) → ƛ (λ a → ƛ λ b → f a b) ≡ ƛ λ b → ƛ λ a → f a b
+
+thr· : ∀{a1 b1 a2 b2 c } → a1 · b1 ≡ a2 · b2 → a1 · c · b1 ≡ a2 · c · b2
+thr· {a1} {b1} {a2} {b2} {c} eq = cong (a1 ·_) comm· ∙ assoc· ∙ cong (_· c) eq ∙ sym assoc· ∙ cong (a2 ·_) comm·
 
 lid : ∀{x} → 0b ∪ x ≡ x
 lid {x} = comm ∙ rid
@@ -69,8 +70,11 @@ ldef∅· {x} = comm· ∙ def∅·
 ldist : {x y z : Bree} → (y ∪ z) · x ≡ (y · x) ∪ (z · x)
 ldist {x} {y} {z} = comm· ∙ dist ∙ cong (λ a → a ∪ (x · z)) comm· ∙ cong (λ a → y · x ∪ a) comm·
 
+ldistƛ·  : ∀{C} → {x : C → Bree} {y : Bree} → (ƛ λ c → (y · x c)) ≡ y · (ƛ x)
+ldistƛ· {C} {x} {y} = cong ƛ_ (funExt (λ x → comm·)) ∙ distƛ· ∙ comm·
+
 ∪CommMonoid : CommMonoid _
-∪CommMonoid = makeCommMonoid 0b _∪_ squash (λ x y z → assoc {x} {y} {z}) (λ x → rid {x}) (λ x → lid) λ x y → comm 
+∪CommMonoid = makeCommMonoid 0b _∪_ squash (λ x y z → assoc {x} {y} {z}) (λ x → rid {x}) λ x y → comm 
 
 BreeSemillatice : Semilattice _
 fst BreeSemillatice = Bree
@@ -81,7 +85,7 @@ IsSemilattice.idem (SemilatticeStr.isSemilattice (snd BreeSemillatice)) = λ x �
 
 
 ·CommMonoid : CommMonoid _
-·CommMonoid = makeCommMonoid 1b _·_ squash (λ x y z → assoc·) (λ x → rid·) (λ x → lid·) λ x y → comm·
+·CommMonoid = makeCommMonoid 1b _·_ squash (λ x y z → assoc·) (λ x → rid·) λ x y → comm·
 
 BreeSemiRing : SemiRing _
 fst BreeSemiRing = Bree
@@ -112,8 +116,8 @@ module Elim {ℓ''} {B : Bree → Type ℓ''}
        (def∅·* : ∀{x} → (bx : B x) → PathP (λ i → B (def∅· {x} i)) (·* bx 0b*) 0b*)
        (dist* : ∀{x y z} → (bx : B x) → (by : B y) → (bz : B z) → PathP (λ i → B (dist {x} {y} {z} i)) (·* bx (∪* by bz)) (∪* (·* bx by) (·* bx bz)))
        (distƛ∪* : ∀{C x y fx fy} → PathP (λ i → B (distƛ∪ {C} {x} {y} i)) (ƛ* (λ c → x c ∪ y c) λ e → ∪* (fx e) (fy e)) (∪* (ƛ* x fx) (ƛ* y fy))) 
-       (distƛ·* : ∀{C x y fx fy} → PathP (λ i → B (distƛ· {C} {x} {y} i)) (ƛ* (λ c → x c · y c) λ e → ·* (fx e) (fy e)) (·* (ƛ* x fx) (ƛ* y fy))) 
-       (remƛ* : ∀{C x y eq fy} → (b : B x) → (eqb : ∀ z → PathP (λ i → B (eq z i)) (fy z) b) → PathP (λ i → B (remƛ {C} x y eq i)) (ƛ* y fy) b)
+       (distƛ·* : ∀{C x y fx fy} → PathP (λ i → B (distƛ· {C} {x} {y} i)) (ƛ* (λ c → x c · y) λ e → ·* (fx e) fy) (·* (ƛ* x fx) fy)) 
+       (remƛ* : ∀{C x} → (b : B x) → PathP (λ i → B (remƛ {C} x i)) (ƛ* {C} (λ z → x) λ z → b) b)
        (commƛ* : ∀{C D} → (f : C → D → Bree) → (fb : (a : C) → (b : D) → B (f a b)) → (PathP (λ i → B (commƛ f i)) (ƛ* (λ a → ƛ (λ b → f a b)) λ a → ƛ* (f a) (fb a) ) (ƛ* (λ b → ƛ (λ a → f a b)) λ b → ƛ* (λ a → f a b) λ a → fb a b)))
        
        where
@@ -137,8 +141,8 @@ module Elim {ℓ''} {B : Bree → Type ℓ''}
   f (def∅· {x} i) = def∅·* {x} (f x) i
   f (dist {x} {y} {z} i) = dist* {x} {y} {z} (f x) (f y) (f z) i
   f (distƛ∪ {C} {x} {y} i) = distƛ∪* {C} {x} {y} {λ e → f (x e)} {λ e → f ( y e)} i
-  f (distƛ· {C} {x} {y} i) = distƛ·* {C} {x} {y} {λ e → f (x e)} {λ e → f ( y e)} i
-  f (remƛ x y eq i) = remƛ* {_} {x} {y} {eq} {λ e → f (y e)} (f x) (λ z → cong f (eq z)) i
+  f (distƛ· {C} {x} {y} i) = distƛ·* {C} {x} {y} {λ e → f (x e)} {f y} i
+  f (remƛ x i) = remƛ* {_} {x} (f x) i
   f (commƛ g i) = commƛ* g (λ a b → f (g a b)) i
 
 module ElimProp {ℓ''} {B : Bree → Type ℓ''}
@@ -165,8 +169,8 @@ module ElimProp {ℓ''} {B : Bree → Type ℓ''}
                (λ {x} b → toPathP (BProp (transp (λ i → B (def∅· {x} i)) i0 (·* b 0b*)) 0b*))
                (λ {x} {y} {z} bx by bz → toPathP (BProp (transp (λ i → B (dist {x} {y} {z} i)) i0 (·* bx (∪* by bz))) (∪* (·* bx by) (·* bx bz))))
                (λ {C} {x} {y} {fx} {fy} → toPathP (BProp (transp (λ i → B ((distƛ∪ {C} {x} {y} i))) i0 (ƛ* (λ c → x c ∪ y c) λ e → ∪* (fx e) (fy e))) (∪* (ƛ* x fx) (ƛ* y fy) )))
-               (λ {C} {x} {y} {fx} {fy} → toPathP (BProp (transp (λ i → B ((distƛ· {C} {x} {y} i))) i0 (ƛ* (λ c → x c · y c) λ e → ·* (fx e) (fy e))) (·* (ƛ* x fx) (ƛ* y fy))))
-               (λ {C} {x} {y} {eq} {fy} b eqb → toPathP (BProp (transp (λ i → B (remƛ {C} x y eq i)) i0 (ƛ* y fy)) b))
+               (λ {C} {x} {y} {fx} {fy} → toPathP (BProp (transp (λ i → B ((distƛ· {C} {x} {y} i))) i0 (ƛ* (λ c → x c · y) λ e → ·* (fx e) fy)) (·* (ƛ* x fx) fy)))
+               (λ {C} {x} b → toPathP (BProp (transp (λ i → B (remƛ {C} x i)) i0 (ƛ* (λ z → x) (λ z → b))) b))
                (λ f fb → toPathP (BProp (transp (λ i → B (commƛ f i)) i0 (ƛ* (λ a → ƛ (λ b → f a b)) λ a → ƛ* (f a) (fb a))) (ƛ* (λ b → ƛ (λ a → f a b)) λ b → ƛ* (λ a → f a b) λ a → fb a b)))
                x
 
@@ -190,12 +194,11 @@ module Rec {ℓ''} {B : Type ℓ''}
        (def∅·* : (bx : B) → (·* bx 0b*) ≡ 0b*)
        (dist* : (bx : B) → (by : B) → (bz : B) → (·* bx (∪* by bz)) ≡ (∪* (·* bx by) (·* bx bz)))
        (distƛ∪* : ∀{C x y fx fy} → (ƛ* {C} (λ c → x c ∪ y c) λ e → ∪* (fx e) (fy e)) ≡ (∪* (ƛ* x fx) (ƛ* y fy))) 
-       (distƛ·* : ∀{C x y fx fy} → (ƛ* {C} (λ c → x c · y c) λ e → ·* (fx e) (fy e)) ≡ (·* (ƛ* x fx) (ƛ* y fy))) 
-       (remƛ* : ∀{C} → ∀{x : Bree} → ∀{y} → {eq : (∀ z → y z ≡ x)} → ∀{fy} → (b : B) → (eqb : ∀ z → fy z ≡ b) → (ƛ* {C} y fy) ≡ b)
+       (distƛ·* : ∀{C x y fx fy} → (ƛ* {C} (λ c → x c · y) λ e → ·* (fx e) fy) ≡ (·* (ƛ* x fx) fy)) 
+       (remƛ* : ∀{C} → ∀{x : Bree} → (b : B) → (ƛ* {C} (λ z → x) (λ z → b)) ≡ b)
        (commƛ* : ∀{C D} → (f : C → D → Bree) → (fb : C → D → B) → (ƛ* (λ a → ƛ (λ b → f a b)) λ a → ƛ* (f a) (fb a) ) ≡ (ƛ* (λ b → ƛ (λ a → f a b)) λ b → ƛ* (λ a → f a b) λ a → fb a b))
 
        where
 
   f : Bree → B
-  f q = Elim.f (λ _ → squash*) 0b* 1b* ←* ƛ* ∪* ·* assoc* rid* comm* idem* perm* assoc·* rid·* comm·* def∅·* dist* distƛ∪* distƛ·*
-               (λ {C} {x} {y} {eq} {fy} b eqb i → remƛ* {C} {x} {y} {eq} {fy} b eqb i) commƛ* q
+  f q = Elim.f (λ _ → squash*) 0b* 1b* ←* ƛ* ∪* ·* assoc* rid* comm* idem* perm* assoc·* rid·* comm·* def∅·* dist* distƛ∪* distƛ·* remƛ* commƛ* q

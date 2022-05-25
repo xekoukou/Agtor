@@ -45,5 +45,5 @@ module _ {ℓ ℓ'} (CMA : CommMonoid ℓ) (CMB : CommMonoid ℓ') where
     comm* (x1 , x2) (y1 , y2) = λ i → (Q.comm x1 y1 i) , (R.comm x2 y2 i)
 
   ProductCommMonoid : CommMonoid _
-  ProductCommMonoid = makeCommMonoid (Q.ε , R.ε) _*_ p-isSet assoc* rid* lid* comm*
+  ProductCommMonoid = makeCommMonoid (Q.ε , R.ε) _*_ p-isSet assoc* rid* comm*
 

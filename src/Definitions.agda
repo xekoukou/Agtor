@@ -145,8 +145,8 @@ module _ {ℓ ℓ' : _} where
            (λ bx by bz i → QB.dist {bx} {by} {bz} i)
            (λ {C} {x} {y} {fx} {fy} i → QB.distƛ∪ {C} {fx} {fy} i)
            (λ {C} {x} {y} {fx} {fy} i → QB.distƛ· {C} {fx} {fy} i)
-           (λ {C} {x} {y} {eq} {fy} b eqb i → QB.remƛ {C} b fy eqb i)
-           (λ {C} {D} f fb → QB.commƛ {C} {D} {!!})
+           (λ {C} b i → QB.remƛ {C} b i)
+           (λ {C} {D} f fb → QB.commƛ {C} {D} fb)
            q
 
       open IsSemiRingHom
