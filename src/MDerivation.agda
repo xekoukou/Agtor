@@ -17,55 +17,16 @@ module Derivation (cm : C → D → Bree) where
 
   open SemiRingStr (snd BreeSemiRing)
 
-  δ  : Bree → Bree
-  δᵃ : Bree → Bree → Bree
   δᶜ : Bree → Bree → Bree
-  δᵃ-comm : (x y : Bree) → δᵃ x y ≡ δᵃ y x
   δᶜ-0b : (x : Bree) → δᶜ x 0b ≡ 0b
   δᶜ-1b : (x : Bree) → δᶜ x 1b ≡ 0b
   δᶜ-comm : (x y : Bree) → δᶜ x y ≡ δᶜ y x
---  {-# TERMINATING #-}
---   δᶜ-ƛ : ∀ y → {B` : Type} (f : B` → Bree) →
---          (ƛ (λ z → δᶜ y (f z))) ≡ δᶜ y (ƛ f)
-  δᵃ-linr : ∀ x y z → δᵃ x (y ∪ z) ≡ δᵃ x y ∪ δᵃ x z
   δᶜ-linr : ∀ x y z → δᶜ x (y ∪ z) ≡ δᶜ x y ∪ δᶜ x z
-  δ-dist   : ∀ x y z → δ (x · (y ∪ z)) ≡ δ (x · y) ∪ δ (x · z)
---  δᶜ-permq  : ∀ x1 y1 x2 y2 q → δᶜ (x1 ← y1) q · x2 ← y2 ∪ δᶜ (x2 ← y2) q · x1 ← y1 ≡ δᶜ (x1 ← y2) q · x2 ← y1 ∪ δᶜ (x2 ← y1) q · x1 ← y2
+  δᶜ-ƛ : ∀ y → {B` : Type} (f : B` → Bree) →
+         (ƛ (λ z → δᶜ y (f z))) ≡ δᶜ y (ƛ f)
 
-  δᵃ-linr x y z = cong (δ x · (y ∪ z) ∪_) dist ∙ cong (_∪ x · δ y ∪ x · δ z) dist ∙ assoc ∙ cong (_∪ (x · δ z)) (sym assoc ∙ cong (δ x · y ∪_) comm ∙ assoc) ∙ sym assoc
-  
+
   δᶜ-linr x y z = δᶜ-comm x (y ∪ z) ∙ cong₂ _∪_ (δᶜ-comm y x) (δᶜ-comm z x)
-
-  δ-dist x y z = cong₂ _∪_ (δᵃ-linr x y z) (δᶜ-linr x y z) ∙ assoc ∙ cong (_∪ δᶜ x z) (sym assoc ∙ cong (δᵃ x y ∪_) comm ∙ assoc) ∙ sym assoc
-
-  δ 0b = 0b
-  δ 1b = 0b
-  δ (x ← y) = cm x y
-  δ (ƛ x) = ƛ λ z → δ (x z)
-  δ (x ∪ y) = δ x ∪ δ y
-  δ (x · y) = δᵃ x y ∪ δᶜ x y
-  δ (squash a b p1 p2 i j) = isOfHLevel→isOfHLevelDep 2 (λ x → squash)  (δ a) (δ b) (cong δ p1) (cong δ p2) (squash a b p1 p2) i j
-  δ (assoc {x} {y} {z} i) = assoc {δ x} {δ y} {δ z} i
-  δ (rid {b} i) = rid {δ b} i
-  δ (comm {x} {y} i) = comm {δ x} {δ y} i
-  δ(idem {x} i) = idem {δ x} i
-  δ (perm {x1} {y1} {x2} {y2} i) = comm {cm x1 y1 · x2 ← y2 ∪ x1 ← y1 · cm x2 y2} {cm x1 y2 · x2 ← y1 ∪ x1 ← y2 · cm x2 y1} i
-  δ (assoc· {x} {y} {z} i) = (cong ((δ x · y · z ∪ x · ((δ y · z ∪ y · δ z) ∪ δᶜ y z)) ∪_) (δᶜ-comm x (y · z))
-    ∙ cong (_∪ (δᶜ y x · z ∪ δᶜ z x · y)) (cong (δ x · y · z ∪_) (dist ∙ cong (_∪ x · δᶜ y z) (dist ∙ cong (x · δ y · z ∪_) assoc·) ∙ cong ((x · δ y · z ∪ (x · y) · δ z) ∪_) comm·)) ∙ assoc
-    ∙ cong (_∪ δᶜ z x · y) (sym assoc ∙ cong (δ x · y · z ∪_) (sym assoc ∙ cong ((x · δ y · z ∪ (x · y) · δ z) ∪_) comm ∙ assoc) ∙  assoc ∙ cong (_∪ δᶜ y z · x) ((cong (δ x · y · z ∪_) (sym assoc ∙ cong (x · δ y · z ∪_) comm ∙ assoc) ∙ assoc ∙ cong (_∪ (x · y) · δ z) (assoc ∙ cong (_∪ δᶜ y x · z) (cong₂ _∪_ assoc· assoc· ∙ sym ldist)
-    ∙ cong (λ q → (δ x · y ∪ x · δ y) · z ∪ q · z) (δᶜ-comm y x) ∙ sym ldist)))) ∙ sym assoc
-    ∙ cong ((((δ x · y ∪ x · δ y) ∪ δᶜ x y) · z ∪ (x · y) · δ z) ∪_) (comm ∙ cong (_∪ (δᶜ y z · x)) (cong (_· y) (δᶜ-comm z x)))) i
-  δ (rid· {x} i) = (cong (_∪ δᶜ x 1b) (cong₂ _∪_ (rid· {δ x}) (def∅· {x}) ∙ rid {δ x}) ∙ cong (δ x ∪_) (δᶜ-comm x 1b) ∙ rid {δ x}) i
-  δ (comm· {x} {y} i) = cong₂ _∪_ (δᵃ-comm x y) (δᶜ-comm x y) i
-  δ (def∅· {x} i) = (cong₂ _∪_ (cong₂ _∪_ (def∅· {δ x}) (def∅· {x}) ∙ rid) (δᶜ-comm x 0b) ∙ rid) i
-  δ (dist {x} {y} {z} i) = (cong₂ _∪_ ( cong (δ x · (y ∪ z) ∪_) dist ∙ cong (_∪ x · δ y ∪ x · δ z) dist ∙ assoc ∙ cong (_∪ (x · δ z)) (sym assoc ∙ cong (δ x · y ∪_) comm ∙ assoc) ∙ sym assoc) (δᶜ-linr x y z) ∙ assoc ∙ cong (_∪ δᶜ x z) (sym assoc ∙ cong (δᵃ x y ∪_) comm ∙ assoc) ∙ sym assoc) i
-  
-  δ (distƛ∪ {C} {x} {y} i) = distƛ∪ {C} {λ z → δ (x z)} {λ z → δ (y z)} i
-  δ (distƛ· {C} {x} {y} i) = (distƛ∪ {x = λ z → δ (x z) · y ∪ x z · δ y} {y = λ z → δᶜ (x z) y} ∙ cong (_∪ (ƛ (λ z → δᶜ (x z) y))) (distƛ∪ ∙ cong₂ _∪_ distƛ· distƛ·)) i
-  δ (remƛ {C} x i) = remƛ {C} (δ x) i
-  δ (commƛ f i) = commƛ (λ e v → δ (f e v)) i
-
-  δᵃ x y = (δ x ·  y) ∪ (x · δ y)
 
   δᶜ 0b y = 0b
   δᶜ 1b y = 0b
@@ -160,23 +121,9 @@ module Derivation (cm : C → D → Bree) where
                        (λ f fb → cong ƛ_ (funExt (λ z i → fb z i)) ∙ remƛ 0b) (λ eq1 eq2 → cong₂ _∪_ eq1 eq2 ∙ rid)
                        (λ {x} {y} eq1 eq2 → cong₂ _∪_ (cong (_· y) eq1 ∙ comm· ∙ def∅·) (cong (_· x) eq2 ∙ comm· ∙ def∅·) ∙ rid) z
 
-  δᵃ-comm x y = comm ∙ cong₂ (λ a b → a ∪ b) comm· comm·
-
---   δᶜ-ƛ y f = ElimProp.f (λ {z} → squash ((ƛ (λ d → δᶜ z (f d)))) (δᶜ z (ƛ f))) (remƛ 0b) (remƛ 0b) (λ x y₁ → refl)
---                         (λ g eq → commƛ (λ x y → δᶜ (g y) (f x)) ∙ (cong ƛ_ (funExt eq)))
---                         (λ eq1 eq2 → distƛ∪ ∙ cong₂ _∪_ eq1 eq2)
---                         (λ {x} {y} eq1 eq2 → distƛ∪ ∙ cong₂ _∪_ (distƛ· ∙ cong (_· y) eq1) (distƛ· ∙ cong (_· x) eq2))
---                         y
 
   {-# TERMINATING #-}
-  δᶜ-comm x y = ElimProp.f (λ {z} → squash (δᶜ z y) (δᶜ y z)) (sym (δᶜ-0b y)) (sym (δᶜ-1b y)) l1 (λ f eq → cong ƛ_ (funExt eq) ∙ δᶜ-ƛ f) (l2 y) (λ {x1} {y1} eq1 eq2 → cong₂ _∪_ (cong (_· y1) eq1) (cong (_· x1) eq2) ∙ l3 y) x where
-    δᶜ-ƛ : {B` : Type} (f : B` → Bree) →
-           (ƛ (λ z → δᶜ y (f z))) ≡ δᶜ y (ƛ f)
-    δᶜ-ƛ f = ElimProp.f (λ {z} → squash ((ƛ (λ d → δᶜ z (f d)))) (δᶜ z (ƛ f))) (remƛ 0b) (remƛ 0b) (λ x y₁ → refl)
-                        (λ g eq → commƛ (λ x y → δᶜ (g y) (f x)) ∙ (cong ƛ_ (funExt eq)))
-                        (λ eq1 eq2 → distƛ∪ ∙ cong₂ _∪_ eq1 eq2)
-                        (λ {x} {y} eq1 eq2 → distƛ∪ ∙ cong₂ _∪_ (distƛ· ∙ cong (_· y) eq1) (distƛ· ∙ cong (_· x) eq2))
-                        y
+  δᶜ-comm x y = ElimProp.f (λ {z} → squash (δᶜ z y) (δᶜ y z)) (sym (δᶜ-0b y)) (sym (δᶜ-1b y)) l1 (λ f eq → cong ƛ_ (funExt eq) ∙ δᶜ-ƛ y f) (l2 y) (λ {x1} {y1} eq1 eq2 → cong₂ _∪_ (cong (_· y1) eq1) (cong (_· x1) eq2) ∙ l3 y) x where
     l1 : (x1 : C) → (y1 : D) → δᶜ (x1 ← y1) y ≡ δᶜ y (x1 ← y1)
     l1 x1 y1 = ElimProp.f (λ {z} → squash (δᶜ (x1 ← y1) z) (δᶜ z (x1 ← y1))) refl refl (λ x2 y2 → comm ∙ cong₂ _∪_ comm· comm·) (λ f eqf → cong ƛ_ (funExt eqf)) (λ eq1 eq2 → cong₂ _∪_ eq1 eq2) (λ eq1 eq2 → cong₂ _∪_ (cong (_· _) eq1) (cong (_· _) eq2)) y
     l2 : ∀ y → {z : Bree} {w : Bree} → δᶜ z y ≡ δᶜ y z → δᶜ w y ≡ δᶜ y w → δᶜ z y ∪ δᶜ w y ≡ δᶜ y (z ∪ w)
@@ -193,29 +140,87 @@ module Derivation (cm : C → D → Bree) where
                                                      ∙ cong (_· w) eq1)) ∙ sym assoc ∙ cong (δᶜ z (x1 · y1) · w ∪_) (cong₂ _∪_ (sym assoc· ∙ cong (δᶜ w x1 ·_) comm· ∙ assoc·) (sym assoc· ∙ cong (δᶜ w y1 ·_) comm· ∙ assoc·) ∙ sym ldist ∙ cong (_· z) eq2))
                                 y
 
---   δᶜ-permq x1 y1 x2 y2 q = ElimProp.f
---     (λ {z} → squash (δᶜ (x1 ← y1) z · x2 ← y2 ∪ δᶜ (x2 ← y2) z · x1 ← y1) (δᶜ (x1 ← y2) z · x2 ← y1 ∪ δᶜ (x2 ← y1) z · x1 ← y2))
---     (cong₂ _∪_ ldef∅· ldef∅· ∙ rid ∙ sym (cong₂ _∪_ ldef∅· ldef∅· ∙ rid))
---     (cong₂ _∪_ ldef∅· ldef∅· ∙ rid ∙ sym (cong₂ _∪_ ldef∅· ldef∅· ∙ rid))
---     (λ x y → cong₂ _∪_ (ldist ∙ cong₂ _∪_ (sym assoc· ∙ (cong (cm x1 y ·_) perm) ∙ assoc·)
---                                           (sym assoc· ∙ thr· {c = cm x y1} (perm ∙ comm·) ∙ assoc·))
---                        (ldist ∙ cong₂ _∪_ (sym assoc· ∙ (cong (cm x2 y ·_) perm) ∙ assoc·)
---                                           (sym assoc· ∙ thr· (perm ∙ comm·) ∙ assoc·))
---              ∙ assoc ∙ comm ∙ assoc ∙ cong (_∪ (cm x2 y · x ← y1) · x1 ← y2) (assoc ∙ cong (_∪ (x2 ← y · cm x y1) · x1 ← y2) (comm ∙ sym ldist))
---              ∙ sym assoc ∙ cong (((cm x1 y · x ← y2 ∪ x1 ← y · cm x y2) · x2 ← y1) ∪_) (comm ∙ sym ldist))
---     (λ f eq →   cong₂ _∪_ (sym distƛ·) (sym distƛ·) ∙ sym distƛ∪ ∙ cong ƛ_ (funExt eq)
---               ∙ distƛ∪ ∙ cong₂ _∪_ distƛ· distƛ·)
---     (λ {x} {y} eq1 eq2 →   cong₂ _∪_ ldist ldist ∙ assoc
---                          ∙ cong (_∪ δᶜ (x2 ← y2) y · x1 ← y1) (comm ∙ assoc ∙ cong (_∪ δᶜ (x1 ← y1) y · x2 ← y2) (comm ∙ eq1)) ∙ sym assoc ∙ cong ((δᶜ (x1 ← y2) x · x2 ← y1 ∪ δᶜ (x2 ← y1) x · x1 ← y2) ∪_) eq2 ∙ assoc ∙ cong (_∪ δᶜ (x2 ← y1) y · x1 ← y2) (comm ∙ assoc ∙ cong (_∪ δᶜ (x2 ← y1) x · x1 ← y2) (comm ∙ sym ldist)) ∙ sym assoc ∙ cong ((δᶜ (x1 ← y2) x ∪ δᶜ (x1 ← y2) y) · x2 ← y1 ∪_) (sym ldist))
---     (λ {x} {y} eq1 eq2 → cong₂ _∪_ (ldist ∙ cong₂ _∪_ (sym assoc· ∙ cong (δᶜ (x1 ← y1) x ·_) comm· ∙ assoc·)
---                                                       (sym assoc· ∙ cong (δᶜ (x1 ← y1) y ·_) comm· ∙ assoc·))
---                                    (ldist ∙  cong₂ _∪_ (sym assoc· ∙ cong (δᶜ (x2 ← y2) x ·_) comm· ∙ assoc·)
---                                                       (sym assoc· ∙ cong (δᶜ (x2 ← y2) y ·_) comm· ∙ assoc·))
---                          ∙ assoc ∙ cong (_∪ ((δᶜ (x2 ← y2) y · x1 ← y1) · x)) (comm ∙ assoc ∙ cong (_∪ (δᶜ (x1 ← y1) y · x2 ← y2) · x) (comm ∙ sym ldist ∙ cong (_· y) eq1 ∙ ldist ∙ cong₂ _∪_
---                                                                    (sym assoc· ∙ cong (δᶜ (x1 ← y2) x ·_) comm· ∙ assoc·)
---                                                                    (sym assoc· ∙ cong (δᶜ (x2 ← y1) x ·_) comm· ∙ assoc·) )) ∙ sym assoc
---          ∙ cong (((δᶜ (x1 ← y2) x · y) · x2 ← y1 ∪ (δᶜ (x2 ← y1) x · y) · x1 ← y2) ∪_)
---               (sym ldist ∙ cong (_· x) eq2 ∙ ldist ∙ cong₂ _∪_ (sym assoc· ∙ cong (δᶜ (x1 ← y2) y ·_) comm· ∙ assoc·) (sym assoc· ∙ cong (δᶜ (x2 ← y1) y ·_) comm· ∙ assoc·))
---          ∙ assoc ∙ cong (_∪ (δᶜ (x2 ← y1) y · x) · x1 ← y2) (comm ∙ assoc ∙ cong (_∪ (δᶜ (x2 ← y1) x · y) · x1 ← y2) (comm ∙ sym ldist)) ∙ sym assoc ∙ cong ((δᶜ (x1 ← y2) x · y ∪ δᶜ (x1 ← y2) y · x) · x2 ← y1 ∪_) (sym ldist))
---    
---     q
+
+  δᶜ-permq  : ∀ x1 y1 x2 y2 q → δᶜ (x1 ← y1) q · x2 ← y2 ∪ δᶜ (x2 ← y2) q · x1 ← y1 ≡ δᶜ (x1 ← y2) q · x2 ← y1 ∪ δᶜ (x2 ← y1) q · x1 ← y2
+  δᶜ-permq x1 y1 x2 y2 q = ElimProp.f
+    (λ {z} → squash (δᶜ (x1 ← y1) z · x2 ← y2 ∪ δᶜ (x2 ← y2) z · x1 ← y1) (δᶜ (x1 ← y2) z · x2 ← y1 ∪ δᶜ (x2 ← y1) z · x1 ← y2))
+    (cong₂ _∪_ ldef∅· ldef∅· ∙ rid ∙ sym (cong₂ _∪_ ldef∅· ldef∅· ∙ rid))
+    (cong₂ _∪_ ldef∅· ldef∅· ∙ rid ∙ sym (cong₂ _∪_ ldef∅· ldef∅· ∙ rid))
+    (λ x y → cong₂ _∪_ (ldist ∙ cong₂ _∪_ (sym assoc· ∙ (cong (cm x1 y ·_) perm) ∙ assoc·)
+                                          (sym assoc· ∙ thr· {c = cm x y1} (perm ∙ comm·) ∙ assoc·))
+                       (ldist ∙ cong₂ _∪_ (sym assoc· ∙ (cong (cm x2 y ·_) perm) ∙ assoc·)
+                                          (sym assoc· ∙ thr· (perm ∙ comm·) ∙ assoc·))
+             ∙ assoc ∙ comm ∙ assoc ∙ cong (_∪ (cm x2 y · x ← y1) · x1 ← y2) (assoc ∙ cong (_∪ (x2 ← y · cm x y1) · x1 ← y2) (comm ∙ sym ldist))
+             ∙ sym assoc ∙ cong (((cm x1 y · x ← y2 ∪ x1 ← y · cm x y2) · x2 ← y1) ∪_) (comm ∙ sym ldist))
+    (λ f eq →   cong₂ _∪_ (sym distƛ·) (sym distƛ·) ∙ sym distƛ∪ ∙ cong ƛ_ (funExt eq)
+              ∙ distƛ∪ ∙ cong₂ _∪_ distƛ· distƛ·)
+    (λ {x} {y} eq1 eq2 →   cong₂ _∪_ ldist ldist ∙ assoc
+                         ∙ cong (_∪ δᶜ (x2 ← y2) y · x1 ← y1) (comm ∙ assoc ∙ cong (_∪ δᶜ (x1 ← y1) y · x2 ← y2) (comm ∙ eq1)) ∙ sym assoc ∙ cong ((δᶜ (x1 ← y2) x · x2 ← y1 ∪ δᶜ (x2 ← y1) x · x1 ← y2) ∪_) eq2 ∙ assoc ∙ cong (_∪ δᶜ (x2 ← y1) y · x1 ← y2) (comm ∙ assoc ∙ cong (_∪ δᶜ (x2 ← y1) x · x1 ← y2) (comm ∙ sym ldist)) ∙ sym assoc ∙ cong ((δᶜ (x1 ← y2) x ∪ δᶜ (x1 ← y2) y) · x2 ← y1 ∪_) (sym ldist))
+    (λ {x} {y} eq1 eq2 → cong₂ _∪_ (ldist ∙ cong₂ _∪_ (sym assoc· ∙ cong (δᶜ (x1 ← y1) x ·_) comm· ∙ assoc·)
+                                                      (sym assoc· ∙ cong (δᶜ (x1 ← y1) y ·_) comm· ∙ assoc·))
+                                   (ldist ∙  cong₂ _∪_ (sym assoc· ∙ cong (δᶜ (x2 ← y2) x ·_) comm· ∙ assoc·)
+                                                      (sym assoc· ∙ cong (δᶜ (x2 ← y2) y ·_) comm· ∙ assoc·))
+                         ∙ assoc ∙ cong (_∪ ((δᶜ (x2 ← y2) y · x1 ← y1) · x)) (comm ∙ assoc ∙ cong (_∪ (δᶜ (x1 ← y1) y · x2 ← y2) · x) (comm ∙ sym ldist ∙ cong (_· y) eq1 ∙ ldist ∙ cong₂ _∪_
+                                                                   (sym assoc· ∙ cong (δᶜ (x1 ← y2) x ·_) comm· ∙ assoc·)
+                                                                   (sym assoc· ∙ cong (δᶜ (x2 ← y1) x ·_) comm· ∙ assoc·) )) ∙ sym assoc
+         ∙ cong (((δᶜ (x1 ← y2) x · y) · x2 ← y1 ∪ (δᶜ (x2 ← y1) x · y) · x1 ← y2) ∪_)
+              (sym ldist ∙ cong (_· x) eq2 ∙ ldist ∙ cong₂ _∪_ (sym assoc· ∙ cong (δᶜ (x1 ← y2) y ·_) comm· ∙ assoc·) (sym assoc· ∙ cong (δᶜ (x2 ← y1) y ·_) comm· ∙ assoc·))
+         ∙ assoc ∙ cong (_∪ (δᶜ (x2 ← y1) y · x) · x1 ← y2) (comm ∙ assoc ∙ cong (_∪ (δᶜ (x2 ← y1) x · y) · x1 ← y2) (comm ∙ sym ldist)) ∙ sym assoc ∙ cong ((δᶜ (x1 ← y2) x · y ∪ δᶜ (x1 ← y2) y · x) · x2 ← y1 ∪_) (sym ldist))
+   
+    q
+
+
+  δᶜ-ƛ y f = ElimProp.f (λ {z} → squash ((ƛ (λ d → δᶜ z (f d)))) (δᶜ z (ƛ f))) (remƛ 0b) (remƛ 0b) (λ x y₁ → refl)
+                        (λ g eq → commƛ (λ x y → δᶜ (g y) (f x)) ∙ (cong ƛ_ (funExt eq)))
+                        (λ eq1 eq2 → distƛ∪ ∙ cong₂ _∪_ eq1 eq2)
+                        (λ {x} {y} eq1 eq2 → distƛ∪ ∙ cong₂ _∪_ (distƛ· ∙ cong (_· y) eq1) (distƛ· ∙ cong (_· x) eq2))
+                        y
+
+
+
+
+
+
+
+
+  δ  : Bree → Bree
+  δᵃ : Bree → Bree → Bree
+  δᵃ-comm : (x y : Bree) → δᵃ x y ≡ δᵃ y x
+  δᵃ-linr : ∀ x y z → δᵃ x (y ∪ z) ≡ δᵃ x y ∪ δᵃ x z
+  δ-dist   : ∀ x y z → δ (x · (y ∪ z)) ≡ δ (x · y) ∪ δ (x · z)
+
+  δᵃ-linr x y z = cong (δ x · (y ∪ z) ∪_) dist ∙ cong (_∪ x · δ y ∪ x · δ z) dist ∙ assoc ∙ cong (_∪ (x · δ z)) (sym assoc ∙ cong (δ x · y ∪_) comm ∙ assoc) ∙ sym assoc
+ 
+  δ-dist x y z = cong₂ _∪_ (δᵃ-linr x y z) (δᶜ-linr x y z) ∙ assoc ∙ cong (_∪ δᶜ x z) (sym assoc ∙ cong (δᵃ x y ∪_) comm ∙ assoc) ∙ sym assoc
+
+  δ 0b = 0b
+  δ 1b = 0b
+  δ (x ← y) = cm x y
+  δ (ƛ x) = ƛ λ z → δ (x z)
+  δ (x ∪ y) = δ x ∪ δ y
+  δ (x · y) = δᵃ x y ∪ δᶜ x y
+  δ (squash a b p1 p2 i j) = isOfHLevel→isOfHLevelDep 2 (λ x → squash)  (δ a) (δ b) (cong δ p1) (cong δ p2) (squash a b p1 p2) i j
+  δ (assoc {x} {y} {z} i) = assoc {δ x} {δ y} {δ z} i
+  δ (rid {b} i) = rid {δ b} i
+  δ (comm {x} {y} i) = comm {δ x} {δ y} i
+  δ(idem {x} i) = idem {δ x} i
+  δ (perm {x1} {y1} {x2} {y2} i) = comm {cm x1 y1 · x2 ← y2 ∪ x1 ← y1 · cm x2 y2} {cm x1 y2 · x2 ← y1 ∪ x1 ← y2 · cm x2 y1} i
+  δ (assoc· {x} {y} {z} i) = (cong ((δ x · y · z ∪ x · ((δ y · z ∪ y · δ z) ∪ δᶜ y z)) ∪_) (δᶜ-comm x (y · z))
+    ∙ cong (_∪ (δᶜ y x · z ∪ δᶜ z x · y)) (cong (δ x · y · z ∪_) (dist ∙ cong (_∪ x · δᶜ y z) (dist ∙ cong (x · δ y · z ∪_) assoc·) ∙ cong ((x · δ y · z ∪ (x · y) · δ z) ∪_) comm·)) ∙ assoc
+    ∙ cong (_∪ δᶜ z x · y) (sym assoc ∙ cong (δ x · y · z ∪_) (sym assoc ∙ cong ((x · δ y · z ∪ (x · y) · δ z) ∪_) comm ∙ assoc) ∙  assoc ∙ cong (_∪ δᶜ y z · x) ((cong (δ x · y · z ∪_) (sym assoc ∙ cong (x · δ y · z ∪_) comm ∙ assoc) ∙ assoc ∙ cong (_∪ (x · y) · δ z) (assoc ∙ cong (_∪ δᶜ y x · z) (cong₂ _∪_ assoc· assoc· ∙ sym ldist)
+    ∙ cong (λ q → (δ x · y ∪ x · δ y) · z ∪ q · z) (δᶜ-comm y x) ∙ sym ldist)))) ∙ sym assoc
+    ∙ cong ((((δ x · y ∪ x · δ y) ∪ δᶜ x y) · z ∪ (x · y) · δ z) ∪_) (comm ∙ cong (_∪ (δᶜ y z · x)) (cong (_· y) (δᶜ-comm z x)))) i
+  δ (rid· {x} i) = (cong (_∪ δᶜ x 1b) (cong₂ _∪_ (rid· {δ x}) (def∅· {x}) ∙ rid {δ x}) ∙ cong (δ x ∪_) (δᶜ-comm x 1b) ∙ rid {δ x}) i
+  δ (comm· {x} {y} i) = cong₂ _∪_ (δᵃ-comm x y) (δᶜ-comm x y) i
+  δ (def∅· {x} i) = (cong₂ _∪_ (cong₂ _∪_ (def∅· {δ x}) (def∅· {x}) ∙ rid) (δᶜ-comm x 0b) ∙ rid) i
+  δ (dist {x} {y} {z} i) = (cong₂ _∪_ ( cong (δ x · (y ∪ z) ∪_) dist ∙ cong (_∪ x · δ y ∪ x · δ z) dist ∙ assoc ∙ cong (_∪ (x · δ z)) (sym assoc ∙ cong (δ x · y ∪_) comm ∙ assoc) ∙ sym assoc) (δᶜ-linr x y z) ∙ assoc ∙ cong (_∪ δᶜ x z) (sym assoc ∙ cong (δᵃ x y ∪_) comm ∙ assoc) ∙ sym assoc) i
+  
+  δ (distƛ∪ {C} {x} {y} i) = distƛ∪ {C} {λ z → δ (x z)} {λ z → δ (y z)} i
+  δ (distƛ· {C} {x} {y} i) = (distƛ∪ {x = λ z → δ (x z) · y ∪ x z · δ y} {y = λ z → δᶜ (x z) y} ∙ cong (_∪ (ƛ (λ z → δᶜ (x z) y))) (distƛ∪ ∙ cong₂ _∪_ distƛ· distƛ·)) i
+  δ (remƛ {C} x i) = remƛ {C} (δ x) i
+  δ (commƛ f i) = commƛ (λ e v → δ (f e v)) i
+
+  δᵃ x y = (δ x ·  y) ∪ (x · δ y)
+
+  δᵃ-comm x y = comm ∙ cong₂ (λ a b → a ∪ b) comm· comm·
+  
