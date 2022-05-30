@@ -157,7 +157,7 @@ module ElimProp {ℓ''} {B : Bree → Type ℓ''}
 
 
   f : (x : Bree) → B x
-  f x = Elim.f (λ x → isProp→isSet BProp) 0b* 1b* ←* ƛ* ∪* ·*
+  f x = Elim.f (λ x → isProp→isSet (BProp {x})) 0b* 1b* ←* ƛ* ∪* ·*
                (λ {x} {y} {z} bx by bz → toPathP (BProp (transp (λ i → B (assoc {x} {y} {z} i)) i0 (∪* bx (∪* by bz))) (∪* (∪* bx by) bz)))
                (λ {x} b → toPathP (BProp (transp (λ i → B (rid {x} i)) i0 (∪* b 0b*)) b))
                (λ {x} {y} bx by → toPathP (BProp (transp (λ i → B (comm {x} {y} i)) i0 (∪* bx by)) (∪* by bx)))
