@@ -24,11 +24,11 @@ module Derivation (cm : C → D → Bree) where
   δᶜ-linr : ∀ x y z → δᶜ x (y ∪ z) ≡ δᶜ x y ∪ δᶜ x z
   δᶜ-ƛ : ∀ y → {B` : Type} (f : B` → Bree) →
          (ƛ (λ z → δᶜ y (f z))) ≡ δᶜ y (ƛ f)
-
+  δᶜ-permq  : ∀ x1 y1 x2 y2 q → δᶜ (x1 ← y1) q · x2 ← y2 ∪ δᶜ (x2 ← y2) q · x1 ← y1 ≡ δᶜ (x1 ← y2) q · x2 ← y1 ∪ δᶜ (x2 ← y1) q · x1 ← y2
 
   δᶜ-linr x y z = δᶜ-comm x (y ∪ z) ∙ cong₂ _∪_ (δᶜ-comm y x) (δᶜ-comm z x)
 
---  {-# TERMINATING #-}
+  {-# TERMINATING #-}
   δᶜ 0b y = 0b
   δᶜ 1b y = 0b
   δᶜ (ƛ f) y = ƛ λ z → δᶜ (f z) y
@@ -71,8 +71,7 @@ module Derivation (cm : C → D → Bree) where
   δᶜ (rid {x} i) q = rid {δᶜ x q} i
   δᶜ (comm {x} {y} i) q = comm {δᶜ x q} {δᶜ y q} i
   δᶜ (idem {x} i) q = idem {δᶜ x q} i
-  δᶜ (perm {x1} {y1} {x2} {y2} i) q = ElimProp.f {B = λ z → δᶜ (x1 ← y1) z · x2 ← y2 ∪ δᶜ (x2 ← y2) z · x1 ← y1 ≡ δᶜ (x1 ← y2) z · x2 ← y1 ∪ δᶜ (x2 ← y1) z · x1 ← y2} {!!} {!!} {!!} {!!} {!!} {!!} {!!} q i
--- δᶜ-permq x1 y1 x2 y2 q i
+  δᶜ (perm {x1} {y1} {x2} {y2} i) q = δᶜ-permq x1 y1 x2 y2 q i
   δᶜ (assoc· {x} {y} {z} i) q = (cong (λ a → δᶜ x q · y · z ∪ a) (ldist {x} {δᶜ y q · z} {δᶜ z q · y})
     ∙ (cong₂ (λ a b → δᶜ x q · y · z ∪ a ∪ b) ((sym assoc·) ∙ cong (λ a → δᶜ y q · a) comm·) (((sym assoc·) ∙ cong (λ a → δᶜ z q · a) comm·)) ∙ assoc ∙ cong (λ a → a ∪ (δᶜ z q · x · y)) ((cong (λ a → a ∪ (δᶜ y q · x · z)) assoc· ∙ cong (λ a → (δᶜ x q · y) · z ∪ a) assoc·) ∙ sym ldist))) i
   δᶜ (rid· {x} i) q = (cong (λ a → δᶜ x q · 1b ∪ a) (ldef∅· {x}) ∙ rid ∙ rid·) i
@@ -115,7 +114,7 @@ module Derivation (cm : C → D → Bree) where
                                 y
 
 
-  δᶜ-permq  : ∀ x1 y1 x2 y2 q → δᶜ (x1 ← y1) q · x2 ← y2 ∪ δᶜ (x2 ← y2) q · x1 ← y1 ≡ δᶜ (x1 ← y2) q · x2 ← y1 ∪ δᶜ (x2 ← y1) q · x1 ← y2
+
   δᶜ-permq x1 y1 x2 y2 q = ElimProp.f
     (λ {z} → squash (δᶜ (x1 ← y1) z · x2 ← y2 ∪ δᶜ (x2 ← y2) z · x1 ← y1) (δᶜ (x1 ← y2) z · x2 ← y1 ∪ δᶜ (x2 ← y1) z · x1 ← y2))
     (cong₂ _∪_ ldef∅· ldef∅· ∙ rid ∙ sym (cong₂ _∪_ ldef∅· ldef∅· ∙ rid))
