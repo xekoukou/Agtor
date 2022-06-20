@@ -41,8 +41,10 @@ module _ {ℓ ℓ' : _} where
 
   module MC = Category (UMTypePrC ℓ ℓ')
   
-  record ActorT (prM : UMTypePr ℓ ℓ') (UAType : Type ℓ'') : Type (ℓ-max ℓ (ℓ-max ℓ' (ℓ-max ℓ'' (ℓ-suc ℓ-zero)))) where
+  record ActorT (prM : UMTypePr ℓ ℓ') (UAType : Type ℓ'') : Type (ℓ-max (ℓ-max (ℓ-suc ℓ) ℓ') (ℓ-suc ℓ'')) where
+
     open ProjStr (snd prM)
+    open MBree {ℓ = ℓ''} {ℓ' = ℓ}
     private
       UMType = ⟨ prM ⟩
   
@@ -50,8 +52,7 @@ module _ {ℓ ℓ' : _} where
       P       : UMType → Type
       P-isSet : (x : UMType) → isSet (P x) 
       decP  : ∀ A → Dec (P A)
-      image : ∀ {A} → { p : P A } →  ⟨ ⟦ A ⟧ ⟩  → Tree UMType
-      next  : ∀ {A} → { p : P A } →  ⟨ ⟦ A ⟧ ⟩  → Tree UAType
+      next  : ∀ {A} → { p : P A } →  ⟨ ⟦ A ⟧ ⟩  → Bree {C = UAType} {D = UMType}
   
   module _ (DA DB : UMTypePr ℓ ℓ') where
   
@@ -77,7 +78,7 @@ module _ {ℓ ℓ' : _} where
 
   module _ where
 
-    record UATypeStr (U : Type ℓ'') : Type (ℓ-max (ℓ-suc ℓ) (ℓ-max (ℓ-suc ℓ') ℓ'')) where
+    record UATypeStr (U : Type ℓ'') : Type (ℓ-max (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) (ℓ-suc ℓ'')) where
       inductive
       field
         prM : UMTypePr ℓ ℓ'
