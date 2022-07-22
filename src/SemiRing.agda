@@ -1,4 +1,4 @@
-{-# OPTIONS  --confluence-check --sized-types --cubical #-}
+{-# OPTIONS --cubical #-}
 
 module SemiRing where
 

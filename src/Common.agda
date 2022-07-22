@@ -1,4 +1,4 @@
-{-# OPTIONS  --confluence-check --sized-types --cubical #-}
+{-# OPTIONS --cubical #-}
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Data.List

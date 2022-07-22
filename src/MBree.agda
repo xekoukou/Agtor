@@ -1,4 +1,4 @@
-{-# OPTIONS --sized-types --cubical #-}
+{-# OPTIONS --cubical #-}
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Structure
