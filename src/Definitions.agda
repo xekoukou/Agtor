@@ -1,4 +1,4 @@
-{-# OPTIONS  --sized-types --cubical #-}
+{-# OPTIONS --cubical #-}
 
 module Definitions where
 

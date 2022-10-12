@@ -32,7 +32,7 @@ data Bree : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
   1b      : Bree
   _←_     : C → D → Bree
   ƛ_      : {B : Type} → (B → Bree) → Bree
-  _∪_     : Bree → Bree → Bree 
+  _∪_     : Bree → Bree → Bree  
   _·_     : Bree → Bree → Bree
   squash  : isSet Bree
 
