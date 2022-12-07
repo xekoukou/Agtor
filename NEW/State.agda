@@ -17,7 +17,7 @@ open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
 open import StateLemma
 
-module State {ℓ} (C : ∀{n} → Vec ℕ n → Type ℓ) where
+module State {ℓ} (C : (k : ℕ) → Type ℓ) where
 
 infixr 5 _∪_
 infixr 7 _·_
@@ -28,7 +28,7 @@ mutual
   data State : Type ℓ where  
     0b      : State
     1b      : State
-    `[_]_   : ∀{k} → (ls : Vec ℕ k) → (∀ ls → C {k} ls) → State
+    `[_]_   : ∀{k} → (ls : Vec ℕ k) → C k → State
     _∪_     : State → State → State 
     _·_     : State → State → State
     ν_      : State → State
