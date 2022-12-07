@@ -1,35 +1,35 @@
-{-# OPTIONS --cubical #-}
+    {-# OPTIONS --cubical #-}
 
-open import Cubical.Foundations.Prelude
-open import Cubical.Foundations.Function
-open import Cubical.Data.Sum
-open import Cubical.Data.Unit
-open import Cubical.Data.Sigma
-open import Cubical.Data.Maybe as M renaming (nothing to ∅ ; just to ⟦_⟧)
-open import Cubical.Data.Vec
-open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
-open import Cubical.Relation.Nullary
-open import Cubical.Data.Empty as ⊥
-open import Cubical.Data.Nat hiding (_·_)
-open import Cubical.Data.Nat.Order.Recursive
-open import Cubical.Algebra.CommMonoid
-open import Cubical.Algebra.Semilattice
-open import Cubical.Foundations.HLevels
-open import Cubical.HITs.PropositionalTruncation
-open import SemiRing
+    open import Cubical.Foundations.Prelude
+    open import Cubical.Foundations.Function
+    open import Cubical.Data.Sum
+    open import Cubical.Data.Unit
+    open import Cubical.Data.Sigma
+    open import Cubical.Data.Maybe as M renaming (nothing to ∅ ; just to ⟦_⟧)
+    open import Cubical.Data.Vec
+    open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
+    open import Cubical.Relation.Nullary
+    open import Cubical.Data.Empty as ⊥
+    open import Cubical.Data.Nat hiding (_·_)
+    open import Cubical.Data.Nat.Order.Recursive
+    open import Cubical.Algebra.CommMonoid
+    open import Cubical.Algebra.Semilattice
+    open import Cubical.Foundations.HLevels
+    open import Cubical.HITs.PropositionalTruncation
+    open import SemiRing
 
-module State2 where
+    module State2 where
 
-data Ordered¬∅ : ℕ → Set where
-  1■ : Ordered¬∅ (suc zero)
-  0:_ : ∀{n} → Ordered¬∅ n → Ordered¬∅ n
-  1:_ : ∀{n} → Ordered¬∅ n → Ordered¬∅ (suc n)
-  
-Ordered : ℕ → Type
-Ordered zero = Unit
-Ordered (suc n) = Ordered¬∅ (suc n)
+    data Ordered¬∅ : ℕ → Set where
+    1■ : Ordered¬∅ (suc zero)
+    0:_ : ∀{n} → Ordered¬∅ n → Ordered¬∅ n
+    1:_ : ∀{n} → Ordered¬∅ n → Ordered¬∅ (suc n)
 
-lsuc' : ∀{n} → ℕ → Ordered¬∅ n → Ordered¬∅ n
+    Ordered : ℕ → Type
+    Ordered zero = Unit
+    Ordered (suc n) = Ordered¬∅ (suc n)
+
+    lsuc' : ∀{n} → ℕ → Ordered¬∅ n → Ordered¬∅ n
 lsuc' zero ls = 0: ls
 lsuc' (suc n) 1■ = 1■
 lsuc' (suc n) (0: ls) = 0: lsuc' n ls

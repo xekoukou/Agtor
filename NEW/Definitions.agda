@@ -12,3 +12,4 @@ open import State
 
 module Definitions where
 
+{- ((a ∪ b) · (c ∪ d)  -}
