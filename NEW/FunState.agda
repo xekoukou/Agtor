@@ -19,7 +19,7 @@ open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
 import State
 
-module FunState {ℓ ℓ'} (C : ∀{n} → Vec ℕ n → Type ℓ) where
+module FunState {ℓ ℓ'} (C : ∀ n → Type ℓ) where
 
 module St = State C
 open St
