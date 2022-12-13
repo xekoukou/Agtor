@@ -26,51 +26,37 @@ import State
 
 module Definitions where
 
-module _ {ℓ} (UMType : Type ℓ) (UAType : (k : ℕ) → Type ℓ) where
+module _ {ℓ} (UMType : Type ℓ) where
 
-  CT : ℕ → Type ℓ
-  CT = λ k → UMType ⊎ UAType k
+  mutual
+  
+    CT : ℕ → Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
+    CT k = UMType ⊎ ActorT k
 
-  [CT] : Type ℓ
-  [CT] = Σ _ λ k → Vec ℕ k × CT k
+    module ST = State CT
 
-  PT : Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
-  PT = [CT] → Type
+    [CT] : Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
+    [CT] = Σ _ λ k → Vec ℕ k × CT k
 
-  DPT : PT → Type ℓ
-  DPT P = ∀ A → Dec (P A)
+    PT : Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
+    PT = ST.State → Type
 
--- When a group of actors, messages is needed to produce a response, the predicate can
--- only be pointwise, because the checking of the predicate is distributed and pointwis, because the
--- receiving actor itself is distributed.
-
-  Pattern : ∀ k → Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
-  Pattern k = Vec (Σ PT DPT) k
-
-  ConT : ∀{k} → Vec [CT] (suc k) → Pattern (suc k) → Type
-  ConT (l ∷ []) (f ∷ []) = ∥ fst f l ∥₁
-  ConT (l ∷ ls@(_ ∷ _)) (f ∷ fs) = ∥ fst f l ∥₁ × ConT ls fs
+    DPT : PT → Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
+    DPT P = ∀ A → Dec (P A)
 
 
 
-  module ST = State CT
-
-  record CaseT (k : ℕ) : Type (ℓ-max ℓ (ℓ-suc ℓ-zero)) where
-    field
-      {d} : ℕ
-      ptr : Pattern (suc d)
-      -- This projections needs to agree with the global projection function.
-      -- I just can't fix this without abstracting the projection function here.
-      {prJ} : ∀ A → ConT A ptr → Type
-      δᶜT : ∀ A → (c : ConT A ptr) → prJ A c → ST.State
-
-
-
-  record ActorT k : Type (ℓ-max ℓ (ℓ-suc ℓ-zero)) where
-    coinductive
-    field
-      cases : List (CaseT k)
-      δT : ST.State
+    record ActorT (k : ℕ) : Type (ℓ-max ℓ (ℓ-suc ℓ-zero)) where
+      coinductive
+      field
+        q : ActorT 3
+--        P : PT
+--        decP : DPT P
+        -- This projections needs to agree with the global projection function.
+        -- I just can't fix this without abstracting the projection function here.
+  --      {prJ} : ∀ A → ∥ P A ∥₁ → Type
+     --   δᶜT : ∀ A → (c : ∥ P A ∥₁) → prJ A c → ST.State
+     --   δT : ST.State
 
 
   mutual
@@ -86,11 +72,9 @@ module _ {ℓ} (UMType : Type ℓ) (UAType : (k : ℕ) → Type ℓ) where
     C : ∀ k → Type {!!}
     C k = (Σ Type λ A → A) ⊎ (Actor k)
 
-    open CaseT
-    
-    record Case {k} (cs : CaseT k) : Type {!!} where
+    record Case {k} : Type {!!} where
       field
-        δᶜ : ∀ A → (c : ConT A (ptr cs)) → (prJ cs) A c → State.State C
+ --       δᶜ : ∀ A → (c : ConT A (ptr cs)) → (prJ cs) A c → State.State C
 
 
     
