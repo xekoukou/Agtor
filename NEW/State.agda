@@ -2,6 +2,7 @@
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Function
+open import Cubical.Foundations.Structure
 open import Cubical.Data.Sum
 open import Cubical.Data.Unit
 open import Cubical.Data.Sigma
@@ -10,11 +11,14 @@ open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat hiding (_·_)
-open import Cubical.Data.Nat.Order.Recursive
+open import Cubical.Data.Nat.Order.Recursive as O
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
+open import Cubical.Core.Id hiding (_≡_)
+import Cubical.Functions.Logic as L
+
 open import StateLemma
 
 module State {ℓ} (C : (k : ℕ) → Type ℓ) where
@@ -70,7 +74,6 @@ mutual
   sucₛ n (dist q q₁ q₂ i) = dist (sucₛ n q) (sucₛ n q₁) (sucₛ n q₂) i
   sucₛ n (ν-∪ q q₁ i) = (cong (λ a → ν (sucₛ (suc n) q ∪ a)) (lemma2 n 0 q₁ tt) ∙ (ν-∪ (sucₛ (suc n) q) (sucₛ n q₁))) i
   sucₛ n (ν-· q q₁ i) = (cong (λ a → ν (sucₛ (suc n) q · a)) (lemma2 n 0 q₁ tt) ∙ (ν-· (sucₛ (suc n) q) (sucₛ n q₁))) i
-
 
 
   lemma2 : ∀ n m q → m ≤ n → sucₛ (suc n) (sucₛ m q) ≡ sucₛ m (sucₛ n q)
@@ -197,3 +200,121 @@ module Rec {ℓ'} {B : Type ℓ'}
 
 
 
+
+data IsStrSt : State → Type ℓ where
+  0bₛ : IsStrSt 0b
+  1bₛ : IsStrSt 1b
+  `[_]ₛ_  : ∀{k} → ∀ ls c → IsStrSt (`[_]_ {k} ls c)
+  _∪ₛ_  : ∀{s1 s2} → IsStrSt s1 → IsStrSt s2 → IsStrSt (s1 ∪ s2)
+  _·ₛ_  : ∀{s1 s2} → IsStrSt s1 → IsStrSt s2 → IsStrSt (s1 · s2)
+  νₛ_  : ∀{s} → IsStrSt s → IsStrSt (ν s)
+
+record SState : Type ℓ where
+  constructor ⟨_⟩ₛ
+  field 
+    {s} : State
+    isStrSt : IsStrSt s
+
+open SState public
+
+StrEq : SState → SState → Type ℓ
+StrEq ⟨ 0bₛ ⟩ₛ ⟨ 0bₛ ⟩ₛ = Lift Unit
+StrEq ⟨ 0bₛ ⟩ₛ e2 = Lift ⊥
+StrEq ⟨ 1bₛ ⟩ₛ ⟨ 1bₛ ⟩ₛ = Lift Unit
+StrEq ⟨ 1bₛ ⟩ₛ e2 = Lift ⊥
+StrEq ⟨ `[_]ₛ_ {k1} ls1 c1 ⟩ₛ ⟨ `[_]ₛ_ {k2} ls2 c2 ⟩ₛ = Id (k1 , ls1 , c1) (k2 , ls2 , c2)
+StrEq ⟨ `[_]ₛ_ _ _ ⟩ₛ e2 = Lift ⊥
+StrEq ⟨ _∪ₛ_ e1 e2 ⟩ₛ ⟨ _∪ₛ_ e3 e4 ⟩ₛ = StrEq ⟨ e1 ⟩ₛ ⟨ e3 ⟩ₛ × StrEq ⟨ e2 ⟩ₛ ⟨ e4 ⟩ₛ
+StrEq ⟨ _∪ₛ_ e1 e3 ⟩ₛ e2 = Lift ⊥
+StrEq ⟨ _·ₛ_ e1 e2 ⟩ₛ ⟨ _·ₛ_ e3 e4 ⟩ₛ = StrEq ⟨ e1 ⟩ₛ ⟨ e3 ⟩ₛ × StrEq ⟨ e2 ⟩ₛ ⟨ e4 ⟩ₛ
+StrEq ⟨ _·ₛ_ e1 e3 ⟩ₛ e2 = Lift ⊥
+StrEq ⟨ νₛ_ e1 ⟩ₛ ⟨ νₛ_ e2 ⟩ₛ = StrEq ⟨ e1 ⟩ₛ ⟨ e2 ⟩ₛ
+StrEq ⟨ νₛ_ e1 ⟩ₛ e2 = Lift ⊥
+
+
+module _ where
+
+
+  All : ∀{e} → Vec ℕ e → ℕ → Type
+  All [] k = Unit
+  All (x ∷ xs) k = (x < k) × All xs k
+
+  WellScoped : SState → ℕ → Type
+  WellScoped ⟨ 0bₛ ⟩ₛ k = Unit
+  WellScoped ⟨ 1bₛ ⟩ₛ k = Unit
+  WellScoped ⟨ `[ ls ]ₛ c ⟩ₛ k = All ls k
+  WellScoped ⟨ s₁ ∪ₛ s₂ ⟩ₛ k = WellScoped ⟨ s₁ ⟩ₛ k × WellScoped ⟨ s₂ ⟩ₛ k
+  WellScoped ⟨ s₁ ·ₛ s₂ ⟩ₛ k = WellScoped ⟨ s₁ ⟩ₛ k × WellScoped ⟨ s₂ ⟩ₛ k
+  WellScoped ⟨ νₛ s₁ ⟩ₛ k = WellScoped ⟨ s₁ ⟩ₛ (suc k)
+
+  All` : ∀{e} → Vec ℕ e → ℕ → hProp ℓ-zero
+  All` [] k = Unit , isPropUnit
+  All` (x ∷ xs) k = (x < k) × fst (All` xs k) , isProp× (O.isProp≤ {suc x} {k}) (snd (All` xs k))
+
+
+  WellScoped` : State → ℕ → hProp ℓ-zero
+  {-# TERMINATING #-}
+  -- This is terminating because s can only increase a finite ammount because of ν in State.
+  WellScoped`-suc : ∀{s k} → ∀ n → WellScoped` (sucₛ n s) (n + suc k) ≡ WellScoped` s k
+
+
+
+
+  WellScoped` 0b k = Unit , isPropUnit
+  WellScoped` 1b k = Unit , isPropUnit
+  WellScoped` (`[ ls ] x) k = All` ls k
+  WellScoped` (s₁ ∪ s₂) k = ⟨ WellScoped` s₁ k ⟩  × ⟨ WellScoped` s₂ k ⟩ , isProp× (snd (WellScoped` s₁ k)) (snd (WellScoped` s₂ k))
+  WellScoped` (s₁ · s₂) k = ⟨ WellScoped` s₁ k ⟩  × ⟨ WellScoped` s₂ k ⟩ , isProp× (snd (WellScoped` s₁ k)) (snd (WellScoped` s₂ k))
+  WellScoped` (ν s₁) k = ⟨ WellScoped` s₁ (suc k) ⟩ , snd (WellScoped` s₁ (suc k))
+  WellScoped` (ν-elim s₁ i) k = WellScoped`-suc {s₁} {k} 0 i
+  WellScoped` (ν-∪ s₁ s₂ i) k = {!!}
+  WellScoped` (ν-· s₁ s₂ i) k = {!!}
+  WellScoped` (squash s₁ s₂ x y i i₁) k = {!!}
+  WellScoped` (assoc s₁ s₂ s₃ i) k = {!!}
+  WellScoped` (rid s₁ i) k = {!!}
+  WellScoped` (comm s₁ s₂ i) k = {!!}
+  WellScoped` (idem s₁ i) k = {!!}
+  WellScoped` (assoc· s₁ s₂ s₃ i) k = {!!}
+  WellScoped` (rid· s₁ i) k = {!!}
+  WellScoped` (comm· s₁ s₂ i) k = {!!}
+  WellScoped` (def∅· s₁ i) k = {!!}
+  WellScoped` (dist s₁ s₂ s₃ i) k = {!!}
+
+
+  WellScoped`-suc {s} {k} n
+    = L.⇔toPath {P = WellScoped` (sucₛ n s) (n + suc k)} {Q = WellScoped` s k} (P→Q s n) (Q→P s n) where
+      P→Q : ∀ s n → ⟨ WellScoped` (sucₛ n s) (n + suc k) ⟩ → ⟨ WellScoped` s k ⟩
+      P→Q s n = ElimProp.f (λ {x} → isPropΠ (snd {!WellScoped` {x} {k}!})) {!!} {!!} {!!} {!!} {!!} {!!} s
+      Q→P : ∀ s n → ⟨ WellScoped` s k ⟩ → ⟨ WellScoped` (sucₛ n s) (n + suc k) ⟩
+      Q→P = {!!}
+  
+
+
+  -- All` : ∀{e} → Vec ℕ e → ℕ → Bool
+  -- All` [] k = true
+  -- All` (x ∷ xs) k = x <? k and All` xs k
+
+  -- WellScoped` : State → ℕ → Bool
+  -- WellScoped` 0b k = true
+  -- WellScoped` 1b k = true
+  -- WellScoped` (`[ ls ] x) k = All ls k
+  -- WellScoped` (s₁ ∪ s₂) k = WellScoped` s₁ k × WellScoped` s₂ k
+  -- WellScoped` (s₁ · s₂) k = WellScoped` s₁ k × WellScoped` s₂ k
+  -- WellScoped` (ν s₁) k = WellScoped` s₁ (suc k)
+  -- WellScoped` (ν-elim s₁ i) k = {!!}
+  -- WellScoped` (ν-∪ s₁ s₂ i) k = {!!}
+  -- WellScoped` (ν-· s₁ s₂ i) k = {!!}
+  -- WellScoped` (squash s₁ s₂ x y i i₁) k = {!!}
+  -- WellScoped` (assoc s₁ s₂ s₃ i) k = {!!}
+  -- WellScoped` (rid s₁ i) k = {!!}
+  -- WellScoped` (comm s₁ s₂ i) k = {!!}
+  -- WellScoped` (idem s₁ i) k = {!!}
+  -- WellScoped` (assoc· s₁ s₂ s₃ i) k = {!!}
+  -- WellScoped` (rid· s₁ i) k = {!!}
+  -- WellScoped` (comm· s₁ s₂ i) k = {!!}
+  -- WellScoped` (def∅· s₁ i) k = {!!}
+  -- WellScoped` (dist s₁ s₂ s₃ i) k = {!!}
+
+plus : ℕ → ℕ → ℕ
+plus zero y = zero
+plus (suc x) y = plus x (suc y)
