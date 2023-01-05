@@ -33,6 +33,6 @@ lemma1' (suc n) (suc m) zero rel = refl
 lemma1' (suc n) (suc m) (suc x) rel = cong suc (lemma1' n m x rel)
 
 lemma1 : ∀{k} → ∀ n m ls → m ≤ n → lsuc {k} (suc n) (lsuc m ls) ≡ lsuc m (lsuc n ls)
-lemma1 {zero} n m ls rel = refl
-lemma1 {suc r} n m (x ∷ ls) rel = cong₂ _∷_ (lemma1' n m x rel) (lemma1 n m ls rel)
+lemma1 n m [] rel = refl
+lemma1 n m (x ∷ ls) rel = cong₂ _∷_ (lemma1' n m x rel) (lemma1 n m ls rel)
 
