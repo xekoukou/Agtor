@@ -55,11 +55,21 @@ mapₛₛ f (ν q) = ν mapₛₛ f q
 f-secr : (f : ∀{k} → Vec ℕ k → Vec ℕ k) → Particle → Particle
 f-secr f ([ secr ] c) = [ f secr ] c
 
-sucₛₛ : ℕ → (q : SState) → SState
-sucₛₛ n q = mapₛₛ (f-secr (lsuc n)) q
+sucₛₛ : (q : SState) → ℕ → SState
+sucₛₛ 0b n = 0b
+sucₛₛ 1b n = 1b
+sucₛₛ (` [ secr ] c) n = ` [ lsuc<? secr n ] c 
+sucₛₛ (lq ∪ rq) n = sucₛₛ lq n ∪ sucₛₛ rq n
+sucₛₛ (lq · rq) n = sucₛₛ lq n · sucₛₛ rq n
+sucₛₛ (ν q) n = ν sucₛₛ q (suc n)
 
-swapₛₛ : ℕ → ℕ → SState → SState
-swapₛₛ m n q = mapₛₛ (f-secr (lswap m n )) q
+swapₛₛ : ℕ → ℕ → (q : SState) → SState
+swapₛₛ m n 0b = 0b
+swapₛₛ m n 1b = 1b
+swapₛₛ m n (` [ secr ] c) = ` [ lswap m n secr ] c 
+swapₛₛ m n (lq ∪ rq) = swapₛₛ m n lq ∪ swapₛₛ m n rq
+swapₛₛ m n (lq · rq) = swapₛₛ m n lq · swapₛₛ m n rq
+swapₛₛ m n (ν q) = ν swapₛₛ (suc m) (suc n) q
 
 ν[_]_ : ℕ → SState → SState
 ν[ zero ] q = q
@@ -74,9 +84,9 @@ data State : Type ℓ where
   ⟨⟩-· : ∀{lq1 rq1 lq2 rq2} → ⟨ lq1 ⟩ₛ ≡ ⟨ lq2 ⟩ₛ → ⟨ rq1 ⟩ₛ ≡ ⟨ rq2 ⟩ₛ → ⟨ lq1 · rq1 ⟩ₛ ≡ ⟨ lq2 · rq2 ⟩ₛ
   ⟨⟩-ν : ∀{q1 q2} → ⟨ q1 ⟩ₛ ≡ ⟨ q2 ⟩ₛ → ⟨ ν q1 ⟩ₛ ≡ ⟨ ν q2 ⟩ₛ
   ν-swap` : ∀ qs → ⟨ ν ν (swapₛₛ 0 1 qs) ⟩ₛ ≡ ⟨ ν ν qs ⟩ₛ
-  ν-elim` : ∀ qs → ⟨ ν sucₛₛ 0 qs ⟩ₛ ≡ ⟨ qs ⟩ₛ
-  ν-∪`    : ∀ qs zs → ⟨ ν (zs ∪ sucₛₛ 0 qs) ⟩ₛ ≡ ⟨ ν zs ∪ qs ⟩ₛ
-  ν-·`    : ∀ qs zs → ⟨ ν (zs · sucₛₛ 0 qs) ⟩ₛ ≡ ⟨ ν zs · qs ⟩ₛ
+  ν-elim` : ∀ qs → ⟨ ν sucₛₛ qs 0 ⟩ₛ ≡ ⟨ qs ⟩ₛ
+  ν-∪`    : ∀ qs zs → ⟨ ν (zs ∪ sucₛₛ qs 0) ⟩ₛ ≡ ⟨ ν zs ∪ qs ⟩ₛ
+  ν-·`    : ∀ qs zs → ⟨ ν (zs · sucₛₛ qs 0) ⟩ₛ ≡ ⟨ ν zs · qs ⟩ₛ
   assoc   : (x y z : SState) → ⟨ x ∪ (y ∪ z) ⟩ₛ ≡ ⟨ (x ∪ y) ∪ z ⟩ₛ
   rid     : (x : SState) → ⟨ x ∪ 0b ⟩ₛ ≡ ⟨ x ⟩ₛ
   comm    : (x y : SState ) → ⟨ x ∪ y ⟩ₛ ≡ ⟨ y ∪ x ⟩ₛ
@@ -109,9 +119,9 @@ module Elim {ℓ'} {B : State → Type ℓ'}
                → (bq1 : B ⟨ q1 ⟩ₛ) → (bq2 : B ⟨ q2 ⟩ₛ)
                → PathP (λ i → B (⟨⟩-ν eq i)) (ν* bq1) (ν* bq2))
        (ν-swap`* : ∀{qs} → (b : B ⟨ qs ⟩ₛ) → (bs : B ⟨ swapₛₛ 0 1 qs ⟩ₛ ) → PathP (λ i → B (ν-swap` qs i)) (ν* (ν* bs)) (ν* (ν* b)))
-       (ν-elim`* : ∀{qs} → (b : B ⟨ qs ⟩ₛ) → (bs : B ⟨ sucₛₛ 0 qs ⟩ₛ ) → PathP (λ i → B (ν-elim` qs i)) (ν* bs) b)
-       (ν-∪`* : ∀{qs zs} → (bq : B ⟨ qs ⟩ₛ ) → (bqs : B ⟨ sucₛₛ 0 qs ⟩ₛ ) → (bz : B ⟨ zs ⟩ₛ) → PathP (λ i → B (ν-∪` qs zs i)) (ν* (∪* bz bqs)) (∪* (ν* bz) bq))
-       (ν-·`* : ∀{qs zs} → (bq : B ⟨ qs ⟩ₛ ) → (bqs : B ⟨ sucₛₛ 0 qs ⟩ₛ ) → (bz : B ⟨ zs ⟩ₛ) → PathP (λ i → B (ν-·` qs zs i)) (ν* (·* bz bqs)) (·* (ν* bz) bq))
+       (ν-elim`* : ∀{qs} → (b : B ⟨ qs ⟩ₛ) → (bs : B ⟨ sucₛₛ qs 0 ⟩ₛ ) → PathP (λ i → B (ν-elim` qs i)) (ν* bs) b)
+       (ν-∪`* : ∀{qs zs} → (bq : B ⟨ qs ⟩ₛ ) → (bqs : B ⟨ sucₛₛ qs 0 ⟩ₛ ) → (bz : B ⟨ zs ⟩ₛ) → PathP (λ i → B (ν-∪` qs zs i)) (ν* (∪* bz bqs)) (∪* (ν* bz) bq))
+       (ν-·`* : ∀{qs zs} → (bq : B ⟨ qs ⟩ₛ ) → (bqs : B ⟨ sucₛₛ qs 0 ⟩ₛ ) → (bz : B ⟨ zs ⟩ₛ) → PathP (λ i → B (ν-·` qs zs i)) (ν* (·* bz bqs)) (·* (ν* bz) bq))
        (assoc* : ∀{x y z} → (bx : B ⟨ x ⟩ₛ ) → (by : B ⟨ y ⟩ₛ ) → (bz : B ⟨ z ⟩ₛ ) → PathP (λ i → B (assoc x y z i)) (∪* bx (∪* by bz)) (∪* (∪* bx by) bz))
        (rid* : ∀{x} → (b : B ⟨ x ⟩ₛ ) → PathP (λ i → B (rid x i)) (∪* b 0b*) b)
        (comm* : ∀{x y} → (bx : B ⟨ x ⟩ₛ ) → (by : B ⟨ y ⟩ₛ ) → PathP (λ i → B (comm (x) (y) i)) (∪* bx by) (∪* by bx))
@@ -145,9 +155,9 @@ module Elim {ℓ'} {B : State → Type ℓ'}
   f (def∅· x i) = def∅·* (f` x ) i
   f (dist x y z i) = dist* (f` x ) (f` y) (f` z) i
   f (ν-swap` q i) = ν-swap`* (f` q) (f` (swapₛₛ 0 1 q)) i
-  f (ν-elim` q i) = ν-elim`* (f` q) (f` (sucₛₛ 0 q)) i
-  f (ν-∪` q z i) = ν-∪`* (f` q) (f` (sucₛₛ 0 q)) (f` z) i
-  f (ν-·` q z i) = ν-·`* (f` q) (f` (sucₛₛ 0 q)) (f` z) i
+  f (ν-elim` q i) = ν-elim`* (f` q) (f` (sucₛₛ q 0)) i
+  f (ν-∪` q z i) = ν-∪`* (f` q) (f` (sucₛₛ q 0)) (f` z) i
+  f (ν-·` q z i) = ν-·`* (f` q) (f` (sucₛₛ q 0)) (f` z) i
   f (⟨⟩-∪ eq1 eq2 i) = ⟨⟩-∪* eq1 eq2 (f` _) (f` _) (f` _) (f` _) i
   f (⟨⟩-· eq1 eq2 i) = ⟨⟩-·* eq1 eq2 (f` _) (f` _) (f` _) (f` _) i
   f (⟨⟩-ν eq1 i) = ⟨⟩-ν* eq1 (f` _) (f` _) i
@@ -217,158 +227,22 @@ module Rec {ℓ'} {B : Type ℓ'}
                (λ eq1 eq2 → ⟨⟩-∪*) (λ eq1 eq2 → ⟨⟩-·*) (λ eq₁ → ⟨⟩-ν*) ν-swap`* ν-elim`* ν-∪`* ν-·`* assoc* rid* comm* idem* assoc·* rid·* comm·* def∅·* dist* q
 
 
+All< : ∀{e} → Vec ℕ e → ℕ → Type
+All< [] k = Unit
+All< (x ∷ xs) k = (x < k) × All< xs k
 
--- _∪`_ : (lq rq : State) → State
--- ⟨ x ⟩ₛ ∪` y = {!!}
--- ⟨⟩-∪ x x₁ i ∪` y = {!!}
--- ⟨⟩-· x x₁ i ∪` y = {!!}
--- ⟨⟩-ν x i ∪` y = {!!}
--- ν-swap` qs i ∪` y = {!!}
--- ν-elim` qs i ∪` y = {!!}
--- ν-∪` qs zs i ∪` y = {!!}
--- ν-·` qs zs i ∪` y = {!!}
--- assoc x y₁ z i ∪` y = {!!}
--- rid x i ∪` y = {!!}
--- comm x y₁ i ∪` y = {!!}
--- idem x i ∪` y = {!!}
--- assoc· x y₁ z i ∪` y = {!!}
--- rid· x i ∪` y = {!!}
--- comm· x y₁ i ∪` y = {!!}
--- def∅· x i ∪` y = {!!}
--- dist x y₁ z i ∪` y = {!!}
--- squash x x₁ x₂ y₁ i i₁ ∪` y = {!!}
+
+data WellScopedₛₛ : SState → ℕ → Type ℓ where
+  ws-0b : ∀{k} → WellScopedₛₛ 0b k
+  ws-1b : ∀{k} → WellScopedₛₛ 1b k
+  ws-`  : ∀{k n secr c} → All< secr k → WellScopedₛₛ (` ([_]_ {n} secr c)) k
+  ws-∪  : ∀{k lq rq} → WellScopedₛₛ lq k → WellScopedₛₛ rq k → WellScopedₛₛ (lq ∪ rq) k
+  ws-·  : ∀{k lq rq} → WellScopedₛₛ lq k → WellScopedₛₛ rq k → WellScopedₛₛ (lq · rq) k
+  ws-ν  : ∀{k q} → WellScopedₛₛ q (suc k) → WellScopedₛₛ (ν q) k
 
 
 
--- --  ν-swap` : ∀ qs → ∀ m t n → m < n → t < n → ⟨ ν[ n ] (swapₛₛ m t qs) ⟩ₛ ≡ ⟨ ν[ n ] qs ⟩ₛ
 
--- -- sucₛ : ℕ → (q : State) → State
--- -- sucₛ n 0b = 0b
--- -- sucₛ n 1b = 1b
--- -- sucₛ n (`[ ls ] x) = `[ lsuc n ls ] x
--- -- sucₛ n (q ∪ q₁) = sucₛ n q ∪ sucₛ n q₁
--- -- sucₛ n (q · q₁) = sucₛ n q · sucₛ n q₁
--- -- sucₛ n (ν q) = ν sucₛ (suc n) q
--- -- sucₛ n (ν-elim` {k} {ls} {c} i) = (cong (λ ls → (ν (`[ ls ] c))) (lemma1 n 0 ls tt) ∙ ν-elim`) i
--- -- sucₛ n (ν-elim0b i) = ν-elim0b i
--- -- sucₛ n (ν-elim1b i) = ν-elim1b i
--- -- sucₛ n (ν-∪` {k} {ls} {c} q i) = (cong (λ ls → ν (sucₛ (suc n) q ∪ `[ ls ] c)) (lemma1 n 0 ls tt) ∙ ν-∪` (sucₛ (suc n) q)) i
--- -- sucₛ n (ν-∪1b q i) = ν-∪1b (sucₛ (suc n) q) i
--- -- sucₛ n (ν-·` {k} {ls} {c} q i) = (cong (λ ls → ν (sucₛ (suc n) q · `[ ls ] c)) (lemma1 n 0 ls tt) ∙ ν-·` (sucₛ (suc n) q)) i
--- -- sucₛ n (squash q q₁ x y i i₁) = squash (sucₛ n q) (sucₛ n q₁) (cong (sucₛ n) x) (cong (sucₛ n) y) i i₁
--- -- sucₛ n (assoc q q₁ q₂ i) = assoc (sucₛ n q) (sucₛ n q₁) (sucₛ n q₂) i
--- -- sucₛ n (rid q i) = rid (sucₛ n q) i
--- -- sucₛ n (comm q q₁ i) = comm (sucₛ n q) (sucₛ n q₁) i
--- -- sucₛ n (idem q i) = idem (sucₛ n q) i
--- -- sucₛ n (assoc· q q₁ q₂ i) = assoc· (sucₛ n q) (sucₛ n q₁) (sucₛ n q₂) i
--- -- sucₛ n (rid· q i) = rid· (sucₛ n q) i
--- -- sucₛ n (comm· q q₁ i) = comm· (sucₛ n q) (sucₛ n q₁) i
--- -- sucₛ n (def∅· q i) = def∅· (sucₛ n q) i
--- -- sucₛ n (dist q q₁ q₂ i) = dist (sucₛ n q) (sucₛ n q₁) (sucₛ n q₂) i
-
--- -- lemma2 : ∀ n m q → m ≤ n → sucₛ (suc n) (sucₛ m q) ≡ sucₛ m (sucₛ n q)
--- -- lemma2 n m q rel = ElimProp.f {B = (λ q → ∀ n m → m ≤ n → sucₛ (suc n) (sucₛ m q) ≡ sucₛ m (sucₛ n q))}
--- --                               (λ {q} → isPropΠ λ n → isPropΠ (λ m → isPropΠ λ rel → squash (sucₛ (suc n) (sucₛ m q)) (sucₛ m (sucₛ n q))))
--- --                               (λ n m rel → refl)
--- --                               (λ n m rel → refl)
--- --                               (λ ls C n m rel → cong (`[_] C) (lemma1 n m ls rel))
--- --                               (λ eq1 eq2 n m rel → cong₂ _∪_ (eq1 n m rel) (eq2 n m rel))
--- --                               (λ eq1 eq2 n m rel → cong₂ _·_ (eq1 n m rel) (eq2 n m rel))
--- --                               (λ eq n m rel → cong ν_ (eq (suc n) (suc m) rel))
--- --                               q n m rel
-
-
--- -- ν-ν[]-comm : ∀ n q → ν ν[ n ] q ≡ ν[ n ] (ν q)
--- -- ν-ν[]-comm zero q = refl
--- -- ν-ν[]-comm (suc n) q = cong ν_ (ν-ν[]-comm n q)
-
--- -- ν-elim0b[_] : ∀ n → ν[ suc n ] 0b ≡ ν[ n ] 0b
--- -- ν-elim0b[ zero ] = ν-elim0b
--- -- ν-elim0b[ suc n ] = cong ν_ (ν-elim0b[ n ])
-
--- -- ν-elim0b[_]0b : ∀ n → ν[ suc n ] 0b ≡ 0b
--- -- ν-elim0b[ zero ]0b = ν-elim0b
--- -- ν-elim0b[ suc n ]0b = cong ν_ (ν-elim0b[ n ]0b) ∙ ν-elim0b
-
--- -- ν-elim1b[_] : ∀ n → ν[ suc n ] 1b ≡ ν[ n ] 1b
--- -- ν-elim1b[ zero ] = ν-elim1b
--- -- ν-elim1b[ suc n ] = cong ν_ (ν-elim1b[ n ])
-
--- -- ν-elim1b[_]1b : ∀ n → ν[ suc n ] 1b ≡ 1b
--- -- ν-elim1b[ zero ]1b = ν-elim1b
--- -- ν-elim1b[ suc n ]1b = cong ν_ (ν-elim1b[ n ]1b) ∙ ν-elim1b
-
--- -- ν-elim`[_≥_] : ∀ n m → {rel : m ≤ n} → ∀ {k} → {ls : Vec ℕ k} → ∀{C} →
--- --             (ν[ suc n ] (`[ lsuc m ls ] C)) ≡ ν[ n ] (`[ ls ] C)
--- -- ν-elim`[ zero ≥ zero ] {rel} = ν-elim`
--- -- ν-elim`[ suc n ≥ zero ] {rel} = ν-ν[]-comm (suc n) _ ∙ cong (ν[ suc n ]_) ν-elim`
--- -- ν-elim`[ suc n ≥ suc m ] {rel} = {!!}
-
--- -- ν-elim[_] : ∀ n q → ν[ suc n ] (sucₛ n q) ≡ q
--- -- ν-∪[_]    : ∀ n q z → ν[ suc n ] (z ∪ (sucₛ n q)) ≡ (ν[ suc n ] z) ∪ q
--- -- ν-·[_]    : ∀ n q z → ν[ suc n ] (z · (sucₛ n q)) ≡ (ν[ suc n ] z) · q
-
--- -- ν-elim[ n ] q i = ElimProp.f (λ {q} → isPropΠ λ n → squash (ν[ suc n ] (sucₛ n q)) q)
--- --                           ν-elim0b[_]0b
--- --                           ν-elim1b[_]1b
--- --                           {!!}
--- --                           {!!}
--- --                           {!!}
--- --                           {!q!}
--- --                           q
--- --                           n
--- --                           i
-
--- -- -- ν-elim n q = ElimProp.f (λ {q} → squash (ν (sucₛ 0 q)) q)
--- -- --                       ν-elim0b
--- -- --                       ν-elim1b
--- -- --                       (λ ls C → ν-elim`)
--- -- --                       (λ {x} {y} eq1 eq2 → ν-∪ (sucₛ 0 x) y ∙ cong (_∪ y) eq1)
--- -- --                       (λ {x} {y} eq1 eq2 → ν-· (sucₛ 0 x) y ∙ cong (_· y) eq1)
--- -- --                       {!!}
--- -- --                       q
-
--- -- -- ν-∪ z q = ElimProp.f (λ {q} → isPropΠ (λ z → squash (ν (z ∪ sucₛ 0 q)) ((ν z) ∪ q )))
--- -- --                      (λ z → cong ν_ (rid z) ∙ sym (rid _))
--- -- --                      (λ z → ν-∪1b z)
--- -- --                      (λ _ _ → λ z → ν-∪` z)
--- -- --                      (λ {x = x} {y = y} eq1 eq2 z → cong ν_ (assoc _ _ _) ∙ eq2 (z ∪ sucₛ 0 x) ∙ cong (_∪ y) (eq1 z) ∙ sym (assoc _ _ _))
--- -- --                      (λ {x = x} {y = y} eq1 eq2 z → {!!})
--- -- --                      {!!}
--- -- --                      q z
-
--- -- -- ν-· z q = {!!}
-
-
--- -- -- -- -- data IsStrSt : State → Type ℓ where
--- -- -- -- --   0bₛ : IsStrSt 0b
--- -- -- -- --   1bₛ : IsStrSt 1b
--- -- -- -- --   `[_]ₛ_  : ∀{k} → ∀ ls c → IsStrSt (`[_]_ {k} ls c)
--- -- -- -- --   _∪ₛ_  : ∀{s1 s2} → IsStrSt s1 → IsStrSt s2 → IsStrSt (s1 ∪ s2)
--- -- -- -- --   _·ₛ_  : ∀{s1 s2} → IsStrSt s1 → IsStrSt s2 → IsStrSt (s1 · s2)
--- -- -- -- --   νₛ_  : ∀{s} → IsStrSt s → IsStrSt (ν s)
-
--- -- -- -- -- record SState : Type ℓ where
--- -- -- -- --   constructor ⟨_⟩ₛ
--- -- -- -- --   field 
--- -- -- -- --     {s} : State
--- -- -- -- --     isStrSt : IsStrSt s
-
--- -- -- -- -- open SState public
-
--- -- -- -- -- StrEq : SState → SState → Type ℓ
--- -- -- -- -- StrEq ⟨ 0bₛ ⟩ₛ ⟨ 0bₛ ⟩ₛ = Lift Unit
--- -- -- -- -- StrEq ⟨ 0bₛ ⟩ₛ e2 = Lift ⊥
--- -- -- -- -- StrEq ⟨ 1bₛ ⟩ₛ ⟨ 1bₛ ⟩ₛ = Lift Unit
--- -- -- -- -- StrEq ⟨ 1bₛ ⟩ₛ e2 = Lift ⊥
--- -- -- -- -- StrEq ⟨ `[_]ₛ_ {k1} ls1 c1 ⟩ₛ ⟨ `[_]ₛ_ {k2} ls2 c2 ⟩ₛ = Id (k1 , ls1 , c1) (k2 , ls2 , c2)
--- -- -- -- -- StrEq ⟨ `[_]ₛ_ _ _ ⟩ₛ e2 = Lift ⊥
--- -- -- -- -- StrEq ⟨ _∪ₛ_ e1 e2 ⟩ₛ ⟨ _∪ₛ_ e3 e4 ⟩ₛ = StrEq ⟨ e1 ⟩ₛ ⟨ e3 ⟩ₛ × StrEq ⟨ e2 ⟩ₛ ⟨ e4 ⟩ₛ
--- -- -- -- -- StrEq ⟨ _∪ₛ_ e1 e3 ⟩ₛ e2 = Lift ⊥
--- -- -- -- -- StrEq ⟨ _·ₛ_ e1 e2 ⟩ₛ ⟨ _·ₛ_ e3 e4 ⟩ₛ = StrEq ⟨ e1 ⟩ₛ ⟨ e3 ⟩ₛ × StrEq ⟨ e2 ⟩ₛ ⟨ e4 ⟩ₛ
--- -- -- -- -- StrEq ⟨ _·ₛ_ e1 e3 ⟩ₛ e2 = Lift ⊥
--- -- -- -- -- StrEq ⟨ νₛ_ e1 ⟩ₛ ⟨ νₛ_ e2 ⟩ₛ = StrEq ⟨ e1 ⟩ₛ ⟨ e2 ⟩ₛ
--- -- -- -- -- StrEq ⟨ νₛ_ e1 ⟩ₛ e2 = Lift ⊥
 
 
 -- -- -- -- -- module _ where

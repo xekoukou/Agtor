@@ -44,8 +44,8 @@ module _ {ℓ ℓ' : _} (prM : UMTypePr ℓ ℓ') where
       field
         P     : List (Fin k) → UMType → Type
         decP  : ∀ C A → Dec (P C A)
-        δᶜT  : ∀ C A → { p : ∥ P C A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState
-        δT   : StT.SState
+        δᶜT   : ∀ C A → { p : ∥ P C A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState
+        δT    : StT.SState
 
 
 
