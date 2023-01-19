@@ -7,7 +7,7 @@ open import Cubical.Data.Sum
 open import Cubical.Data.Unit
 open import Cubical.Data.Sigma
 open import Cubical.Data.Vec
-open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
+open import Cubical.Data.Bool hiding (isProp≤ ; _≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat hiding (_·_)
@@ -16,7 +16,7 @@ open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
-open import Cubical.HITs.SetQuotients renaming ([_] to ⟨_⟩ₛ)
+open import Cubical.HITs.SetQuotients renaming ([_] to ⟨_⟩ₛ) 
 open import Cubical.Relation.Binary
 open import Cubical.Core.Id hiding (_≡_)
 import Cubical.Functions.Logic as L
@@ -45,14 +45,6 @@ data SState : Type ℓ where
   _∪_     : (lq : SState) → (rq : SState) → SState 
   _·_     : (lq : SState) → ( rq : SState) → SState
   ν_      : SState → SState
-
-mapₛₛ : (f : Particle → Particle) → (q : SState) → SState
-mapₛₛ f 0b = 0b
-mapₛₛ f 1b = 1b
-mapₛₛ f (` x) = ` f x
-mapₛₛ f (lq ∪ rq) = mapₛₛ f lq ∪ mapₛₛ f rq 
-mapₛₛ f (lq · rq) = mapₛₛ f lq · mapₛₛ f rq 
-mapₛₛ f (ν q) = ν mapₛₛ f q
 
 f-secr : (f : ∀{k} → Vec ℕ k → Vec ℕ k) → Particle → Particle
 f-secr f ([ secr ] c) = [ f secr ] c
@@ -84,6 +76,9 @@ data _R_ : SState → SState → Type ℓ where
   ⟨⟩-ν : ∀{q1 q2} → q1 R q2 → (ν q1) R (ν q2)
   ν-swap` : ∀ qs → (ν ν (swapₛₛ 0 1 qs) ) R ( ν ν qs )
   ν-elim` : ∀ qs → ( ν sucₛₛ qs 0 ) R ( qs )
+    -- I need to change this to let ν to be split on _∪_
+    -- because during reduction, we will need this.
+    -- but we only need one direction, thus it is impossible.
   ν-∪`    : ∀ qs zs → ( ν (zs ∪ sucₛₛ qs 0) ) R ( ν zs ∪ qs )
   ν-·`    : ∀ qs zs → ( ν (zs · sucₛₛ qs 0) ) R ( ν zs · qs )
   assoc   : (x y z : SState) → ( x ∪ (y ∪ z) ) R ( (x ∪ y) ∪ z )
@@ -101,7 +96,7 @@ data _R_ : SState → SState → Type ℓ where
   refl`    : ∀ x → x R x
   sym`    : ∀ x y → x R y → y R x
   trans`  : ∀ x y z → x R y → y R z → x R z
-  squash¹ : ∀ x y → isProp (x R y)
+  squash₁ : ∀ x y → isProp (x R y)
   
 
 
@@ -112,7 +107,7 @@ State = SState / _R_
 open BinaryRelation
 
 RisPropValued : isPropValued _R_
-RisPropValued a b = squash¹ a b
+RisPropValued a b = squash₁ a b
 
 RisEquivRel : isEquivRel _R_
 isEquivRel.reflexive RisEquivRel = refl`
@@ -125,6 +120,10 @@ All< [] k = Unit
 All< (x ∷ xs) k = (x < k) × All< xs k
 
 
+All<isProp : ∀{e} → (vs : Vec ℕ e) → ∀ n → isProp (All< vs n)
+All<isProp [] n = isPropUnit
+All<isProp (x ∷ vs) n (a1 , all1) (a2 , all2) = Σ≡Prop (λ _ → All<isProp vs n) (isProp≤ {suc x} {n} a1 a2)
+
 data WellScopedₛₛ : SState → ℕ → Type ℓ where
   ws-0b : ∀{k} → WellScopedₛₛ 0b k
   ws-1b : ∀{k} → WellScopedₛₛ 1b k
@@ -134,7 +133,13 @@ data WellScopedₛₛ : SState → ℕ → Type ℓ where
   ws-ν  : ∀{k q} → WellScopedₛₛ q (suc k) → WellScopedₛₛ (ν q) k
 
 
-
+WSisProp : ∀ s n → isProp (WellScopedₛₛ s n)
+WSisProp 0b n ws-0b ws-0b = refl
+WSisProp 1b n ws-1b ws-1b = refl
+WSisProp (` ([ secr ] _)) n (ws-` x) (ws-` y) = cong ws-` (All<isProp secr n x y)
+WSisProp (s ∪ s₁) n (ws-∪ x x₁) (ws-∪ y y₁) = cong₂ ws-∪ (WSisProp s n x y) (WSisProp s₁ n x₁ y₁)
+WSisProp (s · s₁) n (ws-· x x₁) (ws-· y y₁) = cong₂ ws-· (WSisProp s n x y) (WSisProp s₁ n x₁ y₁)
+WSisProp (ν s) n (ws-ν x) (ws-ν y) = cong ws-ν (WSisProp s (suc n) x y)
 
 
 
