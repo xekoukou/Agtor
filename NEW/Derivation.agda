@@ -22,7 +22,7 @@ import State
 import ActorM
 open import Projection
 
-module Delta {ℓ ℓ' : _} (prM : UMTypePr ℓ ℓ') where
+module Derivation {ℓ ℓ' : _} (prM : UMTypePr ℓ ℓ') where
 
 open ActorM prM
 
