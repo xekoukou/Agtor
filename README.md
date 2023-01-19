@@ -7,7 +7,7 @@ of finding the location of the actor and sending the msg to the specific locatio
 
 For example, the same system could potentially be executed in a single machine with multiple cpus or in many machines across the globe. This separation of concerns allows us to treat both systems as the same thing.
 
-It has similar structural congruence properties to pi types, but instead of pi that only has channels,
+It has similar structural congruence properties to pi calculus, but instead of pi that only has channels,
 this language has three types of *particles* :
 - Messages : Normal messages that are sent and asyncronously received by actors.
 - Actors   : Actors receive msgs and secrets. They respond by creating new msgs, secrets and actors.
