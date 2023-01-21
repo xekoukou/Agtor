@@ -6,11 +6,14 @@ open import Cubical.Functions.Surjection
 open import Cubical.Data.Sum
 open import Cubical.Data.Unit
 open import Cubical.Data.Sigma
-open import Cubical.Data.Vec
+open import Cubical.Data.Vec as V
+open import Cubical.Data.List as L
 open import Cubical.Data.Maybe
 open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
+open import Cubical.Data.Fin
+import Cubical.Data.FinData as FD
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Nat.Order.Recursive
 open import Cubical.Algebra.CommMonoid
@@ -42,45 +45,60 @@ module _ where
   δₛₛ[ s ] (q · q₁) = {!!}
   δₛₛ[ s ] (ν q) = {!!}
 
+
+
+  l1 : ∀ {k1} {k2} (secr1 : Vec ℕ k1) (s : Secret k1)
+         (secr2 : Vec ℕ k2) {AT : ActorT k2} (a : Actor AT) →
+       SState
+  l1 secr1 record { cond = cond ; nsecr = nsecr ; secr = secr } secr2 a = {!!} where
+    nSs = V.map (λ (a , b) → lookup (FD.fromℕ' _ a b) secr1) secr
+    l3 = V.map (λ x → (x , true)) secr1
+    l4 = V.foldr (λ (a , b) y → replace (λ (x , y) → x , false) (FD.fromℕ' _ a b) y) l3 secr
+    cs = V.foldr (λ { (x , false) y → y ; (x , true) y → x ∷ y}) L.[] l4
+
+    
+
   mutual
 
-    δₛₛ : ℕ → SState → SState
-    δₛₛ l 0b = 0b
-    δₛₛ l 1b = 1b
-    δₛₛ l (` [ secr ] c-s x) = 0b
-    δₛₛ l (` [ secr ] c-m MT x) = 0b
-    δₛₛ l (` [ secr ] c-a AT a) = fst (Actor.δ a)
-    δₛₛ l (q ∪ q₁) = δₛₛ l q ∪ δₛₛ l q₁
-    δₛₛ l (lq · rq) = δᵃₛₛ l l lq rq ∪ δᶜₛₛ l l lq rq
-    δₛₛ l (ν q) = δₛₛ (suc l) q
+    δₛₛ : SState → SState
+    δₛₛ 0b = 0b
+    δₛₛ 1b = 1b
+    δₛₛ (` [ secr ] c-s x) = 0b
+    δₛₛ (` [ secr ] c-m MT x) = 0b
+    δₛₛ (` [ secr ] c-a AT a) = fst (Actor.δ a)
+    δₛₛ (q ∪ q₁) = δₛₛ q ∪ δₛₛ q₁
+    δₛₛ (lq · rq) = δᵃₛₛ lq rq ∪ δᶜₛₛ lq rq
+    δₛₛ (ν q) = ν δₛₛ q
   
   
-    δᵃₛₛ : ∀ l r → SState → SState → SState
-    δᵃₛₛ l r x y = δₛₛ l x · y ∪ (x · δₛₛ r y)
+    δᵃₛₛ : SState → SState → SState
+    δᵃₛₛ x y = δₛₛ x · y ∪ (x · δₛₛ y)
 
 
-    δᶜₛₛ : ∀ l r → SState → SState → SState
-    δᶜₛₛ l r 0b rq = 0b
-    δᶜₛₛ l r 1b rq = 0b
-    δᶜₛₛ l r lq@(` x) 0b = 0b
-    δᶜₛₛ l r lq@(` x) 1b = 0b
-    δᶜₛₛ l r (` [ secr1 ] c1) (` [ secr2 ] c2) = δᶜ`ₛₛ l r secr1 c1 secr2 c2
-    δᶜₛₛ l r lq@(` x) (rq1 ∪ rq2) = δᶜₛₛ l r lq rq1 ∪ δᶜₛₛ l r lq rq2
-    δᶜₛₛ l r lq@(` x) (rq1 · rq2) = δᶜₛₛ l r lq rq1 · rq2 ∪ rq1 · δᶜₛₛ l r lq rq2
-    δᶜₛₛ l r lq@(` x) (ν rq) = δᶜₛₛ l (suc r) lq rq
-    δᶜₛₛ l r (lq1 ∪ lq2) rq = δᶜₛₛ l r lq1 rq ∪ δᶜₛₛ l r lq2 rq
-    δᶜₛₛ l r (lq1 · lq2) rq = δᶜₛₛ l r lq1 rq · lq2 ∪ lq1 · δᶜₛₛ l r lq2 rq
-    δᶜₛₛ l r (ν lq) rq = δᶜₛₛ (suc l) r lq rq
+    δᶜₛₛ : SState → SState → SState
+    δᶜₛₛ 0b rq = 0b
+    δᶜₛₛ 1b rq = 0b
+    δᶜₛₛ lq@(` x) 0b = 0b
+    δᶜₛₛ lq@(` x) 1b = 0b
+    δᶜₛₛ (` [ secr1 ] c1) (` [ secr2 ] c2) = δᶜ`ₛₛ secr1 c1 secr2 c2
+    δᶜₛₛ lq@(` x) (rq1 ∪ rq2) = δᶜₛₛ lq rq1 ∪ δᶜₛₛ lq rq2
+    δᶜₛₛ lq@(` x) (rq1 · rq2) = δᶜₛₛ lq rq1 · rq2 ∪ rq1 · δᶜₛₛ lq rq2
+    δᶜₛₛ lq@(` x) (ν rq) = δᶜₛₛ lq rq
+    δᶜₛₛ (lq1 ∪ lq2) rq = δᶜₛₛ lq1 rq ∪ δᶜₛₛ lq2 rq
+    δᶜₛₛ (lq1 · lq2) rq = δᶜₛₛ lq1 rq · lq2 ∪ lq1 · δᶜₛₛ lq2 rq
+    δᶜₛₛ (ν lq) rq = ν δᶜₛₛ lq (sucₛₛ rq 0)
 
 
-    δᶜ`ₛₛ : ∀{k1 k2} → ∀ (l r : ℕ) (secr1 : Vec ℕ k1) (c1 : C k1)
-           (secr2 : Vec ℕ k2) (c2 : C k2) → SState
-    δᶜ`ₛₛ l r secr1 (ActorM.c-s x) secr2 (ActorM.c-s x₁) = 0b
-    δᶜ`ₛₛ l r secr1 (ActorM.c-s x) secr2 (ActorM.c-m MT x₁) = 0b
-    δᶜ`ₛₛ l r secr1 (ActorM.c-s s) secr2 (ActorM.c-a AT a) = {!!}
-    δᶜ`ₛₛ l r secr1 (ActorM.c-m MT m) secr2 (ActorM.c-s x₁) = 0b
-    δᶜ`ₛₛ l r secr1 (ActorM.c-m MT x) secr2 (ActorM.c-m MT₁ x₁) = 0b
-    δᶜ`ₛₛ l r secr1 (ActorM.c-m MT m) secr2 (ActorM.c-a AT a) = {!!}
-    δᶜ`ₛₛ l r secr1 (ActorM.c-a AT x) secr2 (ActorM.c-s x₁) = {!!}
-    δᶜ`ₛₛ l r secr1 (ActorM.c-a AT x) secr2 (ActorM.c-m MT x₁) = {!!}
-    δᶜ`ₛₛ l r secr1 (ActorM.c-a AT x) secr2 (ActorM.c-a AT₁ x₁) = 0b
+    δᶜ`ₛₛ : ∀{k1 k2} → (secr1 : Vec ℕ k1) (c1 : C k1)
+            (secr2 : Vec ℕ k2) (c2 : C k2) → SState
+    δᶜ`ₛₛ secr1 (c-s x) secr2 (c-s x₁) = 0b
+    δᶜ`ₛₛ secr1 (c-s x) secr2 (c-m MT x₁) = 0b
+    δᶜ`ₛₛ secr1 (c-s s) secr2 (c-a AT a) = {!l1 secr1 s secr2 a!}
+    δᶜ`ₛₛ secr1 (c-m MT m) secr2 (c-s x₁) = 0b
+    δᶜ`ₛₛ secr1 (c-m MT x) secr2 (c-m MT₁ x₁) = 0b
+    δᶜ`ₛₛ secr1 (c-m MT m) secr2 (c-a AT a) = {!!}
+    δᶜ`ₛₛ secr1 (c-a AT x) secr2 (c-s x₁) = {!!}
+    δᶜ`ₛₛ secr1 (c-a AT x) secr2 (c-m MT x₁) = {!!}
+    δᶜ`ₛₛ secr1 (c-a AT x) secr2 (c-a AT₁ x₁) = 0b
+
+
