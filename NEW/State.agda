@@ -76,10 +76,9 @@ data _R_ : SState → SState → Type ℓ where
   ⟨⟩-ν : ∀{q1 q2} → q1 R q2 → (ν q1) R (ν q2)
   ν-swap` : ∀ qs → (ν ν (swapₛₛ 0 1 qs) ) R ( ν ν qs )
   ν-elim` : ∀ qs → ( ν sucₛₛ qs 0 ) R ( qs )
-    -- I need to change this to let ν to be split on _∪_
-    -- because during reduction, we will need this.
-    -- but we only need one direction, thus it is impossible.
-  ν-∪`    : ∀ qs zs → ( ν (zs ∪ sucₛₛ qs 0) ) R ( ν zs ∪ qs )
+    -- We can add two ν from across _∪_ because even though they represent different secrets
+    -- it is impossible for them to interact with each other, they represent different "time lines."
+  ν-∪`    : ∀ qs zs → ( ν (zs ∪ qs) ) R ( ν zs ∪ ν qs )
   ν-·`    : ∀ qs zs → ( ν (zs · sucₛₛ qs 0) ) R ( ν zs · qs )
   assoc   : (x y z : SState) → ( x ∪ (y ∪ z) ) R ( (x ∪ y) ∪ z )
   rid     : (x : SState) → ( x ∪ 0b ) R ( x )
