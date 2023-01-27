@@ -37,7 +37,7 @@ module _ where
 
   open StV
 
-  δₛₛ[_] : ∀{k} → Secret k → SState → Maybe SState
+  δₛₛ[_] : ∀{fv k} → Secret k → SState fv → Maybe (SState fv)
   δₛₛ[ s ] 0b = just 0b
   δₛₛ[ s ] 1b = just 1b
   δₛₛ[ s ] (` x) = {!!}
@@ -47,9 +47,9 @@ module _ where
 
 
 
-  l1 : ∀ {k1} {k2} (secr1 : Vec ℕ k1) (s : Secret k1)
+  l1 : ∀ {fv} {k1} {k2} (secr1 : Vec ℕ k1) (s : Secret k1)
          (secr2 : Vec ℕ k2) {AT : ActorT k2} (a : Actor AT) →
-       SState
+       SState fv
   l1 secr1 record { cond = cond ; nsecr = nsecr ; secr = secr } secr2 a = {!!} where
     nSs = V.map (λ (a , b) → lookup (FD.fromℕ' _ a b) secr1) secr
     l3 = V.map (λ x → (x , true)) secr1
@@ -60,22 +60,22 @@ module _ where
 
   mutual
 
-    δₛₛ : SState → SState
+    δₛₛ : ∀{fv} → SState fv → SState fv
     δₛₛ 0b = 0b
     δₛₛ 1b = 1b
     δₛₛ (` [ secr ] c-s x) = 0b
     δₛₛ (` [ secr ] c-m MT x) = 0b
-    δₛₛ (` [ secr ] c-a AT a) = fst (Actor.δ a)
+    δₛₛ (` [ secr ] c-a AT a) = ? -- Actor.δ a
     δₛₛ (q ∪ q₁) = δₛₛ q ∪ δₛₛ q₁
     δₛₛ (lq · rq) = δᵃₛₛ lq rq ∪ δᶜₛₛ lq rq
     δₛₛ (ν q) = ν δₛₛ q
   
   
-    δᵃₛₛ : SState → SState → SState
+    δᵃₛₛ : ∀{fv} → SState fv → SState fv → SState fv
     δᵃₛₛ x y = δₛₛ x · y ∪ (x · δₛₛ y)
 
 
-    δᶜₛₛ : SState → SState → SState
+    δᶜₛₛ : ∀{fv} → SState fv → SState fv → SState fv
     δᶜₛₛ 0b rq = 0b
     δᶜₛₛ 1b rq = 0b
     δᶜₛₛ lq@(` x) 0b = 0b
@@ -89,8 +89,8 @@ module _ where
     δᶜₛₛ (ν lq) rq = ν δᶜₛₛ lq (sucₛₛ rq 0)
 
 
-    δᶜ`ₛₛ : ∀{k1 k2} → (secr1 : Vec ℕ k1) (c1 : C k1)
-            (secr2 : Vec ℕ k2) (c2 : C k2) → SState
+    δᶜ`ₛₛ : ∀{fv k1 k2} → (secr1 : Vec ℕ k1) (c1 : C k1)
+            (secr2 : Vec ℕ k2) (c2 : C k2) → SState fv
     δᶜ`ₛₛ secr1 (c-s x) secr2 (c-s x₁) = 0b
     δᶜ`ₛₛ secr1 (c-s x) secr2 (c-m MT x₁) = 0b
     δᶜ`ₛₛ secr1 (c-s s) secr2 (c-a AT a) = {!l1 secr1 s secr2 a!}

@@ -12,6 +12,7 @@ open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Fin hiding (_≤?_)
 open import Cubical.Data.Nat.Order.Recursive
+import Cubical.Data.Nat.Order as O
 open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
@@ -19,20 +20,31 @@ open import Cubical.HITs.PropositionalTruncation
 
 module State.Lemma where
 
-module _ where
 
-  _<?_ : ∀ n m → Dec (n < m)
-  _<?_ n m = suc n ≤? m
+_<?_ : ∀ n m → Dec (n < m)
+_<?_ n m = suc n ≤? m
 
 
-  suc<? : ℕ → ℕ → ℕ
-  suc<? m n = l1 (m <? n) module suc≤?-1 where
-    l1 : Dec (suc m ≤ n) → ℕ
-    l1 (yes p) = m
-    l1 (no ¬p) = suc m
-  
+suc<? : ℕ → ℕ → ℕ
+suc<? m n = l1 (m <? n) module suc≤?-1 where
+  l1 : Dec (suc m ≤ n) → ℕ
+  l1 (yes p) = m
+  l1 (no ¬p) = suc m
+
+q1 : ∀ {k} → (fx : Fin k) → ∀ n → Σ ℕ (λ m → m + suc (suc<? (fst fx) n) ≡ suc k)
+q1 (x , rl) n with x <? n
+... | yes p = O.≤-suc rl
+... | no ¬p = O.suc-≤-suc rl
+
+suc<?Fin : ∀{k} → Fin k → ∀ n → Fin (suc k)
+suc<?Fin a@(x , rl) n = (suc<? x n) , q1 a n
+
+
 lsuc<? : ∀{n} → Vec ℕ n →  ℕ → Vec ℕ n
 lsuc<? ls n = V.map (λ x → suc<? x n) ls
+
+lsuc<?Fin : ∀{k n} → Vec (Fin k) n →  ℕ → Vec (Fin (suc k)) n
+lsuc<?Fin ls n = V.map (λ x → suc<?Fin x n) ls
 
 const` : ∀{ℓ} → {A : Type ℓ} → A → ℕ → A
 const` = const
@@ -65,11 +77,18 @@ abstract
       l2 (no ¬_) = refl
 
 
+  suc-suc-Fin : ∀{k} → ∀ n m → m ≤ n → (x : Fin k) → suc<?Fin (suc<?Fin x m) (suc n) ≡ suc<?Fin (suc<?Fin x n) m
+  suc-suc-Fin n m rel (x , rl) = Σ≡Prop (λ x → O.isProp≤) (suc-suc n m rel x)
+
 
 lsuc-lsuc : ∀{k} → ∀ n m → m ≤ n → (vs : Vec ℕ k) → lsuc<? (lsuc<? vs m) (suc n) ≡ lsuc<? (lsuc<? vs n) m
 lsuc-lsuc n m rel [] = refl
 lsuc-lsuc n m rel (x ∷ vs) = cong₂ _∷_ (suc-suc n m rel x) (lsuc-lsuc n m rel vs)
 
+
+lsuc-lsuc-Fin : ∀{e k} → ∀ n m → m ≤ n → (vs : Vec (Fin e) k) → lsuc<?Fin (lsuc<?Fin vs m) (suc n) ≡ lsuc<?Fin (lsuc<?Fin vs n) m
+lsuc-lsuc-Fin n m rel [] = refl
+lsuc-lsuc-Fin n m rel (x ∷ vs) = cong₂ _∷_ (suc-suc-Fin n m rel x) (lsuc-lsuc-Fin n m rel vs)
 
 
 swap : ℕ → ℕ → ℕ → ℕ
@@ -81,10 +100,21 @@ swap m k r = l1 (m =? r) module swap-1 where
     l2 (yes _) = m
     l2 (no _) = r
 
+q2 : ∀ {k} → (m e r : Fin k) → Σ ℕ (λ k₂ → k₂ + suc (swap-1.l1 (fst m) (fst e) (fst r) (fst m =? fst r)) ≡ k)
+q2 (m , rlm) (e , rle) (r , rlr) with m =? r
+... | yes p = rle
+... | no ¬p with e =? r
+... | yes p = rlm
+... | no ¬p₁ = rlr
 
+swapFin : ∀{k} → Fin k → Fin k → Fin k → Fin k
+swapFin w1@(m , rlm) w2@(k , rlk) w3@(r , rlr) = swap m k r , q2 w1 w2 w3
 
 lswap : ∀{n} → ℕ → ℕ →  Vec ℕ n → Vec ℕ n
 lswap m k ls = V.map (swap m k) ls
+
+lswapFin : ∀{k n} → Fin k → Fin k →  Vec (Fin k) n → Vec (Fin k) n
+lswapFin m k ls = V.map (swapFin m k) ls
 
 abstract
 
@@ -138,16 +168,33 @@ abstract
         l3 (no _) (no ¬p) = J (λ y _ → s<?A y ≡ suc k) refl eq1
 
 
+suc-swap-Fin : ∀{d} → ∀ t → (m e : Fin d) → fst m < t → fst e < t → (k : Fin d) → suc<?Fin (swapFin m e k) t ≡ swapFin (fext m) (fext e) (suc<?Fin k t)
+suc-swap-Fin t (m , rlm) (e , rle) m<t e<t (k , rlk) = Σ≡Prop (λ x → O.isProp≤) (suc-swap t m e m<t e<t k)
+
+
 lsuc-lswap : ∀{k} → ∀ t m e → m < t → e < t → (vs : Vec ℕ k) → lsuc<? (lswap m e vs) t ≡ lswap m e (lsuc<? vs t)
 lsuc-lswap t m e rel1 rel2 [] = refl
 lsuc-lswap t m e rel1 rel2 (x ∷ vs) = cong₂ _∷_ (suc-swap t m e rel1 rel2 x) (lsuc-lswap t m e rel1 rel2 vs)
 
+lsuc-lswap-Fin : ∀{d k} → ∀ t → (m e : Fin d) → fst m < t → fst e < t → (vs : Vec (Fin d) k) → lsuc<?Fin (lswapFin m e vs) t ≡ lswapFin (fext m) (fext e) (lsuc<?Fin vs t)
+lsuc-lswap-Fin t m e rel1 rel2 [] = refl
+lsuc-lswap-Fin t m e rel1 rel2 (x ∷ vs) = cong₂ _∷_ (suc-swap-Fin t m e rel1 rel2 x) (lsuc-lswap-Fin t m e rel1 rel2 vs)
+
 postulate
   suc-swap> : ∀ t m e → t ≤ m → t ≤ e → ∀ k → suc<? (swap m e k) t ≡ swap (suc m) (suc e) (suc<? k t)
+
+suc-swap>-Fin : ∀{d} → ∀ t → (m e : Fin d) → t ≤ fst m → t ≤ fst e → ∀ k → suc<?Fin (swapFin m e k) t ≡ swapFin (fsuc m) (fsuc e) (suc<?Fin k t)
+suc-swap>-Fin t m e rel1 rel2 k = Σ≡Prop (λ x → O.isProp≤) (suc-swap> t (fst m) (fst e) rel1 rel2 (fst k))
+
 
 lsuc-lswap> : ∀{k} → ∀ t m e → t ≤ m → t ≤ e → (vs : Vec ℕ k) → lsuc<? (lswap m e vs) t ≡ lswap (suc m) (suc e) (lsuc<? vs t)
 lsuc-lswap> t m e t≤m t≤e [] = refl
 lsuc-lswap> t m e t≤m t≤e (x ∷ vs) = cong₂ _∷_ (suc-swap> t m e t≤m t≤e x) (lsuc-lswap> t m e t≤m t≤e vs)
+
+
+lsuc-lswap>-Fin : ∀{d k} → ∀ t → (m e : Fin d) → t ≤ fst m → t ≤ fst e → (vs : Vec (Fin d) k) → lsuc<?Fin (lswapFin m e vs) t ≡ lswapFin (fsuc m) (fsuc e) (lsuc<?Fin vs t)
+lsuc-lswap>-Fin t m e rel1 rel2 [] = refl
+lsuc-lswap>-Fin t m e rel1 rel2 (x ∷ vs) = cong₂ _∷_ (suc-swap>-Fin t m e rel1 rel2 x) (lsuc-lswap>-Fin t m e rel1 rel2 vs)
 
 
 abstract
@@ -223,9 +270,18 @@ abstract
     ... | no ¬p₃ | no e2≢k = ⊥.rec (e2≢k e2≡k)
 
 
+swap-swap-Fin : ∀{d} → (t1 t2 e1 e2 : Fin d) → ¬ (t1 ≡ e1) → ¬ (t1 ≡ e2) →  ¬ (t2 ≡ e1) → ¬ (t2 ≡ e2) → ∀ k → swapFin t1 t2 (swapFin e1 e2 k) ≡ swapFin e1 e2 (swapFin t1 t2 k)
+swap-swap-Fin t1 t2 e1 e2 neq1 neq2 neq3 neq4 k
+  = Fin-fst-≡ (swap-swap (fst t1) (fst t2) (fst e1) (fst e2) (Fin-¬≡-¬fst≡ neq1) (Fin-¬≡-¬fst≡ neq2) (Fin-¬≡-¬fst≡ neq3) (Fin-¬≡-¬fst≡ neq4) (fst k))
+
 
 lswap-lswap : ∀{k} → ∀ t1 t2 e1 e2 → ¬ (t1 ≡ e1) → ¬ (t1 ≡ e2) →  ¬ (t2 ≡ e1) → ¬ (t2 ≡ e2) → (vs : Vec ℕ k)
               → lswap t1 t2 (lswap e1 e2 vs) ≡ lswap e1 e2 (lswap t1 t2 vs)
 lswap-lswap t1 t2 e1 e2 x x₁ x₂ x₃ [] = refl
 lswap-lswap t1 t2 e1 e2 x x₁ x₂ x₃ (x₄ ∷ vs) = cong₂ _∷_ (swap-swap t1 t2 e1 e2 x x₁ x₂ x₃ x₄) (lswap-lswap t1 t2 e1 e2 x x₁ x₂ x₃ vs)
 
+
+lswap-lswap-Fin : ∀{d k} → (t1 t2 e1 e2 : Fin d) → ¬ (t1 ≡ e1) → ¬ (t1 ≡ e2) →  ¬ (t2 ≡ e1) → ¬ (t2 ≡ e2) → (vs : Vec (Fin d) k)
+                  → lswapFin t1 t2 (lswapFin e1 e2 vs) ≡ lswapFin e1 e2 (lswapFin t1 t2 vs)
+lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 [] = refl
+lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 (x ∷ vs) = cong₂ _∷_ (swap-swap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 x) (lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 vs)
