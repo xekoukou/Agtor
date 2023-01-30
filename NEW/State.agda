@@ -8,6 +8,7 @@ open import Cubical.Data.Unit
 open import Cubical.Data.Sigma
 open import Cubical.Data.Vec as V
 open import Cubical.Data.Fin hiding (_/_)
+import Cubical.Data.FinData as FD
 open import Cubical.Data.Bool hiding (isProp≤ ; _≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
@@ -79,6 +80,16 @@ id+ m (ν q) = ν id+ m q
 ν[_]_ : ∀{fv} → (n : ℕ) → SState (n + fv) → SState fv
 ν[ zero ] q = q
 ν[ suc x ] q = ν[ x ] (ν q)
+
+substₛₛ : ∀{fv k} → Vec (Fin fv) k → SState k → SState fv
+substₛₛ vs 0b = 0b
+substₛₛ vs 1b = 1b
+substₛₛ vs (` [ secr ] c) = ` [ V.map (λ (x , rl) → lookup (FD.fromℕ' _ x rl) vs) secr ] c
+substₛₛ vs (q ∪ q₁) = substₛₛ vs q ∪ substₛₛ vs q₁
+substₛₛ vs (q · q₁) = substₛₛ vs q · substₛₛ vs q₁
+substₛₛ vs (ν q) = ν substₛₛ (0 ∷ lsuc<?Fin vs 0) q
+
+
 
 
 data _R_ : ∀{fv} → SState fv → SState fv → Type ℓ where

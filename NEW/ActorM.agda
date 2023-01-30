@@ -22,21 +22,23 @@ open import Projection
 module ActorM {ℓ ℓ' : _} (prM : UMTypePr ℓ ℓ') where
 
 
-open ProjStr (snd prM)
+open ProjStr (snd prM) public
 UMType = ⟨ prM ⟩
 
-record Secret k : Type ℓ where
+
+-- Msgs have a type and a number of new secrets.
+-- New Secrets are at the start of the Vec.
+
+record MsgT k : Type ℓ where
   field
-    cond : UMType
-    nsecr : ℕ
-    secr : Vec (Fin k) nsecr
+    umT : UMType
+    nsecr : Fin (suc k)
 
 
 mutual
 
   data CT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
-    ct-s : Secret k → CT k
-    ct-m : UMType → CT k
+    ct-m : MsgT k → CT k
     ct-a : ActorT k → CT k
 
   module StT = State CT
@@ -46,18 +48,15 @@ mutual
     field
       minS    : List (Fin k)  -- This is the secrets that all messages must have
                               -- This is useful for local reduction purposes.
-      P     : List (Fin k) → UMType → Type
-      decP  : ∀ C A → Dec (P C A)
-      δᶜT   : ∀ C A → { p : ∥ P C A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState k
+      P     : List (Fin k) → ℕ → UMType → Type
+      decP  : ∀ c s A → Dec (P c s A)
+      δᶜT   : ∀ c s A → { p : ∥ P c s A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState (s + k)
       δT    : StT.SState k
-
-      δᶜTs   : ∀{m} → ∀ C → (S : Secret m) → { p : ∥ P C (Secret.cond S) ∥₁ } → ActorT (Secret.nsecr S + k)
 
 mutual
   
   data C (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
-    c-s : Secret k → C k
-    c-m : (MT : UMType) → ⟨ ⟦ MT ⟧ ⟩ → C k
+    c-m : (MT : MsgT k) → ⟨ ⟦ MsgT.umT MT ⟧ ⟩ → C k
     c-a : (AT : ActorT k) → Actor AT → C k
 
   module StV = State C
@@ -68,9 +67,8 @@ mutual
     open ActorT
     
     field
-      δᶜ  : ∀ C A → { p : ∥ (P Typ) C A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState k) (_withType (δᶜT Typ) C A {p} v)
+      δᶜ  : ∀ c s A → { p : ∥ (P Typ) c s A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState (s + k)) (_withType (δᶜT Typ) c s A {p} v)
       δ   : Σ (StV.SState k) (_withType δT Typ)
-      δᶜs   : ∀{m} → ∀ C → (S : Secret m) → { p : ∥ (P Typ) C (Secret.cond S) ∥₁ } → Actor ((δᶜTs Typ) C S {p})
 
 
   data _withType_ : ∀{fv} → StV.SState fv → StT.SState fv → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) where
@@ -84,6 +82,5 @@ mutual
            → c withTypeC ct → (StV.` StV.[ secr ] c) withType (StT.` StT.[ secr ] ct)
 
   data _withTypeC_ {k} : C k → CT k → Type ((ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ'))) where
-    wtCs : ∀{s} → (c-s s) withTypeC (ct-s s)
     wtCm : ∀{t v} → (c-m t v) withTypeC (ct-m t)
     wtCa : ∀{t a} → (c-a t a) withTypeC (ct-a t)

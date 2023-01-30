@@ -180,8 +180,54 @@ lsuc-lswap-Fin : ∀{d k} → ∀ t → (m e : Fin d) → fst m < t → fst e < 
 lsuc-lswap-Fin t m e rel1 rel2 [] = refl
 lsuc-lswap-Fin t m e rel1 rel2 (x ∷ vs) = cong₂ _∷_ (suc-swap-Fin t m e rel1 rel2 x) (lsuc-lswap-Fin t m e rel1 rel2 vs)
 
-postulate
+abstract
   suc-swap> : ∀ t m e → t ≤ m → t ≤ e → ∀ k → suc<? (swap m e k) t ≡ swap (suc m) (suc e) (suc<? k t)
+  suc-swap> t m e t≤m t≤e k with k <? t
+  ... | no ¬p = l1 where
+    l1 : suc≤?-1.l1 (swap-1.l1 m e k (=?-1.tr→dec m k (m ≟ k))) t
+           (suc (swap-1.l1 m e k (=?-1.tr→dec m k (m ≟ k))) ≤? t)
+           ≡
+           swap-1.l1 (suc m) (suc e) (suc≤?-1.l1 k t (no ¬p))
+           (=?-1.tr→dec (suc m) (suc≤?-1.l1 k t (no ¬p))
+            (suc m ≟ suc≤?-1.l1 k t (no ¬p)))
+    l1 with m =? k
+    ... | no ¬p₁ = l2 where
+      l2 : suc≤?-1.l1 (swap-1.swap-2.l2 m e k ¬p₁ (=?-1.tr→dec e k (e ≟ k))) t
+             (suc (swap-1.swap-2.l2 m e k ¬p₁ (=?-1.tr→dec e k (e ≟ k))) ≤? t)
+             ≡
+             swap-1.l1 (suc m) (suc e) (suc k)
+             (=?-1.tr→dec (suc m) (suc k) (Trichotomy-suc (m ≟ k)))
+      l2 with suc m =? suc k
+      ... | yes p = ⊥.rec (¬p₁ (injSuc p))
+      ... | no ¬p3 with e =? k | suc e =? suc k
+      ... | yes p | yes p₁ = l3 where
+        l3 : suc≤?-1.l1 (swap-1.swap-2.l2 m e k ¬p₁ (yes p)) t
+               (suc (swap-1.swap-2.l2 m e k ¬p₁ (yes p)) ≤? t)
+               ≡ swap-1.swap-2.l2 (suc m) (suc e) (suc k) ¬p3 (yes p₁)
+        l3 with m <? t
+        ... | yes p = ⊥.rec (≤-asym {m = m} {n = t} p t≤m)
+        ... | no ¬p = refl
+      ... | yes p | no ¬p₁ = ⊥.rec (¬p₁ (cong suc p))
+      ... | no ¬p₁ | yes p = ⊥.rec (¬p₁ (injSuc p))
+      ... | no ¬p1 | no ¬p2 = l3 where
+        l3 : suc≤?-1.l1 k t (suc k ≤? t) ≡ suc k
+        l3 with k <? t
+        ... | yes p1 = ⊥.rec (¬p p1)
+        ... | no ¬p = refl
+    ... | yes p with suc m =? suc k
+    ... | no ¬p = ⊥.rec (¬p (cong suc p))
+    ... | yes p₁ with e <? t
+    ... | yes p₂ = ⊥.rec (≤-asym {m = e} {n = t} p₂ t≤e)
+    ... | no ¬p = refl
+  ... | yes p with suc m =? k | m =? k
+  ... | yes p₁ | d = ⊥.rec ((<-asym {m = suc m} {n = t} (subst (λ a → a ≤ t) (sym (cong suc p₁)) p)) t≤m)
+  ... | no ¬p | yes p₁ = ⊥.rec ((≤-asym {m = m} {n = t} (subst (λ a → a ≤ t) (sym (cong suc p₁)) p)) t≤m)
+  ... | no ¬p | no ¬p₁ with e =? k | suc e =? k
+  ... | yes p₁ | d = ⊥.rec ((≤-asym {m = e} {n = t} (subst (λ a → a ≤ t) (sym (cong suc p₁)) p)) t≤e)
+  ... | no ¬p₂ | yes p₁ = ⊥.rec ((<-asym {m = suc e} {n = t} (subst (λ a → a ≤ t) (sym (cong suc p₁)) p)) t≤e)
+  ... | no ¬p₂ | no ¬p₃ with k <? t
+  ... | yes p₁ = refl
+  ... | no ¬p₄ = ⊥.rec (¬p₄ p)
 
 suc-swap>-Fin : ∀{d} → ∀ t → (m e : Fin d) → t ≤ fst m → t ≤ fst e → ∀ k → suc<?Fin (swapFin m e k) t ≡ swapFin (fsuc m) (fsuc e) (suc<?Fin k t)
 suc-swap>-Fin t m e rel1 rel2 k = Σ≡Prop (λ x → O.isProp≤) (suc-swap> t (fst m) (fst e) rel1 rel2 (fst k))
@@ -285,3 +331,6 @@ lswap-lswap-Fin : ∀{d k} → (t1 t2 e1 e2 : Fin d) → ¬ (t1 ≡ e1) → ¬ (
                   → lswapFin t1 t2 (lswapFin e1 e2 vs) ≡ lswapFin e1 e2 (lswapFin t1 t2 vs)
 lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 [] = refl
 lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 (x ∷ vs) = cong₂ _∷_ (swap-swap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 x) (lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 vs)
+
+
+

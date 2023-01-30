@@ -98,7 +98,7 @@ module _ {ℓ} {C : ∀ k → Type ℓ} where
     l1 a b R1 = eq/ _ _ (⟨⟩-ν R1)
 
   sucₛ : ∀{fv} → (n : ℕ) → State fv → State (suc fv)
-  sucₛ {fv} n q = SQ.elim (λ _ → squash/) (λ a → ⟨ sucₛₛ a n ⟩ₛ) (λ a b r → eq/ _ _ (l1 n a b r)) q where
+  sucₛ {fv} n q = SQ.rec squash/ (λ a → ⟨ sucₛₛ a n ⟩ₛ) (λ a b r → eq/ _ _ (l1 n a b r)) q where
     l1 : ∀{fv} → (n : ℕ) → (a b : SState fv) → (r : a R b) → (sucₛₛ a n ) R ( sucₛₛ b n )
     l1 n .(_ ∪ _) .(_ ∪ _) (⟨⟩-∪ r r₁) = ⟨⟩-∪ (l1 n _ _ r) (l1 n _ _ r₁)
     l1 n .(_ · _) .(_ · _) (⟨⟩-· r r₁) = ⟨⟩-· (l1 n _ _ r) (l1 n _ _ r₁)
@@ -145,6 +145,36 @@ module _ {ℓ} {C : ∀ k → Type ℓ} where
     l1 n m a b (sym` .b .a r) = sym` (swapₛₛ n m b) (swapₛₛ n m a) (l1 n m b a r)
     l1 n m a b (trans` .a y .b r r₁) = trans` (swapₛₛ n m a) (swapₛₛ n m y) (swapₛₛ n m b) (l1 n m a y r) (l1 n m y b r₁)
     l1 n m a b (squash₁ .a .b r r₁ i) = squash₁ (swapₛₛ n m a) (swapₛₛ n m b) (l1 n m a b r) (l1 n m a b r₁) i
+
+
+module _ {ℓ} {C : ∀ k → Type ℓ} where
+
+  open State C
+
+  substₛ : ∀{fv k} → Vec (Fin fv) k → State k → State fv
+  substₛ vs q = SQ.rec squash/ (λ e → ⟨ substₛₛ vs e ⟩ₛ) (λ a b r → eq/ (substₛₛ vs a) (substₛₛ vs b) (l1 vs a b r)) q where
+    l1 : ∀ {fv} {k} (vs : Vec (Fin fv) k)
+         (a b : SState k) (r : a R b) → substₛₛ vs a R substₛₛ vs b
+    l1 vs .(_ ∪ _) .(_ ∪ _) (⟨⟩-∪ r r₁) = ⟨⟩-∪ (l1 vs _ _ r) (l1 vs _ _ r₁)
+    l1 vs .(_ · _) .(_ · _) (⟨⟩-· r r₁) = ⟨⟩-· (l1 vs _ _ r) (l1 vs _ _ r₁)
+    l1 vs .(ν _) .(ν _) (⟨⟩-ν r) = ⟨⟩-ν (l1 _ _ _ r)
+    l1 vs .(ν (ν swapₛₛ 0 1 qs)) .(ν (ν qs)) (ν-swap` qs) = subst (λ a → (ν (ν a)) R substₛₛ vs (ν (ν qs))) {!!} (ν-swap` (substₛₛ (0 ∷ 1 ∷ lsuc<?Fin (lsuc<?Fin vs 0) 0) qs))
+    l1 vs .(ν sucₛₛ b 0) b (ν-elim` .b) = {!!}
+    l1 vs .(ν (zs ∪ qs)) .(ν zs ∪ ν qs) (ν-∪` qs zs) = {!!}
+    l1 vs .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (ν-·` qs zs) = {!!}
+    l1 vs .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (assoc x y z) = {!!}
+    l1 vs .(b ∪ 0b) b (rid .b) = {!!}
+    l1 vs .(x ∪ y) .(y ∪ x) (comm x y) = {!!}
+    l1 vs .(b ∪ b) b (idem .b) = {!!}
+    l1 vs .(x · y · z) .((x · y) · z) (assoc· x y z) = {!!}
+    l1 vs .(b · 1b) b (rid· .b) = {!!}
+    l1 vs .(x · y) .(y · x) (comm· x y) = {!!}
+    l1 vs .(x · 0b) .0b (def∅· x) = {!!}
+    l1 vs .(x · (y ∪ z)) .(x · y ∪ x · z) (dist x y z) = {!!}
+    l1 vs a .a (refl` .a) = {!!}
+    l1 vs a b (sym` .b .a r) = {!!}
+    l1 vs a b (trans` .a y .b r r₁) = {!!}
+    l1 vs a b (squash₁ .a .b r r₁ i) = {!!}
 
 
 module _ {ℓ1} {ℓ2} {C1 : ∀ k → Type ℓ1} {C2 : ∀ k → Type ℓ2} where
