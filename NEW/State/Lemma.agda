@@ -11,6 +11,7 @@ open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Fin hiding (_≤?_)
+import Cubical.Data.FinData as FD
 open import Cubical.Data.Nat.Order.Recursive
 import Cubical.Data.Nat.Order as O
 open import Cubical.Algebra.CommMonoid
@@ -334,3 +335,31 @@ lswap-lswap-Fin t1 t2 e1 e2 rel1 rel2 rel3 rel4 (x ∷ vs) = cong₂ _∷_ (swap
 
 
 
+sbst : ∀{fv k d} → Vec (Fin fv) k → Vec (Fin k) d → Vec (Fin fv) d
+sbst vs xs = V.map (λ (x , rl) → lookup (FD.fromℕ' _ x rl) vs) xs
+
+
+sbsuc : ∀{fv k} → (n : ℕ) → Vec (Fin fv) k → Fin (suc fv) → Vec (Fin (suc fv)) (suc k)
+sbsuc n [] v = v ∷ []
+sbsuc zero vs v = v ∷ V.map fsuc vs
+sbsuc (suc n) (x ∷ vs) v = fext x ∷ sbsuc n vs v
+
+sbst-suc : ∀ {fv k} (vs : Vec (Fin fv) k) (v : Fin (suc fv)) (x : Fin k) → ∀ n → 
+     suc<?Fin (lookup (FD.fromℕ' k (fst x) (snd x)) vs) n ≡
+     lookup (FD.fromℕ' (suc k) (fst (suc<?Fin x n)) (snd (suc<?Fin x n))) (sbsuc n vs v)
+sbst-suc [] v y n = ⊥.rec (¬Fin0 y)
+sbst-suc {k = suc k} (x ∷ vs) v y (suc n) = {!!}
+sbst-suc (x ∷ vs) v (zero , snd₁) zero with fst x <? zero
+... | no ¬p = refl
+sbst-suc (x ∷ vs@[]) v (suc _ , snd) zero = ⊥.rec (O.¬-<-zero (O.pred-≤-pred snd))
+sbst-suc {k = suc (suc n)} (x ∷ vs@(x₁ ∷ xs)) v (suc y , snd) zero =  subst (λ a → suc<?Fin
+      (lookup (FD.fromℕ' (suc n) y (O.pred-≤-pred snd)) (x₁ ∷ xs)) zero
+      ≡
+      lookup
+      (FD.fromℕ' (suc n) y a)
+      (fsuc x₁ ∷ V.map fsuc xs)) (O.isProp≤ _ _) (sbst-suc vs v (y , O.pred-≤-pred snd) zero)
+
+sbst-lsuc : ∀{fv k d v} → ∀ n → (vs : Vec (Fin fv) k) → (ls : Vec (Fin k) d)
+            → lsuc<?Fin (sbst vs ls) n ≡ sbst (sbsuc n vs v) (lsuc<?Fin ls n)
+sbst-lsuc n vs [] = refl
+sbst-lsuc {v = v} n vs (x ∷ ls) = cong₂ _∷_ (sbst-suc vs v x n) (sbst-lsuc n vs ls)
