@@ -2,7 +2,7 @@
 
 This is an attempt at a dependently typed actor language. This is highly experimental with a low probability of actually working.
 
-Contrary to pi calculus, we start by putting the constraint that communication should be type safe, disregarding how it happens, ie disregarding the problem
+We start by putting the constraint that communication should be type safe, disregarding how it happens, ie disregarding the problem
 of finding the location of the actor and sending the msg to the specific location. It is assumed that later, one could introduce the restriction of knowing where to send the message.
 
 For example, the same system could potentially be executed in a single machine with multiple cpus or in many machines across the globe. This separation of concerns allows us to treat both systems as the same thing.
