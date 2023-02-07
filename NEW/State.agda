@@ -84,10 +84,10 @@ id+ m (ν q) = ν id+ m q
 substₛₛ : ∀{fv k} → Vec (Fin fv) k → SState k → SState fv
 substₛₛ vs 0b = 0b
 substₛₛ vs 1b = 1b
-substₛₛ vs (` [ secr ] c) = ` [ V.map (λ (x , rl) → lookup (FD.fromℕ' _ x rl) vs) secr ] c
+substₛₛ vs (` [ secr ] c) = ` [ sbst vs secr ] c
 substₛₛ vs (q ∪ q₁) = substₛₛ vs q ∪ substₛₛ vs q₁
 substₛₛ vs (q · q₁) = substₛₛ vs q · substₛₛ vs q₁
-substₛₛ vs (ν q) = ν substₛₛ (0 ∷ lsuc<?Fin vs 0) q
+substₛₛ vs (ν q) = ν substₛₛ (sbext 0 vs fsuc 0) q
 
 
 

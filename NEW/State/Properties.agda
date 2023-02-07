@@ -9,13 +9,15 @@ open import Cubical.Categories.Instances.Sets
 open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Data.Sum
 open import Cubical.Data.Fin
-open import Cubical.Data.Empty
+import Cubical.Data.FinData as FD
+open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Vec as V
 open import Cubical.Data.List hiding ([_])
 open import Cubical.Data.Sigma
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Unit
-open import Cubical.Data.Nat.Order.Recursive as O
+import Cubical.Data.Nat.Order as O
+open import Cubical.Data.Nat.Order.Recursive
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
 open import Cubical.HITs.PropositionalTruncation
 
@@ -151,69 +153,140 @@ module _ {ℓ} {C : ∀ k → Type ℓ} where
 
   open State C
 
-  substₛ : ∀{fv k} → Vec (Fin fv) k → State k → State fv
-  substₛ vs q = SQ.rec squash/ (λ e → ⟨ substₛₛ vs e ⟩ₛ) (λ a b r → eq/ (substₛₛ vs a) (substₛₛ vs b) (l1 vs a b r)) q where
-    l1 : ∀ {fv} {k} (vs : Vec (Fin fv) k)
-         (a b : SState k) (r : a R b) → substₛₛ vs a R substₛₛ vs b
-    l1 vs .(_ ∪ _) .(_ ∪ _) (⟨⟩-∪ r r₁) = ⟨⟩-∪ (l1 vs _ _ r) (l1 vs _ _ r₁)
-    l1 vs .(_ · _) .(_ · _) (⟨⟩-· r r₁) = ⟨⟩-· (l1 vs _ _ r) (l1 vs _ _ r₁)
-    l1 vs .(ν _) .(ν _) (⟨⟩-ν r) = ⟨⟩-ν (l1 _ _ _ r)
-    l1 vs .(ν (ν swapₛₛ 0 1 qs)) .(ν (ν qs)) (ν-swap` qs) = subst (λ a → (ν (ν a)) R substₛₛ vs (ν (ν qs))) {!!} (ν-swap` (substₛₛ (0 ∷ 1 ∷ lsuc<?Fin (lsuc<?Fin vs 0) 0) qs))
-    l1 vs .(ν sucₛₛ b 0) b (ν-elim` .b) = {!!}
-    l1 vs .(ν (zs ∪ qs)) .(ν zs ∪ ν qs) (ν-∪` qs zs) = {!!}
-    l1 vs .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (ν-·` qs zs) = {!!}
-    l1 vs .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (assoc x y z) = {!!}
-    l1 vs .(b ∪ 0b) b (rid .b) = {!!}
-    l1 vs .(x ∪ y) .(y ∪ x) (comm x y) = {!!}
-    l1 vs .(b ∪ b) b (idem .b) = {!!}
-    l1 vs .(x · y · z) .((x · y) · z) (assoc· x y z) = {!!}
-    l1 vs .(b · 1b) b (rid· .b) = {!!}
-    l1 vs .(x · y) .(y · x) (comm· x y) = {!!}
-    l1 vs .(x · 0b) .0b (def∅· x) = {!!}
-    l1 vs .(x · (y ∪ z)) .(x · y ∪ x · z) (dist x y z) = {!!}
-    l1 vs a .a (refl` .a) = {!!}
-    l1 vs a b (sym` .b .a r) = {!!}
-    l1 vs a b (trans` .a y .b r r₁) = {!!}
-    l1 vs a b (squash₁ .a .b r r₁ i) = {!!}
+  l1 : ∀ {fv} {k} (vs : Vec {ℓ-zero} (Fin fv) k)
+       n (nrl : n O.< suc fv) →
+     _≡_ {ℓ-zero}
+     {Vec {ℓ-zero}
+      (Σ {ℓ-zero} {ℓ-zero} ℕ
+       (λ k₁ →
+          Σ {ℓ-zero} {ℓ-zero} ℕ
+          (λ k₂ → _≡_ {ℓ-zero} {ℕ} (k₂ + suc k₁) (suc (suc fv)))))
+      (suc (suc k))}
+     (sbext {suc fv} {suc (suc fv)} {suc k} (0 ⦃ tt ⦄)
+      (sbext {fv} {suc fv} {k} n vs (λ x → suc<?Fin {fv} x n) (n , nrl))
+      (fsuc {suc fv}) (0 ⦃ tt ⦄))
+     (sbext {suc fv} {suc (suc fv)} {suc k}
+      (fst (fsuc {suc fv} (n , nrl)))
+      (sbext {fv} {suc fv} {k} (0 ⦃ tt ⦄) vs (fsuc {fv}) (0 ⦃ tt ⦄))
+      (λ x → suc<?Fin {suc fv} x (fst (fsuc {suc fv} (n , nrl))))
+      (fsuc {suc fv} (n , nrl)))
+  l1 [] zero nrl = refl
+  l1 {fv = fv} {k = suc k} (x ∷ vs) zero nrl = λ i → f (l2 vs i) where
+    f : Vec (Fin (suc (suc fv))) k → Vec (Fin (suc (suc fv))) (suc (suc (suc k)))
+    f a = fzero ∷ fsuc (zero , nrl) ∷ fsuc (suc<?Fin x zero) ∷ a
+    l2 : ∀{fv k} → (vs : Vec (Fin fv) k) → V.map fsuc (V.map (λ x₁ → suc<?Fin x₁ zero) vs) ≡ V.map (λ x₁ → suc<?Fin x₁ (fst (fsuc (zero , nrl)))) (V.map fsuc vs)
+    l2 [] = refl
+    l2 {fv} {suc k} (x ∷ vs) = λ i → f2 (l2 vs i) where
+      f2 : Vec (Fin (suc (suc fv))) k → Vec (Fin (suc (suc fv))) (suc k)
+      f2 a = fsuc (fsuc x) ∷ a
+  
+  l1 [] (suc n) nrl = refl
+  l1 {fv} {suc k} (x ∷ vs) (suc n) nrl = {!!} where
+    f3 : Vec (Fin (suc (suc fv))) (suc k) → Vec (Fin (suc (suc fv))) (suc (suc (suc k)))
+    f3 a = fzero ∷ fsuc (suc<?Fin x (suc n)) ∷ a
+    l3 : V.map fsuc (sbext n vs (λ x₁ → suc<?Fin x₁ (suc n)) (suc n , nrl)) ≡
+         sbext n (V.map fsuc vs) (λ x₁ → suc<?Fin x₁ (fst (fsuc (suc n , nrl)))) (fsuc (suc n , nrl))
+    l3 = {!!}
 
 
-module _ {ℓ1} {ℓ2} {C1 : ∀ k → Type ℓ1} {C2 : ∀ k → Type ℓ2} where
 
-  module S1 = State C1
-  module S2 = State C2
+  l6 : ∀{k fv} → (vs : Vec (Fin fv) k) → ∀ n → (nrl : n O.< suc fv) →
+      _≡_ {A = Vec (Fin (suc fv)) (suc k)} 
+      (sbext n vs (λ x → suc<?Fin x n) (n , nrl))
+      (sbext n vs (λ x → suc<?Fin x (fst (fsuc (n , nrl))))
+      (fsuc (n , nrl)))
+  l6 vs zero nrl = ?
+  l6 vs (suc n) nrl = {!!}
 
-  open S2
+  l7 : ∀{k fv} → (vs : Vec (Fin fv) k) → ∀ n → (nrl : n O.< suc fv) →
+      _≡_ {A = Vec (Fin (suc (suc fv))) (suc (suc k))} (fzero {suc fv} ∷
+      V.map fsuc (sbext n vs (λ x → suc<?Fin x n) (n , nrl)))
+      (suc<?Fin fzero (fst (fsuc (n , nrl))) ∷
+      sbext n (V.map fsuc vs) (λ x → suc<?Fin x (fst (fsuc (n , nrl))))
+      (fsuc (n , nrl)))
+  l7 vs n nrl = cong₂ V._∷_ (Σ≡Prop (λ _ → O.isProp≤) refl) (l6 vs n nrl)
 
-  mapₛₛ : ∀{fv} → (∀{k} → C1 k → C2 k) → (q : S1.SState fv) → S2.SState fv
-  mapₛₛ f 0b = 0b
-  mapₛₛ f 1b = 1b
-  mapₛₛ f (` [ secr ] c) = ` [ secr ] (f c)
-  mapₛₛ f (lq ∪ rq) = mapₛₛ f lq ∪ mapₛₛ f rq 
-  mapₛₛ f (lq · rq) = mapₛₛ f lq · mapₛₛ f rq 
-  mapₛₛ f (ν q) = ν mapₛₛ f q
 
-  -- mapₛ : (∀{k} → C1 k → C2 k) → S1.State → S2.State
-  -- mapₛ f q = SQ.rec squash/ (λ x → ⟨ mapₛₛ f x ⟩ₛ) (λ a b r → eq/ _ _ (l1 a b r)) q where
-  --   l1 : (a b : S1.SState) →
-  --    a S1.R b → (mapₛₛ f a) R (mapₛₛ f b)
-  --   l1 .(_ S1.∪ _) .(_ S1.∪ _) (⟨⟩-∪ x x₁) = ⟨⟩-∪ (l1 _ _ x) (l1 _ _ x₁)
-  --   l1 .(_ S1.· _) .(_ S1.· _) (⟨⟩-· x x₁) = ⟨⟩-· (l1 _ _ x) (l1 _ _ x₁)
-  --   l1 .(S1.ν _) .(S1.ν _) (⟨⟩-ν x) = ⟨⟩-ν (l1 _ _ x)
-  --   l1 .(S1.ν (S1.ν S1.swapₛₛ 0 1 qs)) .(S1.ν (S1.ν qs)) (ν-swap` qs) = {!!}
-  --   l1 .(S1.ν S1.sucₛₛ b 0) b (S1.ν-elim` .b) = {!!}
-  --   l1 .(S1.ν (zs S1.∪ S1.sucₛₛ qs 0)) .(S1.ν zs S1.∪ qs) (S1.ν-∪` qs zs) = {!!}
-  --   -- l1 .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (ν-·` qs zs) = ?
-  --   -- l1 .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (assoc x y z) = ?
-  --   -- l1 .(b ∪ 0b) b (rid .b) = ?
-  --   -- l1 .(x ∪ y) .(y ∪ x) (comm x y) = ?
-  --   -- l1 .(b ∪ b) b (idem .b) = ?
-  --   -- l1 .(x · y · z) .((x · y) · z) (assoc· x y z) = ?
-  --   -- l1 .(b · 1b) b (rid· .b) = ?
-  --   -- l1 .(x · y) .(y · x) (comm· x y) = ?
-  --   -- l1 .(x · 0b) .0b (def∅· x) = ?
-  --   -- l1 .(x · (y ∪ z)) .(x · y ∪ x · z) (dist x y z) = ?
-  --   -- l1 a .a (refl` .a) = ?
-  --   -- l1 a b (sym` .b .a x) = ?
-  --   -- l1 a b (trans` .a y .b x x₁) = ?
-  --   -- l1 a b (squash₁ .a .b x x₁ i) = ?
+  subst-sucₛₛ : ∀{fv k} → (vs : Vec (Fin fv) k)
+                → (q : SState k) → (n : Fin (suc fv)) → substₛₛ (sbext (fst n) vs (λ x → suc<?Fin x (fst n)) n) (sucₛₛ q (fst n)) ≡ sucₛₛ (substₛₛ vs q) (fst n)
+  subst-sucₛₛ vs 0b n = refl
+  subst-sucₛₛ vs 1b n = refl
+  subst-sucₛₛ vs (` [ secr ] c) n = cong (λ a → ` [ a ] c) (sbst-suc2 vs secr n)
+  subst-sucₛₛ vs (q ∪ q₁) n = cong₂ _∪_ (subst-sucₛₛ vs q n) (subst-sucₛₛ vs q₁ n)
+  subst-sucₛₛ vs (q · q₁) n = cong₂ _·_ (subst-sucₛₛ vs q n) (subst-sucₛₛ vs q₁ n)
+  subst-sucₛₛ {fv} vs (ν q) fn@(n , nrl) = cong ν_ (cong (λ a → substₛₛ a (sucₛₛ q (suc n))) (l7 vs n nrl)  ∙ subst-sucₛₛ (sbext 0 vs fsuc 0) q (fsuc fn) )
+
+  l2 : ∀ {fv} {k} (vs : Vec (Fin fv) k) {l}
+       (secr : Vec (Fin k) l) (c : C l) →
+       (ν (` [ sbst (sbext 0 vs fsuc 0) (lsuc<?Fin secr 0) ] c)) R substₛₛ vs (` [ secr ] c)
+  l2 vs secr c = J (λ y eq → (ν (` [ y ] c)) R (substₛₛ vs (` [ secr ] c))) (ν-elim` (` [ sbst vs secr ] c)) (sym (sbst-suc vs secr))
+
+
+--   substₛ : ∀{fv k} → Vec (Fin fv) k → State k → State fv
+--   substₛ vs q = SQ.rec squash/ (λ e → ⟨ substₛₛ vs e ⟩ₛ) (λ a b r → eq/ (substₛₛ vs a) (substₛₛ vs b) (l1 vs a b r)) q where
+--     l1 : ∀ {fv} {k} (vs : Vec (Fin fv) k)
+--          (a b : SState k) (r : a R b) → substₛₛ vs a R substₛₛ vs b
+--     l1 vs .(_ ∪ _) .(_ ∪ _) (⟨⟩-∪ r r₁) = ⟨⟩-∪ (l1 vs _ _ r) (l1 vs _ _ r₁)
+--     l1 vs .(_ · _) .(_ · _) (⟨⟩-· r r₁) = ⟨⟩-· (l1 vs _ _ r) (l1 vs _ _ r₁)
+--     l1 vs .(ν _) .(ν _) (⟨⟩-ν r) = ⟨⟩-ν (l1 _ _ _ r)
+--     l1 vs .(ν (ν swapₛₛ 0 1 qs)) .(ν (ν qs)) (State.ν-swap` qs) = {!!}
+--     l1 vs .(ν sucₛₛ b 0) b (ν-elim` .b) = J (λ y eq → (ν y) R substₛₛ vs b) (ν-elim` (substₛₛ vs b)) (sym (subst-sucₛₛ vs b 0))
+--     -- substₛₛ (sbext 0 vs fsuc 0) vs (sucₛₛ b 0)
+--     l1 vs .(ν (zs ∪ qs)) .(ν zs ∪ ν qs) (State.ν-∪` qs zs) = {!!}
+--     l1 vs .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (State.ν-·` qs zs) = {!!}
+--     l1 vs .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (State.assoc x y z) = {!!}
+--     l1 vs .(b ∪ 0b) b (State.rid .b) = {!!}
+--     l1 vs .(x ∪ y) .(y ∪ x) (State.comm x y) = {!!}
+--     l1 vs .(b ∪ b) b (State.idem .b) = {!!}
+--     l1 vs .(x · y · z) .((x · y) · z) (State.assoc· x y z) = {!!}
+--     l1 vs .(b · 1b) b (State.rid· .b) = {!!}
+--     l1 vs .(x · y) .(y · x) (State.comm· x y) = {!!}
+--     l1 vs .(x · 0b) .0b (State.def∅· x) = {!!}
+--     l1 vs .(x · (y ∪ z)) .(x · y ∪ x · z) (State.dist x y z) = {!!}
+--     l1 vs a .a (State.refl` .a) = {!!}
+--     l1 vs a b (State.sym` .b .a r) = {!!}
+--     l1 vs a b (State.trans` .a y .b r r₁) = {!!}
+--     l1 vs a b (State.squash₁ .a .b r r₁ i) = {!!}
+
+
+
+-- module _ {ℓ1} {ℓ2} {C1 : ∀ k → Type ℓ1} {C2 : ∀ k → Type ℓ2} where
+
+--   module S1 = State C1
+--   module S2 = State C2
+
+--   open S2
+
+--   mapₛₛ : ∀{fv} → (∀{k} → C1 k → C2 k) → (q : S1.SState fv) → S2.SState fv
+--   mapₛₛ f 0b = 0b
+--   mapₛₛ f 1b = 1b
+--   mapₛₛ f (` [ secr ] c) = ` [ secr ] (f c)
+--   mapₛₛ f (lq ∪ rq) = mapₛₛ f lq ∪ mapₛₛ f rq 
+--   mapₛₛ f (lq · rq) = mapₛₛ f lq · mapₛₛ f rq 
+--   mapₛₛ f (ν q) = ν mapₛₛ f q
+
+--   -- mapₛ : (∀{k} → C1 k → C2 k) → S1.State → S2.State
+--   -- mapₛ f q = SQ.rec squash/ (λ x → ⟨ mapₛₛ f x ⟩ₛ) (λ a b r → eq/ _ _ (l1 a b r)) q where
+--   --   l1 : (a b : S1.SState) →
+--   --    a S1.R b → (mapₛₛ f a) R (mapₛₛ f b)
+--   --   l1 .(_ S1.∪ _) .(_ S1.∪ _) (⟨⟩-∪ x x₁) = ⟨⟩-∪ (l1 _ _ x) (l1 _ _ x₁)
+--   --   l1 .(_ S1.· _) .(_ S1.· _) (⟨⟩-· x x₁) = ⟨⟩-· (l1 _ _ x) (l1 _ _ x₁)
+--   --   l1 .(S1.ν _) .(S1.ν _) (⟨⟩-ν x) = ⟨⟩-ν (l1 _ _ x)
+--   --   l1 .(S1.ν (S1.ν S1.swapₛₛ 0 1 qs)) .(S1.ν (S1.ν qs)) (ν-swap` qs) = {!!}
+--   --   l1 .(S1.ν S1.sucₛₛ b 0) b (S1.ν-elim` .b) = {!!}
+--   --   l1 .(S1.ν (zs S1.∪ S1.sucₛₛ qs 0)) .(S1.ν zs S1.∪ qs) (S1.ν-∪` qs zs) = {!!}
+--   --   -- l1 .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (ν-·` qs zs) = ?
+--   --   -- l1 .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (assoc x y z) = ?
+--   --   -- l1 .(b ∪ 0b) b (rid .b) = ?
+--   --   -- l1 .(x ∪ y) .(y ∪ x) (comm x y) = ?
+--   --   -- l1 .(b ∪ b) b (idem .b) = ?
+--   --   -- l1 .(x · y · z) .((x · y) · z) (assoc· x y z) = ?
+--   --   -- l1 .(b · 1b) b (rid· .b) = ?
+--   --   -- l1 .(x · y) .(y · x) (comm· x y) = ?
+--   --   -- l1 .(x · 0b) .0b (def∅· x) = ?
+--   --   -- l1 .(x · (y ∪ z)) .(x · y ∪ x · z) (dist x y z) = ?
+--   --   -- l1 a .a (refl` .a) = ?
+--   --   -- l1 a b (sym` .b .a x) = ?
+--   --   -- l1 a b (trans` .a y .b x x₁) = ?
+--   --   -- l1 a b (squash₁ .a .b x x₁ i) = ?
 
