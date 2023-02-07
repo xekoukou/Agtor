@@ -21,3 +21,8 @@ us to perform local reduction ignoring the outside world.
 (we might though need to express that all messages are eventually delivered.)
 - Nondeterministic computation is expressed with the use of free variables. Multiple free variables could potentially be merged into a single one, if the outcome of the computation depends on the aggregate, for example.
 Moreover free variables allows us to have an open system. This means that the type of the system can depend on user input and thus the dynamics of the system can change based on that input.
+
+
+## notes
+
+To typecheck, it requires my fork of the cubical [library](https://github.com/xekoukou/cubical/tree/myCubical)
