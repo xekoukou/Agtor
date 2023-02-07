@@ -61,6 +61,10 @@ sucₛₛ (lq ∪ rq) n = sucₛₛ lq n ∪ sucₛₛ rq n
 sucₛₛ (lq · rq) n = sucₛₛ lq n · sucₛₛ rq n
 sucₛₛ (ν q) n = ν sucₛₛ q (suc n)
 
+sucₛₛ[_] : ∀ {fv} n → (q : SState fv) → SState (suc n + fv)
+sucₛₛ[ zero ] q = sucₛₛ q zero
+sucₛₛ[ suc n ] q = sucₛₛ (sucₛₛ[ n ] q) (suc n)
+
 swapₛₛ : ∀{fv} → Fin fv → Fin fv → (q : SState fv) → SState fv
 swapₛₛ m n 0b = 0b
 swapₛₛ m n 1b = 1b
@@ -87,7 +91,7 @@ substₛₛ vs 1b = 1b
 substₛₛ vs (` [ secr ] c) = ` [ sbst vs secr ] c
 substₛₛ vs (q ∪ q₁) = substₛₛ vs q ∪ substₛₛ vs q₁
 substₛₛ vs (q · q₁) = substₛₛ vs q · substₛₛ vs q₁
-substₛₛ vs (ν q) = ν substₛₛ (sbext 0 vs fsuc 0) q
+substₛₛ vs (ν q) = ν substₛₛ (sbsuc 1 vs) q
 
 
 
