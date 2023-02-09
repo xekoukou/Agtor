@@ -112,6 +112,26 @@ swap m k r = l1 (m =? r) module swap-1 where
     l2 (yes _) = m
     l2 (no _) = r
 
+swap-suc : ∀ m n t → swap (suc m) (suc n) (suc t) ≡ suc (swap m n t)
+swap-suc m n t with m ≟ t
+... | eq x = refl
+... | lt x with n ≟ t
+... | eq x₁ = refl
+... | lt x₁ = refl
+... | gt x₁ = refl
+swap-suc m n t | gt x with n ≟ t
+swap-suc m n t | gt x | lt x₁ = refl
+swap-suc m n t | gt x | eq x₁ = refl
+swap-suc m n t | gt x | gt x₁ = refl
+
+swap-< : ∀ m n t q → m < q → n < q → t < q → swap m n t < q
+swap-< m n t q mrl nrl trl with m =? t
+... | yes p = nrl
+... | no ¬p with n =? t
+... | yes p = mrl
+... | no ¬p₁ = trl
+
+
 q2 : ∀ {k} → (m e r : Fin k) → Σ ℕ (λ k₂ → k₂ + suc (swap-1.l1 (fst m) (fst e) (fst r) (fst m =? fst r)) ≡ k)
 q2 (m , rlm) (e , rle) (r , rlr) with m =? r
 ... | yes p = rle
@@ -380,16 +400,42 @@ sbst-suc n vs [] = refl
 sbst-suc zero vs (x ∷ secr) = cong₂ V._∷_ (sym (lookup-map vs fsuc x) ∙ cong (λ z → lookup' (fst x , z) (V.map fsuc vs)) (O.isProp≤ (snd x) _)) (sbst-suc zero vs secr)
 sbst-suc (suc n) vs (x ∷ secr) = cong₂ V._∷_ (sbsuc-l2 (suc n) vs x) ((sbst-suc (suc n) vs secr))
 
-postulate
-  sbst-l3 : ∀ {fv} {k} n (m t : Fin (suc (suc n) + k))
-               (mrl : fst m ≤ suc n) (trl : fst t ≤ suc n) (vs : Vec (Fin fv) k)
-               (x : Fin (suc (suc n) + k)) →
-             swapFin (fst m , to-≤ (≤-trans{fst m} {suc n} {suc (n + fv)} mrl (k≤k+n n)))
-             (fst t , to-≤ (≤-trans{fst t} {suc n} {suc (n + fv)} trl (k≤k+n n)))
-             (lookup' x (sbsuc (suc (suc n)) vs))
-             ≡ lookup' (swapFin m t x) (sbsuc (suc (suc n)) vs)
+
+sbsuc-lookup : ∀{fv k} n t → (trln : t < n) → (trl2 : t O.< (n + fv)) → (trl : t O.< (n + k)) → (vs : Vec (Fin fv) k) → ( t , trl2) ≡ lookup' (t , trl) (sbsuc n vs)
+sbsuc-lookup (suc n) zero trln trl2 trl vs = Σ≡Prop (λ _ → O.isProp≤) refl
+sbsuc-lookup (suc n) (suc t) trln trl2 trl vs = (Σ≡Prop (λ _ → O.isProp≤) refl ∙ cong fsuc (sbsuc-lookup n t trln (O.pred-≤-pred trl2) (O.pred-≤-pred trl) vs)) ∙ sym (lookup-map (sbsuc n vs) fsuc (t , O.pred-≤-pred trl))
+
+sbsuc-lookup2 : ∀{fv k} n t → (trln : n ≤ t) → (trl : t O.< (n + k)) → (vs : Vec (Fin fv) k) → n ≤ fst (lookup' (t , trl) (sbsuc n vs))
+sbsuc-lookup2 zero t trln trl vs = tt
+sbsuc-lookup2 {fv} {k} (suc n) (suc t) trln trl vs = subst (λ x → suc n ≤
+      fst x) (sym (lookup-map (sbsuc n vs) fsuc (t , O.pred-≤-pred trl))) (sbsuc-lookup2 n t trln (O.pred-≤-pred trl) vs)
+
+
+
+sbst-l4 : ∀ {fv} {k} n (m t : Fin (suc (suc n) + k))
+             (mrl : fst m ≤ suc n) (mrl2 : fst m O.< suc (suc (n + fv))) (trl : fst t ≤ suc n) (trl2 : fst t O.< suc (suc (n + fv))) (vs : Vec (Fin fv) k)
+             (x : Fin (suc (suc n) + k)) →
+           swapFin (fst m , mrl2)
+           (fst t , trl2)
+           (lookup' x (sbsuc (suc (suc n)) vs))
+           ≡ lookup' (swapFin m t x) (sbsuc (suc (suc n)) vs)
+sbst-l4 {fv} {k} n m t mrl mrl2 trl trl2 vs (x , xrl) with x <? (suc (suc n))
+... | yes p = (cong (λ a → swapFin (fst m , mrl2) (fst t , trl2) a) (sym (sbsuc-lookup (suc (suc n)) x p (to-≤ (≤-trans {x} {suc n} {suc (n + fv)} p (k≤k+n n))) xrl vs))) ∙ Σ≡Prop (λ _ → O.isProp≤) refl
+  ∙ sbsuc-lookup (suc (suc n)) (swap (fst m) (fst t) x) l9 (to-≤ (≤-trans {swap (fst m) (fst t) x} {suc n} {suc (n + fv)} l9 (k≤k+n n))) (q2 (fst m , snd m) (fst t , snd t) (x , xrl)) vs where
+  l9 = swap-< (fst m) (fst t) x (suc (suc n)) mrl trl p
+... | no ¬p with fst m =? x
+... | yes p = ⊥.rec (¬p (subst (λ v → v ≤ suc n) p mrl))
+... | no ¬p₁ with fst t =? x
+... | yes p = ⊥.rec (¬p (subst (λ v → v ≤ suc n) p trl))
+... | no ¬p₂ with fst m =? fst (lookup' (x , xrl) (sbsuc (suc (suc n)) vs))
+... | yes p = ⊥.rec (≤-asym {suc n} {fst (lookup' (x , xrl) (sbsuc (suc (suc n)) vs))} (sbsuc-lookup2 (suc (suc n)) x (≤¬-asym {x} {suc n} ¬p) xrl vs) (subst (λ v → v ≤ suc n) p mrl))
+... | no ¬p₃ with fst t =? fst (lookup' (x , xrl) (sbsuc (suc (suc n)) vs))
+... | yes p = ⊥.rec (≤-asym {suc n} {fst (lookup' (x , xrl) (sbsuc (suc (suc n)) vs))} (sbsuc-lookup2 (suc (suc n)) x (≤¬-asym {x} {suc n} ¬p) xrl vs) (subst (λ v → v ≤ suc n) p trl))
+... | no ¬p₄ = refl
+
+
 
 sbst-swap : ∀ {fv k l} n (m t : Fin (suc (suc n) + k)) → (mrl : fst m ≤ suc n) → (trl : fst t ≤ suc n) → (vs : Vec (Fin fv) k) → (secr : Vec (Fin ((suc (suc n)) + k)) l)
   → lswapFin (fst m , to-≤ (≤-trans {fst m} {suc n} {suc (n + fv)} mrl (k≤k+n n))) (fst t , to-≤ (≤-trans {fst t} {suc n} {suc (n + fv)} trl (k≤k+n n))) (sbst (sbsuc (suc (suc n)) vs) secr) ≡ sbst (sbsuc (suc (suc n)) vs) (lswapFin m t secr)
 sbst-swap n m t mrl trl vs [] = refl
-sbst-swap n m t mrl trl vs (x ∷ secr) = cong₂ V._∷_ (sbst-l3 n m t mrl trl vs x ) (sbst-swap n m t mrl trl vs secr)
+sbst-swap {fv} n m t mrl trl vs (x ∷ secr) = cong₂ V._∷_ (sbst-l4 n m t mrl (to-≤ (≤-trans {fst m} {suc n} {suc (n + fv)} mrl (k≤k+n n))) trl (to-≤ (≤-trans {fst t} {suc n} {suc (n + fv)} trl (k≤k+n n))) vs x ) (sbst-swap n m t mrl trl vs secr)
