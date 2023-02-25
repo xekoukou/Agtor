@@ -1,6 +1,12 @@
 {-# OPTIONS --cubical #-}
 
 open import Cubical.Foundations.Prelude
+import Cubical.Functions.Logic as L
+open import Cubical.Foundations.Univalence
+open import Cubical.Foundations.Equiv
+import Cubical.Foundations.GroupoidLaws as GL
+open import Cubical.Foundations.Path
+open import Cubical.Foundations.Equiv.Properties
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.Structure
 open import Cubical.Foundations.HLevels
@@ -19,14 +25,14 @@ open import Cubical.Data.Unit
 import Cubical.Data.Nat.Order as O
 open import Cubical.Data.Nat.Order.Recursive
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
-open import Cubical.HITs.PropositionalTruncation
+open import Cubical.HITs.PropositionalTruncation as PQ
 
 import State
 open import State.Lemma
 
 module State.Properties where
 
-module _ {ℓ} {C : ∀ k → Type ℓ} where
+module 1C {ℓ} (C : ∀ k → Type ℓ) where
 
   open State C
 
@@ -121,7 +127,7 @@ module _ {ℓ} {C : ∀ k → Type ℓ} where
     l1 n a .a (refl` .a) = refl` (sucₛₛ a n)
     l1 n a b (sym` .b .a r) = sym` (sucₛₛ b n) (sucₛₛ a n) (l1 n b a r)
     l1 n a b (trans` .a y .b r r₁) = trans` (sucₛₛ a n) (sucₛₛ y n) (sucₛₛ b n) (l1 n a y r) (l1 n y b r₁)
-    l1 n a b (squash₁ .a .b r r₁ i) = squash₁ (sucₛₛ a n) (sucₛₛ b n) (l1 n a b r) (l1 n a b r₁) i
+--     l1 n a b (squash₁ .a .b r r₁ i) = squash₁ (sucₛₛ a n) (sucₛₛ b n) (l1 n a b r) (l1 n a b r₁) i
 
   swapₛ : ∀{fv} → (n m : Fin fv) → State fv → State fv
   swapₛ {fv} n m q = SQ.rec squash/ (λ q → ⟨ swapₛₛ n m q ⟩ₛ) (λ _ _ r → eq/ _ _ (l1 n m _ _ r)) q where
@@ -146,12 +152,8 @@ module _ {ℓ} {C : ∀ k → Type ℓ} where
     l1 n m a .a (refl` .a) = refl` (swapₛₛ n m a)
     l1 n m a b (sym` .b .a r) = sym` (swapₛₛ n m b) (swapₛₛ n m a) (l1 n m b a r)
     l1 n m a b (trans` .a y .b r r₁) = trans` (swapₛₛ n m a) (swapₛₛ n m y) (swapₛₛ n m b) (l1 n m a y r) (l1 n m y b r₁)
-    l1 n m a b (squash₁ .a .b r r₁ i) = squash₁ (swapₛₛ n m a) (swapₛₛ n m b) (l1 n m a b r) (l1 n m a b r₁) i
+--     l1 n m a b (squash₁ .a .b r r₁ i) = squash₁ (swapₛₛ n m a) (swapₛₛ n m b) (l1 n m a b r) (l1 n m a b r₁) i
 
-
-module _ {ℓ} {C : ∀ k → Type ℓ} where
-
-  open State C
 
   subst-swapₛₛ : ∀ {fv} {k} n (m t : Fin (suc (suc n) + k)) → (mrl : fst m ≤ suc n) → (trl : fst t ≤ suc n) → (vs : Vec (Fin fv) k) (q : SState (suc (suc n) + k)) →
                 swapₛₛ (fst m , to-≤ (≤-trans {fst m} {suc n} {suc (n + fv)} mrl (k≤k+n n))) (fst t , to-≤ (≤-trans {fst t} {suc n} {suc (n + fv)} trl (k≤k+n n))) (substₛₛ (sbsuc (suc (suc n)) vs) q) ≡ substₛₛ (sbsuc (suc (suc n)) vs) (swapₛₛ m t q)
@@ -197,8 +199,119 @@ module _ {ℓ} {C : ∀ k → Type ℓ} where
     l1 vs a .a (refl` .a) = refl` (substₛₛ vs a)
     l1 vs a b (sym` .b .a r) = sym` (substₛₛ vs b) (substₛₛ vs a) (l1 vs b a r)
     l1 vs a b (trans` .a y .b r r₁) = trans` (substₛₛ vs a) (substₛₛ vs y) (substₛₛ vs b) (l1 vs a y r) (l1 vs y b r₁)
-    l1 vs a b (squash₁ .a .b r r₁ i) = squash₁ (substₛₛ vs a) (substₛₛ vs b) (l1 vs a b r) (l1 vs a b r₁) i
+--     l1 vs a b (squash₁ .a .b r r₁ i) = squash₁ (substₛₛ vs a) (substₛₛ vs b) (l1 vs a b r) (l1 vs a b r₁) i
 
+
+  data Is0bₛₛ : ∀{fv} → SState fv → Type ℓ where
+    0≡0b : ∀{fv} → Is0bₛₛ {fv} 0b
+    0≡s∪s : ∀{fv} → {s1 s2 : SState fv} → Is0bₛₛ s1 → Is0bₛₛ s2 → Is0bₛₛ (s1 ∪ s2)
+    0≡s·s : ∀{fv} → {s1 s2 : SState fv} → Is0bₛₛ s1 ⊎ Is0bₛₛ s2 → Is0bₛₛ (s1 · s2)
+    0≡νs : ∀{fv} {s : SState (suc fv)} → Is0bₛₛ s → Is0bₛₛ (ν s)
+
+
+  is0b-swapₛₛ-l : ∀ {fv} {qs : SState (suc (suc fv))} → ∀ m n →
+       Is0bₛₛ (swapₛₛ m n qs) → Is0bₛₛ qs
+  is0b-swapₛₛ-l {fv} {0b} m n x = 0≡0b
+  is0b-swapₛₛ-l {fv} {qs ∪ qs₁} m n (0≡s∪s x x₁) = 0≡s∪s (is0b-swapₛₛ-l _ _ x) (is0b-swapₛₛ-l _ _ x₁)
+  is0b-swapₛₛ-l {fv} {qs · qs₁} m n (0≡s·s (inl x)) = 0≡s·s (inl (is0b-swapₛₛ-l _ _ x))
+  is0b-swapₛₛ-l {fv} {qs · qs₁} m n (0≡s·s (inr x)) = 0≡s·s (inr (is0b-swapₛₛ-l _ _ x))
+  is0b-swapₛₛ-l {fv} {ν qs} m n (0≡νs x) = 0≡νs (is0b-swapₛₛ-l _ _ x)
+
+  is0b-swapₛₛ-r : ∀ {fv} {qs : SState (suc (suc fv))} → ∀ m n →
+       Is0bₛₛ qs → Is0bₛₛ (swapₛₛ m n qs)
+  is0b-swapₛₛ-r {fv} {0b} m n x = 0≡0b
+  is0b-swapₛₛ-r {fv} {.(_ ∪ _)} m n (0≡s∪s x x₁) = 0≡s∪s (is0b-swapₛₛ-r _ _ x) (is0b-swapₛₛ-r _ _ x₁)
+  is0b-swapₛₛ-r {fv} {.(_ · _)} m n (0≡s·s (inl x)) = 0≡s·s (inl (is0b-swapₛₛ-r _ _ x))
+  is0b-swapₛₛ-r {fv} {.(_ · _)} m n (0≡s·s (inr x)) = 0≡s·s (inr (is0b-swapₛₛ-r _ _ x))
+  is0b-swapₛₛ-r {fv} {.(ν _)} m n (0≡νs x) = 0≡νs (is0b-swapₛₛ-r _ _ x)
+
+  is0b-sucₛₛ-l : ∀ {fv} {qs : SState fv} → ∀ m →
+       Is0bₛₛ (sucₛₛ qs m) → Is0bₛₛ qs
+  is0b-sucₛₛ-l {fv} {0b} m x = 0≡0b
+  is0b-sucₛₛ-l {fv} {qs ∪ qs₁} m (0≡s∪s x x₁) = 0≡s∪s (is0b-sucₛₛ-l _ x) (is0b-sucₛₛ-l _ x₁)
+  is0b-sucₛₛ-l {fv} {qs · qs₁} m (0≡s·s (inl x)) = 0≡s·s (inl (is0b-sucₛₛ-l _ x))
+  is0b-sucₛₛ-l {fv} {qs · qs₁} m (0≡s·s (inr x)) = 0≡s·s (inr (is0b-sucₛₛ-l _ x))
+  is0b-sucₛₛ-l {fv} {ν qs} m (0≡νs x) = 0≡νs (is0b-sucₛₛ-l _ x)
+
+  is0b-sucₛₛ-r : ∀ {fv} {qs : SState fv} → ∀ m →
+       Is0bₛₛ qs → Is0bₛₛ (sucₛₛ qs m)
+  is0b-sucₛₛ-r {fv} {0b} m x = 0≡0b
+  is0b-sucₛₛ-r {fv} {.(_ ∪ _)} m (0≡s∪s x x₁) = 0≡s∪s (is0b-sucₛₛ-r _ x) (is0b-sucₛₛ-r _ x₁)
+  is0b-sucₛₛ-r {fv} {.(_ · _)} m (0≡s·s (inl x)) = 0≡s·s (inl (is0b-sucₛₛ-r _ x))
+  is0b-sucₛₛ-r {fv} {.(_ · _)} m (0≡s·s (inr x)) = 0≡s·s (inr (is0b-sucₛₛ-r _ x))
+  is0b-sucₛₛ-r {fv} {.(ν _)} m (0≡νs x) = 0≡νs (is0b-sucₛₛ-r _ x)
+
+
+
+  mutual
+    
+    Is0b-Uni-l' : ∀{fv} → ∀(a b : SState fv) → a R b → Is0bₛₛ a → Is0bₛₛ b
+    Is0b-Uni-l' .(_ ∪ _) .(_ ∪ _) (State.⟨⟩-∪ r r₁) (0≡s∪s is0b is0b₁) = 0≡s∪s (Is0b-Uni-l' _ _ r is0b) (Is0b-Uni-l' _ _ r₁ is0b₁)
+    Is0b-Uni-l' .(_ · _) .(_ · _) (State.⟨⟩-· r r₁) (0≡s·s (inl x)) = 0≡s·s (inl (Is0b-Uni-l' _ _ r x))
+    Is0b-Uni-l' .(_ · _) .(_ · _) (State.⟨⟩-· r r₁) (0≡s·s (inr x)) = 0≡s·s (inr (Is0b-Uni-l' _ _ r₁ x))
+    Is0b-Uni-l' .(ν _) .(ν _) (State.⟨⟩-ν r) (0≡νs is0b) = 0≡νs (Is0b-Uni-l' _ _ r is0b)
+    Is0b-Uni-l' .(ν (ν swapₛₛ 0 1 qs)) .(ν (ν qs)) (State.ν-swap` qs) (0≡νs (0≡νs is0b)) = 0≡νs (0≡νs (is0b-swapₛₛ-l 0 1 is0b))
+    Is0b-Uni-l' .(ν sucₛₛ b 0) b (State.ν-elim` .b) (0≡νs is0b) = is0b-sucₛₛ-l 0 is0b
+    Is0b-Uni-l' .(ν (zs ∪ qs)) .(ν zs ∪ ν qs) (State.ν-∪` qs zs) (0≡νs (0≡s∪s x y)) = 0≡s∪s (0≡νs x) (0≡νs y)
+    Is0b-Uni-l' .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (State.ν-·` qs zs) (0≡νs (0≡s·s (inl x))) = 0≡s·s (inl (0≡νs x))
+    Is0b-Uni-l' .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (State.ν-·` qs zs) (0≡νs (0≡s·s (inr x))) = 0≡s·s (inr (is0b-sucₛₛ-l 0 x))
+    Is0b-Uni-l' .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (State.assoc x y z) (0≡s∪s is0b (0≡s∪s is0b1 is0b2)) = 0≡s∪s (0≡s∪s is0b is0b1) is0b2
+    Is0b-Uni-l' .(b ∪ 0b) b (State.rid .b) (0≡s∪s is0b is0b₁) = is0b
+    Is0b-Uni-l' .(x ∪ y) .(y ∪ x) (State.comm x y) (0≡s∪s is0b is0b₁) = 0≡s∪s is0b₁ is0b
+    Is0b-Uni-l' .(b ∪ b) b (State.idem .b) (0≡s∪s is0b is0b₁) = is0b
+    Is0b-Uni-l' .(x · y · z) .((x · y) · z) (State.assoc· x y z) (0≡s·s (inl x₁)) = 0≡s·s (inl (0≡s·s (inl x₁)))
+    Is0b-Uni-l' .(x · y · z) .((x · y) · z) (State.assoc· x y z) (0≡s·s (inr (0≡s·s (inl x₁)))) = 0≡s·s (inl (0≡s·s (inr x₁)))
+    Is0b-Uni-l' .(x · y · z) .((x · y) · z) (State.assoc· x y z) (0≡s·s (inr (0≡s·s (inr x₁)))) = 0≡s·s (inr x₁)
+    Is0b-Uni-l' .(b · 1b) b (State.rid· .b) (0≡s·s (inl x)) = x
+    Is0b-Uni-l' .(x · y) .(y · x) (State.comm· x y) (0≡s·s (inl x₁)) = 0≡s·s (inr x₁)
+    Is0b-Uni-l' .(x · y) .(y · x) (State.comm· x y) (0≡s·s (inr x₁)) = 0≡s·s (inl x₁)
+    Is0b-Uni-l' .(x · 0b) .0b (State.def∅· x) is0b = 0≡0b
+    Is0b-Uni-l' .(x · (y ∪ z)) .(x · y ∪ x · z) (State.dist x y z) (0≡s·s (inl x₁)) = 0≡s∪s (0≡s·s (inl x₁)) (0≡s·s (inl x₁))
+    Is0b-Uni-l' .(x · (y ∪ z)) .(x · y ∪ x · z) (State.dist x y z) (0≡s·s (inr (0≡s∪s x₁ x₂))) = 0≡s∪s (0≡s·s (inr x₁)) (0≡s·s (inr x₂))
+    Is0b-Uni-l' a .a (State.refl` .a) is0b = is0b
+    Is0b-Uni-l' a b (State.sym` .b .a r) is0b = Is0b-Uni-r' _ _ r is0b
+    Is0b-Uni-l' a b (State.trans` .a y .b r r₁) is0b = Is0b-Uni-l' _ _ r₁ (Is0b-Uni-l' _ _ r is0b)
+  
+    Is0b-Uni-r' : ∀{fv} → ∀(a b : SState fv) → a R b → Is0bₛₛ b → Is0bₛₛ a
+    Is0b-Uni-r' .(_ ∪ _) .(_ ∪ _) (State.⟨⟩-∪ r r₁) (0≡s∪s is0b is0b₁) = 0≡s∪s (Is0b-Uni-r' _ _ r is0b) (Is0b-Uni-r' _ _ r₁ is0b₁)
+    Is0b-Uni-r' .(_ · _) .(_ · _) (State.⟨⟩-· r r₁) (0≡s·s (inl x)) = 0≡s·s (inl (Is0b-Uni-r' _ _ r x))
+    Is0b-Uni-r' .(_ · _) .(_ · _) (State.⟨⟩-· r r₁) (0≡s·s (inr x)) = 0≡s·s (inr (Is0b-Uni-r' _ _ r₁ x))
+    Is0b-Uni-r' .(ν _) .(ν _) (State.⟨⟩-ν r) (0≡νs is0b) = 0≡νs (Is0b-Uni-r' _ _ r is0b)
+    Is0b-Uni-r' .(ν (ν swapₛₛ 0 1 qs)) .(ν (ν qs)) (State.ν-swap` qs) (0≡νs (0≡νs is0b)) = 0≡νs (0≡νs (is0b-swapₛₛ-r _ _ is0b))
+    Is0b-Uni-r' .(ν sucₛₛ b 0) b (State.ν-elim` .b) is0b = 0≡νs (is0b-sucₛₛ-r 0 is0b)
+    Is0b-Uni-r' .(ν (zs ∪ qs)) .(ν zs ∪ ν qs) (State.ν-∪` qs zs) (0≡s∪s (0≡νs is0b) (0≡νs is0b₁)) = 0≡νs (0≡s∪s is0b is0b₁)
+    Is0b-Uni-r' .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (State.ν-·` qs zs) (0≡s·s (inl (0≡νs x))) = 0≡νs (0≡s·s (inl x))
+    Is0b-Uni-r' .(ν (zs · sucₛₛ qs 0)) .(ν zs · qs) (State.ν-·` qs zs) (0≡s·s (inr x)) = 0≡νs (0≡s·s (inr (is0b-sucₛₛ-r 0 x)))
+    Is0b-Uni-r' .(x ∪ y ∪ z) .((x ∪ y) ∪ z) (State.assoc x y z) (0≡s∪s (0≡s∪s is0b is0b₂) is0b₁) = 0≡s∪s is0b (0≡s∪s is0b₂ is0b₁)
+    Is0b-Uni-r' .(b ∪ 0b) b (State.rid .b) is0b = 0≡s∪s is0b 0≡0b
+    Is0b-Uni-r' .(x ∪ y) .(y ∪ x) (State.comm x y) (0≡s∪s is0b is0b₁) = 0≡s∪s is0b₁ is0b
+    Is0b-Uni-r' .(b ∪ b) b (State.idem .b) is0b = 0≡s∪s is0b is0b
+    Is0b-Uni-r' .(x · y · z) .((x · y) · z) (State.assoc· x y z) (0≡s·s (inl (0≡s·s (inl x₁)))) = 0≡s·s (inl x₁)
+    Is0b-Uni-r' .(x · y · z) .((x · y) · z) (State.assoc· x y z) (0≡s·s (inl (0≡s·s (inr x₁)))) = 0≡s·s (inr (0≡s·s (inl x₁)))
+    Is0b-Uni-r' .(x · y · z) .((x · y) · z) (State.assoc· x y z) (0≡s·s (inr x₁)) = 0≡s·s (inr (0≡s·s (inr x₁)))
+    Is0b-Uni-r' .(b · 1b) b (State.rid· .b) is0b = 0≡s·s (inl is0b)
+    Is0b-Uni-r' .(x · y) .(y · x) (State.comm· x y) (0≡s·s (inl x₁)) = 0≡s·s (inr x₁)
+    Is0b-Uni-r' .(x · y) .(y · x) (State.comm· x y) (0≡s·s (inr x₁)) = 0≡s·s (inl x₁)
+    Is0b-Uni-r' .(x · 0b) .0b (State.def∅· x) is0b = 0≡s·s (inr 0≡0b)
+    Is0b-Uni-r' .(x · (y ∪ z)) .(x · y ∪ x · z) (State.dist x y z) (0≡s∪s (0≡s·s (inl x₁)) (0≡s·s x₂)) = 0≡s·s (inl x₁)
+    Is0b-Uni-r' .(x · (y ∪ z)) .(x · y ∪ x · z) (State.dist x y z) (0≡s∪s (0≡s·s (inr x₁)) (0≡s·s (inl x₂))) = 0≡s·s (inl x₂)
+    Is0b-Uni-r' .(x · (y ∪ z)) .(x · y ∪ x · z) (State.dist x y z) (0≡s∪s (0≡s·s (inr x₁)) (0≡s·s (inr x₂))) = 0≡s·s (inr (0≡s∪s x₁ x₂))
+    Is0b-Uni-r' a .a (State.refl` .a) is0b = is0b
+    Is0b-Uni-r' a b (State.sym` .b .a r) is0b = Is0b-Uni-l' _ _ r is0b
+    Is0b-Uni-r' a b (State.trans` .a y .b r r₁) is0b = Is0b-Uni-r' _ _ r (Is0b-Uni-r' _ _ r₁ is0b)
+  
+
+  Is0b-Uni-l : ∀{fv} → ∀(a b : SState fv) → a R b → ∥ Is0bₛₛ a ∥₁ → ∥ Is0bₛₛ b ∥₁
+  Is0b-Uni-l a b r is0b = PQ.rec squash₁ (λ x → ∣ Is0b-Uni-l' a b r x ∣₁) is0b
+
+
+  Is0b-Uni-r : ∀{fv} → ∀(a b : SState fv) → a R b → ∥ Is0bₛₛ b ∥₁ → ∥ Is0bₛₛ a ∥₁
+  Is0b-Uni-r a b r is0b = PQ.rec squash₁ (λ x → ∣ Is0b-Uni-r' a b r x ∣₁) is0b
+
+  Is0bₛ : ∀{fv} → State fv → hProp ℓ
+  Is0bₛ ⟨ a ⟩ₛ = ∥ Is0bₛₛ a ∥₁ , squash₁
+  Is0bₛ (eq/ a b r i) =  TypeOfHLevel≡ 1 {X = ∥ Is0bₛₛ a ∥₁ , squash₁} {Y = ∥ Is0bₛₛ b ∥₁ , squash₁} (hPropExt squash₁ squash₁  (Is0b-Uni-l a b r) (Is0b-Uni-r a b r)) i
+  Is0bₛ (squash/ a b p q i j) =  isSetHProp (Is0bₛ a) (Is0bₛ b) (cong Is0bₛ p) (cong Is0bₛ q) i j
 
 
 module _ {ℓ1} {ℓ2} {C1 : ∀ k → Type ℓ1} {C2 : ∀ k → Type ℓ2} where

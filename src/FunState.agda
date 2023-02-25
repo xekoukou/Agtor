@@ -24,7 +24,7 @@ module FunState {ℓ ℓ'} (C : ∀ n → Type ℓ) where
 module St = State C
 open St
 
-record FunRel (f g : Σ (Type ℓ') (λ A → A → State)) : Type (ℓ-max ℓ (ℓ-suc ℓ')) where
+record FunRel {n : ℕ} (f g : Σ (Type ℓ') (λ A → A → State n)) : Type (ℓ-max ℓ (ℓ-suc ℓ')) where
   field
    srj : fst f → fst g
    isSurj : ∀ y → Σ (fst f) (λ x → srj x ≡ y)
@@ -33,18 +33,21 @@ record FunRel (f g : Σ (Type ℓ') (λ A → A → State)) : Type (ℓ-max ℓ 
 
 open FunRel
 
-FunState : Type (ℓ-max ℓ (ℓ-suc ℓ'))
-FunState = (Σ (Type ℓ') (λ A → A → State)) / FunRel
+FunState : ℕ → Type (ℓ-max ℓ (ℓ-suc ℓ'))
+FunState n = (Σ (Type ℓ') (λ A → A → State n)) / FunRel
 
 
-data FunDomain : FunState → Type (ℓ-max ℓ (ℓ-suc ℓ')) where
-  q : {f : (Σ (Type ℓ') (λ A → A → State))} → fst f → FunDomain [ f ]
+data FunDomain {n : ℕ} : FunState n → Type (ℓ-max ℓ (ℓ-suc ℓ')) where
+  q : {f : (Σ (Type ℓ') (λ A → A → State n))} → fst f → FunDomain [ f ]
   e : ∀{f g} → (rel : FunRel f g) → (x : fst f) → (y : fst g) → (srj rel) x ≡ y → PathP (λ i → FunDomain (eq/ f g rel i)) (q x) (q y)
-  sq : ∀{ x y : FunState} → (p1 p2 : x ≡ y) → (dx : FunDomain x) → (dy : FunDomain y)
+  sq : ∀{ x y : FunState n} → (p1 p2 : x ≡ y) → (dx : FunDomain x) → (dy : FunDomain y)
        → (dp1 : PathP (λ i → FunDomain (p1 i)) dx dy)
        → (dp2 : PathP (λ i → FunDomain (p2 i)) dx dy) → SquareP (λ i j → FunDomain (squash/ x y p1 p2 i j)) dp1 dp2 refl refl
 
-_$_ : (os : FunState) → FunDomain os → State
-.([ _ ]) $ q {f} x = (snd f) x
-.(eq/ _ _ rel i) $ e {_} {g} rel x y x₁ i = (eqIm rel x ∙ cong (snd g) x₁) i
-.(squash/ _ _ p1 p2 i j) $ sq {x} {y} p1 p2 dx dy dp1 dp2 i j = squash (x $ dx) (y $ dy) (cong₂ _$_ p1 dp1) (cong₂ _$_ p2 dp2) i j
+_$_ : {n : ℕ} → (os : FunState n) → FunDomain os → State n
+[ a ] $ fd = {!!}
+eq/ a b r i $ fd = {!!}
+squash/ os os₁ p q₁ i i₁ $ fd = {!!}
+-- .([ _ ]) $ q {f} x = (snd f) x
+-- .(eq/ _ _ rel i) $ e {_} {g} rel x y x₁ i = (eqIm rel x ∙ cong (snd g) x₁) i
+-- -- .(squash/ _ _ p1 p2 i j) $ sq {x} {y} p1 p2 dx dy dp1 dp2 i j = squash (x $ dx) (y $ dy) (cong₂ _$_ p1 dp1) (cong₂ _$_ p2 dp2) i j

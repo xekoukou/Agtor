@@ -50,7 +50,7 @@ mutual
                               -- This is useful for local reduction purposes.
       P     : List (Fin k) → ℕ → UMType → Type
       decP  : ∀ c s A → Dec (P c s A)
-      δᶜT   : ∀ c s A → { p : ∥ P c s A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState (s + k)
+      δᶜT   : ∀ c s A → { p : ∥ P c s A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState (k + s)
       δT    : StT.SState k
 
 mutual
@@ -67,7 +67,7 @@ mutual
     open ActorT
     
     field
-      δᶜ  : ∀ c s A → { p : ∥ (P Typ) c s A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState (s + k)) (_withType (δᶜT Typ) c s A {p} v)
+      δᶜ  : ∀ c s A → { p : ∥ (P Typ) c s A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState (k + s)) (_withType (δᶜT Typ) c s A {p} v)
       δ   : Σ (StV.SState k) (_withType δT Typ)
 
 

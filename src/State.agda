@@ -121,7 +121,12 @@ data _R_ : ∀{fv} → SState fv → SState fv → Type ℓ where
   refl`    : ∀{fv} → (x : SState fv) → x R x
   sym`    : ∀{fv} → (x y : SState fv) → x R y → y R x
   trans`  : ∀{fv} → (x y z : SState fv) → x R y → y R z → x R z
-  squash₁ : ∀{fv} → (x y : SState fv) → isProp (x R y)
+
+-- This is not a proposition, but since there is an isomorphism between the Quotient by truncated R and this one,
+-- we might be able to recover the effective property.
+-- Removing this will make our life a lot easier, and pressumably we can reintroduce it with truncation, whenever w
+-- want.
+--  squash₁ : ∀{fv} → (x y : SState fv) → isProp (x R y)
   
 
 
@@ -131,8 +136,8 @@ State n = SState n / _R_
 
 open BinaryRelation
 
-RisPropValued : ∀{fv} → isPropValued _R_
-RisPropValued {fv} a b = squash₁ {fv} a b
+-- RisPropValued : ∀{fv} → isPropValued _R_
+-- RisPropValued {fv} a b = squash₁ {fv} a b
 
 RisEquivRel : ∀{fv} → isEquivRel _R_
 isEquivRel.reflexive (RisEquivRel {fv}) = refl` {fv}
