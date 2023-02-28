@@ -7,13 +7,13 @@ open import Cubical.Categories.Category
 open import Cubical.Categories.Instances.Sets
 open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Data.Empty
+open import Cubical.Data.Unit
 open import Cubical.Data.Sum
 open import Cubical.Data.Vec as V
-open import Cubical.Data.List
+open import Cubical.Data.List as L
 open import Cubical.Data.Sigma
 open import Cubical.Data.Nat
 open import Cubical.Data.Fin
-
 
 import State
 open import State.Properties
@@ -35,7 +35,9 @@ record MsgT k : Type ℓ where
     nsecr : Fin (suc k)
 
 
-mutual
+interleaved mutual
+
+  record ActorT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ'))
 
   data CT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
     ct-m : MsgT k → CT k
@@ -43,14 +45,25 @@ mutual
 
   module StT = State CT
 
-  record ActorT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
+  record TypPred (k : ℕ) : Type (ℓ-suc ℓ) where
+    field
+      Pt  : UMType → Type
+      decPt  : ∀ A → Dec (Pt A)
+      Ps  : List (Fin k)
+      Pns : ℕ
+
+  open TypPred
+
+  record δᶜT-Section (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
+    inductive
+    field
+      typPred : TypPred k
+      δᶜT : ∀ A → { p : ∥ (Pt typPred) A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState (k + (Pns typPred))
+
+  record ActorT k where
     coinductive
     field
-      minS    : List (Fin k)  -- This is the secrets that all messages must have
-                              -- This is useful for local reduction purposes.
-      P     : List (Fin k) → ℕ → UMType → Type
-      decP  : ∀ c s A → Dec (P c s A)
-      δᶜT   : ∀ c s A → { p : ∥ P c s A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState (k + s)
+      δᶜTs : List (δᶜT-Section k)
       δT    : StT.SState k
 
 mutual
@@ -61,14 +74,23 @@ mutual
 
   module StV = State C
 
+  record δᶜ-Section (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
+    inductive
+    open δᶜT-Section
+    field
+      δᶜTsec : δᶜT-Section k
+      δᶜ  : ∀ A → { p : ∥ (Pt (typPred δᶜTsec)) A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState (k + (Pns (typPred δᶜTsec)))) (_withType ((δᶜT δᶜTsec) A {p} v))
+
+
+
   record Actor {k : ℕ} (Typ : ActorT k) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
     coinductive
     
-    open ActorT
+    open ActorT Typ
     
     field
-      δᶜ  : ∀ c s A → { p : ∥ (P Typ) c s A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState (k + s)) (_withType (δᶜT Typ) c s A {p} v)
-      δ   : Σ (StV.SState k) (_withType δT Typ)
+      δᶜTs  : Σ (List (δᶜ-Section k)) (_withδᶜTs δᶜTs)
+      δ   : Σ (StV.SState k) (_withType δT)
 
 
   data _withType_ : ∀{fv} → StV.SState fv → StT.SState fv → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) where
@@ -84,3 +106,6 @@ mutual
   data _withTypeC_ {k} : C k → CT k → Type ((ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ'))) where
     wtCm : ∀{t v} → (c-m t v) withTypeC (ct-m t)
     wtCa : ∀{t a} → (c-a t a) withTypeC (ct-a t)
+
+  data _withδᶜTs_ {k} (ls : List (δᶜ-Section k)) : List (δᶜT-Section k) → Type ((ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ'))) where
+    wtδᶜ : ls withδᶜTs L.map δᶜ-Section.δᶜTsec ls  
