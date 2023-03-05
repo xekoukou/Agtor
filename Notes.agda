@@ -39,6 +39,8 @@ term A ∪ B has type A ∨ B
 
 if A and B,  A ᵉ · B has type A ᵉ ∧ B , the env needs A⊃ ∨ ⊃(B - A) ᵉ
 
+(This is probably wrong)
+
 0 ᵉ ∨ a ＝ 0 ᵉ
 
 0 ᵉ ∧ a = a

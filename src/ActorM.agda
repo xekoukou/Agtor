@@ -25,6 +25,16 @@ module ActorM {ℓ ℓ' : _} (prM : UMTypePr ℓ ℓ') where
 open ProjStr (snd prM) public
 UMType = ⟨ prM ⟩
 
+record TypPred (k : ℕ) : Type (ℓ-suc ℓ) where
+  field
+    Pt  : UMType → Type
+    decPt  : ∀ A → Dec (Pt A)
+    Ps  : List (Fin k)
+    Pns : ℕ
+
+open TypPred
+
+
 
 -- Msgs have a type and a number of new secrets.
 -- New Secrets are at the start of the Vec.
@@ -45,14 +55,6 @@ interleaved mutual
 
   module StT = State CT
 
-  record TypPred (k : ℕ) : Type (ℓ-suc ℓ) where
-    field
-      Pt  : UMType → Type
-      decPt  : ∀ A → Dec (Pt A)
-      Ps  : List (Fin k)
-      Pns : ℕ
-
-  open TypPred
 
   record δᶜT-Section (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
     inductive

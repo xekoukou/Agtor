@@ -40,7 +40,7 @@ record Particle (fv : ℕ) : Type ℓ where
     {k} : ℕ
     -- This is well-scoped by definition.
     secr : Vec (Fin fv) k
-    c : C k
+    def : C k
 
 data SState : ℕ → Type ℓ where  
   0b      : ∀{fv} → SState fv
@@ -53,10 +53,13 @@ data SState : ℕ → Type ℓ where
 f-secr : ∀{fv} → (f : ∀{k} → Vec (Fin fv) k → Vec (Fin fv) k) → Particle fv → Particle fv
 f-secr f ([ secr ] c) = [ f secr ] c
 
+sucₚ : ∀{fv} → Particle fv → ℕ → Particle (suc fv)
+sucₚ ([ secr ] def) n = [ lsuc<?Fin secr n ] def
+
 sucₛₛ : ∀{fv} → (q : SState fv) → ℕ → SState (suc fv)
 sucₛₛ 0b n = 0b
 sucₛₛ 1b n = 1b
-sucₛₛ (` [ secr ] c) n = ` [ lsuc<?Fin secr n ] c 
+sucₛₛ (` p) n = ` sucₚ p n
 sucₛₛ (lq ∪ rq) n = sucₛₛ lq n ∪ sucₛₛ rq n
 sucₛₛ (lq · rq) n = sucₛₛ lq n · sucₛₛ rq n
 sucₛₛ (ν q) n = ν sucₛₛ q (suc n)
