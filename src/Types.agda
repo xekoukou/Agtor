@@ -104,6 +104,7 @@ data GType (k : ℕ) : Type (ℓ-suc ℓ) where
   _ᵃ : BSet k → GType k
   _&_ : (l r : GType k) → GType k
   _∣_ : (l r : GType k) → GType k
+  -- μ is not useful for behavioral types, they are transformed with the use of μeG to GType k
   μ_ : GType (suc k) → GType k
 
 
@@ -137,6 +138,7 @@ data _G_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
   -- dual to previous
   |mr : {L R : BSet k} → ((L ᵐ) ∣ (R ᵐ)) G ((L || R) ᵐ)
 
+
 --   not true since we can have two different messages x ∈ L ∧ y ∈ R but none in L ∧ R
 --  &mr : {L R : BSet k} → ((L ᵃ) ∣ (R ᵃ)) G ((L && R) ᵃ)
 
@@ -152,6 +154,19 @@ data _G_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
 -- A ⊑ B means that if reduction can ALWAYS happen for B, then it will ALWAYS happen for A as well.
 -- thus if we prove that the msgs needs for reduction are B⊥ , we have proven that reduction
 -- happends for A as well.
+
+
+data _G2_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
+  G' : ∀ {m a : GType k} → m G a → m G2 a
+
+  -- This is not useful for Behavior types, only for reduction types.
+  -- cut is the only way to reduce the restrictions.
+  cut : ∀ {m a : BSet k} → (((m || a) ᵐ) & (a ᵃ)) G2 ((m ᵐ) & (a ᵃ))
+
+data _G3_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
+  G : ∀ {m a : GType k} → m G a → m G3 a
+
+
 
 -- IMPORTANT : The dual operator reverses the relation, it seems.
 data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
@@ -189,9 +204,6 @@ data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
   -- μeG only contains msgs from the outside world, thus it exludes msgs that are internal to q, that could lead to reduction.
   μ2  : ∀{q : GType (suc k)} → (μeG q) ⊑ (μ q)
   
-  -- cut is the only way to reduce the restrictions.
-  -- TODO IMPORTANT : Cut is an equality. Needs to be moved up.
-  cut : ∀ {m a : BSet k} → (((m || a) ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & (a ᵃ))
   μ⊑  : ∀{q e : GType (suc k)} → q ⊑ e → (μ q) ⊑ (μ e)
   -- Wrong : Consider q ⊑ e is less restrictive in both ends. And thus, we could add a term that reduces e , but not q, that is not taken into account
   -- because the restriction of μ, that only considers terms from the outside.
@@ -228,3 +240,9 @@ cut2 {k} {μ m} {a} x = {!!}
 -- (a ᵐ | b ᵐ) & c ᵃ --->  c - a = 0 & c - b = 0
 --- a ᵃ & b ᵃ ⊑ c ᵃ --> c ─→ a && b
 --- c ᵐ ⊑ a ᵐ | b ᵐ ---> 
+
+
+
+
+------- Maybe we cab transfrom non-determinism into determistic computation if ( a ᵐ | b ᵐ ) & (a ᵃ & b ᵃ) is transformed so that for the a ∧ b is empty. This can be done because of rule &ar, thus we can deal
+-- with deterministic computation, and their properties, and then transform this to the non-deterministic case. This can be done, the question is how useful it can be.
