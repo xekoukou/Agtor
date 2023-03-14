@@ -47,15 +47,6 @@ open module StTP = State (TypPred) renaming (Particle to PredP)
 open MsgP
 open PredP
 
-_==?_ : (x y : ℕ) → Dec (Id x y)
-zero ==? zero = yes reflId
-zero ==? suc y = no λ {()}
-suc x ==? zero = no λ {()}
-suc x ==? suc y with x ==? y
-... | yes reflId = yes reflId
-... | no ¬p = no (λ { reflId → ¬p reflId})
-
-
 -- A property on messages.
 BSet : (k : ℕ) → Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
 BSet k = (mp : MsgP k) → Type
@@ -64,23 +55,11 @@ BSet k = (mp : MsgP k) → Type
 ⊨ : ∀{k} → BSet k → Set ℓ
 ⊨ P = ∀ a → P a 
 
+⊥B : ∀{k} → BSet k
+⊥B mp = ⊥
 
-
-
-BPred : ∀{k} → PredP k → BSet k
-BPred {k} A MP =
-  let (n , rl) = nsecr (def MP)
-      (osecrm , nsecrm) = V.split (FD.fromℕ' _ n rl) (secr MP)
-      csecr = compSecr osecrm (secr A)
-      
-  in (fst (nsecr (def MP)) ≡ Pns (def A)) × (csecr ≡ just (Ps (def A))) × Pt (def A) (umT (def MP))
-
-B⊥ : ∀{k} → BSet k
-B⊥ mp = ⊥
-
-
-_─→_ : ∀{k} → BSet k → BSet k → BSet k
-_─→_ P Q mp = P mp → Q mp
+_↦_ : ∀{k} → BSet k → BSet k → BSet k
+_↦_ P Q mp = P mp → Q mp
 
 _&&_ : ∀{k} → BSet k → BSet k → BSet k
 (a && b) mp = a mp × b mp
@@ -88,14 +67,20 @@ _&&_ : ∀{k} → BSet k → BSet k → BSet k
 _||_ : ∀{k} → BSet k → BSet k → BSet k
 (a || b) mp = a mp ⊎ b mp
 
+
+¬B : ∀{k} → BSet k → BSet k
+¬B a mp = ¬ (a mp)
+
+-- I do not like this definition, because we need to prove the negation
+-- 
 _─_ : ∀{k} → BSet k → BSet k → BSet k
-(a ─ b) mp = a mp ⊎ (¬ (b mp))
+(a ─ b) = a && (¬B b)
 
-μe : ∀{k} → BSet (suc k) → BSet k
-μe a mp = a (StM.sucₚ mp 0)
+Bsucₚ : ∀{k} → BSet (suc k) → BSet k
+Bsucₚ a mp = a (StM.sucₚ mp 0)
 
-μe2 : ∀{k} → BSet k → BSet (suc k)
-μe2 {k} a ([ secr ] def) = Σ (Vec (Fin k) _) (λ scr → secr ≡ lsuc<?Fin scr 0 → a (StM.[ scr ] def))
+Bpredₚ : ∀{k} → BSet k → BSet (suc k)
+Bpredₚ {k} a ([ secr ] def) = Σ (Vec (Fin k) _) (λ scr → secr ≡ lsuc<?Fin scr 0 → a (StM.[ scr ] def))
 
 -- Provides a predicates on the msgs needed by the environment so that the term always reduces.
 
@@ -109,7 +94,7 @@ data GType (k : ℕ) : Type (ℓ-suc ℓ) where
 
 
 0ᵐ : ∀{k} → GType k
-0ᵐ = B⊥ ᵐ
+0ᵐ = ⊥B ᵐ
 
 postulate
   μeG : ∀{k} → GType (suc k) → GType k
@@ -151,6 +136,7 @@ data _G_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
 --  0ᵐ& : {q : GType k} → (0ᵃ & q) G {!!}
 --  0ᵐ∣ : {q : GType k} → {!!} G {!!}
 
+
 -- A ⊑ B means that if reduction can ALWAYS happen for B, then it will ALWAYS happen for A as well.
 -- thus if we prove that the msgs needs for reduction are B⊥ , we have proven that reduction
 -- happends for A as well.
@@ -170,9 +156,9 @@ data _G3_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
 
 -- IMPORTANT : The dual operator reverses the relation, it seems.
 data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
-  _→ₘ_ : ∀ (l r : BSet k) → {mph : ⊨ (l ─→ r)} → (l ᵐ) ⊑ (r ᵐ)
+  _→ₘ_ : ∀ (l r : BSet k) → {mph : ⊨ (l ↦ r)} → (l ᵐ) ⊑ (r ᵐ)
   -- DUAL
-  _←ₐ_ : ∀ (l r : BSet k) → {mph : ⊨ (r ─→ l)} → (l ᵃ) ⊑ (r ᵃ)
+  _←ₐ_ : ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
 
   &mr :  ∀ (l r : BSet k) →  ((l ᵐ) & ( r ᵐ)) ⊑ ((l || r) ᵐ)
   -- DUAL
@@ -208,8 +194,8 @@ data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
   -- Wrong : Consider q ⊑ e is less restrictive in both ends. And thus, we could add a term that reduces e , but not q, that is not taken into account
   -- because the restriction of μ, that only considers terms from the outside.
   -- μ⊑2  : ∀{q e : GType (suc k)} → (μ q) ⊑ (μ e) → q ⊑ e
-  μ-cut : ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || μe2 a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
-  μ-cut2 : ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || μe a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
+  μ-cut : ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || Bpredₚ a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
+  μ-cut2 : ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || Bsucₚ a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
 
 cut2 : ∀{k} → ∀ {m a : GType k} → a ⊑ (m ᵀ) → (a & m) ⊑ 0ᵐ
 cut2 {k} {x₁ ᵐ} {x₂ ᵃ} x = {!!}
@@ -246,3 +232,13 @@ cut2 {k} {μ m} {a} x = {!!}
 
 ------- Maybe we cab transfrom non-determinism into determistic computation if ( a ᵐ | b ᵐ ) & (a ᵃ & b ᵃ) is transformed so that for the a ∧ b is empty. This can be done because of rule &ar, thus we can deal
 -- with deterministic computation, and their properties, and then transform this to the non-deterministic case. This can be done, the question is how useful it can be.
+
+
+BPred : ∀{k} → PredP k → BSet k
+BPred {k} A MP =
+  let (n , rl) = nsecr (def MP)
+      (osecrm , nsecrm) = V.split (FD.fromℕ' _ n rl) (secr MP)
+      csecr = compSecr osecrm (secr A)
+      
+  in (fst (nsecr (def MP)) ≡ Pns (def A)) × (csecr ≡ just (Ps (def A))) × Pt (def A) (umT (def MP))
+
