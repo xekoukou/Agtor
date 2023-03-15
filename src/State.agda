@@ -31,35 +31,41 @@ module State {ℓ} (C : (k : ℕ) → Type ℓ) where
 infix 9 ν_
 infixr 5 _∪_
 infixr 7 _·_
-infix 10 `_
+infix 10 _ᵃ
+infix 10 _ᵐ
 infix 12 [_]_
 
-record Particle (fv : ℕ) : Type ℓ where
+record CParticle (fv : ℕ) : Type ℓ where
   constructor [_]_
   field
     {k} : ℕ
     -- This is well-scoped by definition.
+    -- In fact, predicate relevant secrets are always on the front for both messages and actors.
+    -- new secrets for msgs, or old secrets that do not interact with the predicate are at the end.
+    -- To make equality easier, predicate secrets are ordered.
     secr : Vec (Fin fv) k
     def : C k
 
 data SState : ℕ → Type ℓ where  
   0b      : ∀{fv} → SState fv
   1b      : ∀{fv} → SState fv
-  `_       : ∀{fv} → Particle fv → SState fv
+  _ᵐ       : ∀{fv} → CParticle fv → SState fv
+  _ᵃ       : ∀{fv} → CParticle fv → SState fv
   _∪_     : ∀{fv} → (lq : SState fv) → (rq : SState fv) → SState fv
   _·_     : ∀{fv} → (lq : SState fv) → ( rq : SState fv) → SState fv
   ν_      : ∀{fv} → SState (suc fv) → SState fv
 
-f-secr : ∀{fv} → (f : ∀{k} → Vec (Fin fv) k → Vec (Fin fv) k) → Particle fv → Particle fv
+f-secr : ∀{fv} → (f : ∀{k} → Vec (Fin fv) k → Vec (Fin fv) k) → CParticle fv → CParticle fv
 f-secr f ([ secr ] c) = [ f secr ] c
 
-sucₚ : ∀{fv} → Particle fv → ℕ → Particle (suc fv)
+sucₚ : ∀{fv} → CParticle fv → ℕ → CParticle (suc fv)
 sucₚ ([ secr ] def) n = [ lsuc<?Fin secr n ] def
 
 sucₛₛ : ∀{fv} → (q : SState fv) → ℕ → SState (suc fv)
 sucₛₛ 0b n = 0b
 sucₛₛ 1b n = 1b
-sucₛₛ (` p) n = ` sucₚ p n
+sucₛₛ (p ᵃ) n = (sucₚ p n) ᵃ
+sucₛₛ (p ᵐ) n = (sucₚ p n) ᵐ
 sucₛₛ (lq ∪ rq) n = sucₛₛ lq n ∪ sucₛₛ rq n
 sucₛₛ (lq · rq) n = sucₛₛ lq n · sucₛₛ rq n
 sucₛₛ (ν q) n = ν sucₛₛ q (suc n)
@@ -71,7 +77,8 @@ sucₛₛ[ suc n ] q = sucₛₛ (sucₛₛ[ n ] q) (suc n)
 swapₛₛ : ∀{fv} → Fin fv → Fin fv → (q : SState fv) → SState fv
 swapₛₛ m n 0b = 0b
 swapₛₛ m n 1b = 1b
-swapₛₛ m n (` [ secr ] c) = ` [ lswapFin m n secr ] c 
+swapₛₛ m n (([ secr ] c) ᵃ) = ([ lswapFin m n secr ] c) ᵃ 
+swapₛₛ m n (( [ secr ] c) ᵐ) = ([ lswapFin m n secr ] c) ᵐ
 swapₛₛ m n (lq ∪ rq) = swapₛₛ m n lq ∪ swapₛₛ m n rq
 swapₛₛ m n (lq · rq) = swapₛₛ m n lq · swapₛₛ m n rq
 swapₛₛ m n (ν q) = ν swapₛₛ (fsuc m) (fsuc n) q
@@ -79,7 +86,8 @@ swapₛₛ m n (ν q) = ν swapₛₛ (fsuc m) (fsuc n) q
 id+ : ∀{fv} → (m : ℕ) → SState fv → SState (fv + suc m)
 id+ m 0b = 0b
 id+ m 1b = 0b
-id+ {fv} m (` [ secr ] c) = ` [ V.map (inject≤ O.≤SumLeft) secr ] c
+id+ {fv} m (( [ secr ] c) ᵃ)  = ([ V.map (inject≤ O.≤SumLeft) secr ] c) ᵃ
+id+ {fv} m (( [ secr ] c) ᵐ)  = ([ V.map (inject≤ O.≤SumLeft) secr ] c) ᵐ
 id+ m (q1 ∪ q2) = id+ m q1 ∪ id+ m q2
 id+ m (q1 · q2) = id+ m q1 · id+ m q2
 id+ m (ν q) = ν id+ m q
@@ -91,7 +99,8 @@ id+ m (ν q) = ν id+ m q
 substₛₛ : ∀{fv k} → Vec (Fin fv) k → SState k → SState fv
 substₛₛ vs 0b = 0b
 substₛₛ vs 1b = 1b
-substₛₛ vs (` [ secr ] c) = ` [ sbst vs secr ] c
+substₛₛ vs (( [ secr ] c) ᵃ) = ([ sbst vs secr ] c) ᵃ
+substₛₛ vs (( [ secr ] c) ᵐ) = ([ sbst vs secr ] c) ᵐ
 substₛₛ vs (q ∪ q₁) = substₛₛ vs q ∪ substₛₛ vs q₁
 substₛₛ vs (q · q₁) = substₛₛ vs q · substₛₛ vs q₁
 substₛₛ vs (ν q) = ν substₛₛ (sbsuc 1 vs) q

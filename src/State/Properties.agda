@@ -39,7 +39,8 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
   sucₛₛ-sucₛₛ :  ∀{fv} → ∀ n m → m ≤ n → (q : SState fv) → sucₛₛ (sucₛₛ q m) (suc n) ≡ sucₛₛ (sucₛₛ q n) m 
   sucₛₛ-sucₛₛ n m m≤n 0b = refl
   sucₛₛ-sucₛₛ n m m≤n 1b = refl
-  sucₛₛ-sucₛₛ n m m≤n (` [ secr ] c) = cong (λ vs → ` [ vs ] c) (lsuc-lsuc-Fin n m m≤n secr)
+  sucₛₛ-sucₛₛ n m m≤n (([ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lsuc-lsuc-Fin n m m≤n secr)
+  sucₛₛ-sucₛₛ n m m≤n (([ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lsuc-lsuc-Fin n m m≤n secr)
   sucₛₛ-sucₛₛ n m m≤n (q ∪ q₁) = cong₂ _∪_ (sucₛₛ-sucₛₛ n m m≤n q) (sucₛₛ-sucₛₛ n m m≤n q₁)
   sucₛₛ-sucₛₛ n m m≤n (q · q₁) = cong₂ _·_ (sucₛₛ-sucₛₛ n m m≤n q) (sucₛₛ-sucₛₛ n m m≤n q₁)
   sucₛₛ-sucₛₛ n m m≤n (ν q) = cong ν_ (sucₛₛ-sucₛₛ (suc n) (suc m) m≤n q)
@@ -47,7 +48,8 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
   sucₛₛ-swapₛₛ : ∀{fv} → ∀ t m e → fst m < t → fst e < t → (q : SState fv) → sucₛₛ (swapₛₛ m e q) t ≡ swapₛₛ (fext m) (fext e) (sucₛₛ q t)
   sucₛₛ-swapₛₛ t m e m<t e<t 0b = refl
   sucₛₛ-swapₛₛ t m e m<t e<t 1b = refl
-  sucₛₛ-swapₛₛ t m e m<t e<t (` [ secr ] c) = cong (λ vs → ` ([ vs ] c)) (lsuc-lswap-Fin t m e m<t e<t secr)
+  sucₛₛ-swapₛₛ t m e m<t e<t (( [ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lsuc-lswap-Fin t m e m<t e<t secr)
+  sucₛₛ-swapₛₛ t m e m<t e<t (( [ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lsuc-lswap-Fin t m e m<t e<t secr)
   sucₛₛ-swapₛₛ t m e m<t e<t (q ∪ q₁) = cong₂ _∪_ (sucₛₛ-swapₛₛ t m e m<t e<t q)  (sucₛₛ-swapₛₛ t m e m<t e<t q₁)
   sucₛₛ-swapₛₛ t m e m<t e<t (q · q₁) = cong₂ _·_ (sucₛₛ-swapₛₛ t m e m<t e<t q) (sucₛₛ-swapₛₛ t m e m<t e<t q₁)
   sucₛₛ-swapₛₛ t m e m<t e<t (ν q) = cong ν_ (sucₛₛ-swapₛₛ (suc t) (fsuc m) (fsuc e) m<t e<t q)
@@ -55,7 +57,8 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
   sucₛₛ-swapₛₛ> : ∀{fv} → ∀ t m e → t ≤ fst m → t ≤ fst e → (q : SState fv) → sucₛₛ (swapₛₛ m e q) t ≡ swapₛₛ (fsuc m) (fsuc e) (sucₛₛ q t)
   sucₛₛ-swapₛₛ> t m e m>t e>t 0b = refl
   sucₛₛ-swapₛₛ> t m e m>t e>t 1b = refl
-  sucₛₛ-swapₛₛ> t m e m>t e>t (` [ secr ] c) = cong (λ vs → ` ([ vs ] c)) (lsuc-lswap>-Fin t m e m>t e>t secr)
+  sucₛₛ-swapₛₛ> t m e m>t e>t (( [ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lsuc-lswap>-Fin t m e m>t e>t secr)
+  sucₛₛ-swapₛₛ> t m e m>t e>t (( [ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lsuc-lswap>-Fin t m e m>t e>t secr)
   sucₛₛ-swapₛₛ> t m e m>t e>t (q ∪ q₁) = cong₂ _∪_ (sucₛₛ-swapₛₛ> t m e m>t e>t q)  (sucₛₛ-swapₛₛ> t m e m>t e>t q₁)
   sucₛₛ-swapₛₛ> t m e m>t e>t (q · q₁) = cong₂ _·_ (sucₛₛ-swapₛₛ> t m e m>t e>t q) (sucₛₛ-swapₛₛ> t m e m>t e>t q₁)
   sucₛₛ-swapₛₛ> t m e m>t e>t (ν q) = cong ν_ (sucₛₛ-swapₛₛ> (suc t) (fsuc m) (fsuc e) m>t e>t q)
@@ -66,7 +69,8 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
                 → swapₛₛ t1 t2 (swapₛₛ e1 e2 q) ≡ swapₛₛ e1 e2 (swapₛₛ t1 t2 q)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 0b = refl
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 1b = refl
-  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (` [ secr ] c) = cong (λ vs → ` ([ vs ] c)) (lswap-lswap-Fin t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 secr)
+  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (([ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lswap-lswap-Fin t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 secr)
+  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (([ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lswap-lswap-Fin t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 secr)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (q ∪ q₁) = cong₂ _∪_ (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q) (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q₁)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (q · q₁) = cong₂ _·_ (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q) (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q₁)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (ν q) = cong ν_ (swapₛₛ-swapₛₛ (fsuc t1) (fsuc t2) (fsuc e1) (fsuc e2) (t1≢e1 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) (t1≢e2 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) (t2≢e1 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) (t2≢e2 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) q)
@@ -159,7 +163,8 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
                 swapₛₛ (fst m , to-≤ (≤-trans {fst m} {suc n} {suc (n + fv)} mrl (k≤k+n n))) (fst t , to-≤ (≤-trans {fst t} {suc n} {suc (n + fv)} trl (k≤k+n n))) (substₛₛ (sbsuc (suc (suc n)) vs) q) ≡ substₛₛ (sbsuc (suc (suc n)) vs) (swapₛₛ m t q)
   subst-swapₛₛ n m t mrl trl vs 0b = refl
   subst-swapₛₛ n m t mrl trl vs 1b = refl
-  subst-swapₛₛ n m t mrl trl vs (` [ secr ] c) = cong (λ a → ` [ a ] c) (sbst-swap n m t mrl trl vs secr)
+  subst-swapₛₛ n m t mrl trl vs (( [ secr ] c) ᵃ) = cong (λ a → ([ a ] c) ᵃ) (sbst-swap n m t mrl trl vs secr)
+  subst-swapₛₛ n m t mrl trl vs (( [ secr ] c) ᵐ) = cong (λ a → ([ a ] c) ᵐ) (sbst-swap n m t mrl trl vs secr)
   subst-swapₛₛ n m t mrl trl vs (q ∪ q₁) = cong₂ _∪_ (subst-swapₛₛ n m t mrl trl vs q) (subst-swapₛₛ n m t mrl trl vs q₁)
   subst-swapₛₛ n m t mrl trl vs (q · q₁) = cong₂ _·_ (subst-swapₛₛ n m t mrl trl vs q) (subst-swapₛₛ n m t mrl trl vs q₁)
   subst-swapₛₛ n m t mrl trl vs (ν q) = cong ν_ (subst-swapₛₛ (suc n) (fsuc m) (fsuc t) mrl trl vs q)
@@ -170,7 +175,8 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
                 sucₛₛ (substₛₛ (sbsuc n vs) q) n ≡ substₛₛ (sbsuc (suc n) vs) (sucₛₛ q n)
   subst-sucₛₛ n vs 0b = refl
   subst-sucₛₛ n vs 1b = refl
-  subst-sucₛₛ n vs (` [ secr ] c) = cong (λ s → ` [ s ] c) (sbst-suc n vs secr)
+  subst-sucₛₛ n vs (( [ secr ] c) ᵃ) = cong (λ s → ([ s ] c) ᵃ) (sbst-suc n vs secr)
+  subst-sucₛₛ n vs (( [ secr ] c) ᵐ) = cong (λ s → ([ s ] c) ᵐ) (sbst-suc n vs secr)
   subst-sucₛₛ n vs (q ∪ q₁) = cong₂ _∪_ (subst-sucₛₛ n vs q) (subst-sucₛₛ n vs q₁)
   subst-sucₛₛ n vs (q · q₁) = cong₂ _·_ (subst-sucₛₛ n vs q) (subst-sucₛₛ n vs q₁)
   subst-sucₛₛ n vs (ν q) = cong ν_ (subst-sucₛₛ (1 + n) vs q)
@@ -324,7 +330,8 @@ module _ {ℓ1} {ℓ2} {C1 : ∀ k → Type ℓ1} {C2 : ∀ k → Type ℓ2} whe
   mapₛₛ : ∀{fv} → (∀{k} → C1 k → C2 k) → (q : S1.SState fv) → S2.SState fv
   mapₛₛ f 0b = 0b
   mapₛₛ f 1b = 1b
-  mapₛₛ f (` [ secr ] c) = ` [ secr ] (f c)
+  mapₛₛ f (( [ secr ] c) ᵃ) = ([ secr ] (f c)) ᵃ
+  mapₛₛ f (( [ secr ] c) ᵐ) = ([ secr ] (f c)) ᵐ
   mapₛₛ f (lq ∪ rq) = mapₛₛ f lq ∪ mapₛₛ f rq 
   mapₛₛ f (lq · rq) = mapₛₛ f lq · mapₛₛ f rq 
   mapₛₛ f (ν q) = ν mapₛₛ f q
