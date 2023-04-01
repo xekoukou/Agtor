@@ -18,7 +18,7 @@ open import Cubical.Data.Fin
 import Cubical.Data.FinData as FD
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Vec as V
-open import Cubical.Data.List hiding ([_])
+open import Cubical.Data.List as L hiding ([_])
 open import Cubical.Data.Sigma
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Unit
@@ -35,42 +35,98 @@ module State.Properties where
 module 1C {ℓ} (C : ∀ k → Type ℓ) where
 
   open State C
+  module CP = CParticle
+
+  sucₛₛ-sucₛₛ-p : ∀ {fv} n m (m≤n : m ≤ n) (xs : SParticle fv) →
+                 L.map (λ x → sucₚ x (suc n)) (L.map (λ x → sucₚ x m) xs) ≡
+                 L.map (λ x → sucₚ x m) (L.map (λ x → sucₚ x n) xs)
+  sucₛₛ-sucₛₛ-p n m m≤n [] = refl
+  sucₛₛ-sucₛₛ-p n m m≤n (x ∷ xs) = cong₂ _∷_ (cong (λ vs → [ vs ] (CP.def x)) (lsuc-lsuc-Fin n m m≤n (CP.secr x))) (sucₛₛ-sucₛₛ-p n m m≤n xs)
 
   sucₛₛ-sucₛₛ :  ∀{fv} → ∀ n m → m ≤ n → (q : SState fv) → sucₛₛ (sucₛₛ q m) (suc n) ≡ sucₛₛ (sucₛₛ q n) m 
   sucₛₛ-sucₛₛ n m m≤n 0b = refl
   sucₛₛ-sucₛₛ n m m≤n 1b = refl
-  sucₛₛ-sucₛₛ n m m≤n (([ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lsuc-lsuc-Fin n m m≤n secr)
-  sucₛₛ-sucₛₛ n m m≤n (([ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lsuc-lsuc-Fin n m m≤n secr)
+  sucₛₛ-sucₛₛ n m m≤n (xs ᵃ) = cong (λ x → x ᵃ) ( sucₛₛ-sucₛₛ-p n m m≤n xs)
+  sucₛₛ-sucₛₛ n m m≤n (xs ᵐ) = cong (λ x → x ᵐ) ( sucₛₛ-sucₛₛ-p n m m≤n xs)
   sucₛₛ-sucₛₛ n m m≤n (q ∪ q₁) = cong₂ _∪_ (sucₛₛ-sucₛₛ n m m≤n q) (sucₛₛ-sucₛₛ n m m≤n q₁)
   sucₛₛ-sucₛₛ n m m≤n (q · q₁) = cong₂ _·_ (sucₛₛ-sucₛₛ n m m≤n q) (sucₛₛ-sucₛₛ n m m≤n q₁)
   sucₛₛ-sucₛₛ n m m≤n (ν q) = cong ν_ (sucₛₛ-sucₛₛ (suc n) (suc m) m≤n q)
 
+  sucₛₛ-swapₛₛ-p : ∀{fv} → ∀ t m e → fst m < t → fst e < t → (xs : SParticle fv) →
+                 L.map (λ x → sucₚ x t)
+                 (L.map
+                  (λ x →
+                     [ lswapFin m e (State.CParticle.secr x) ] State.CParticle.def x)
+                  xs)
+                 ≡
+                 L.map
+                 (λ x →
+                    [ lswapFin (fext m) (fext e) (State.CParticle.secr x) ]
+                    State.CParticle.def x)
+                 (L.map (λ x → sucₚ x t) xs)
+  sucₛₛ-swapₛₛ-p t m e m<t e<t [] = refl
+  sucₛₛ-swapₛₛ-p t m e m<t e<t (x ∷ xs) = cong₂ _∷_ (cong (λ vs → ([ vs ] (CP.def x))) (lsuc-lswap-Fin t m e m<t e<t (CP.secr x))) (sucₛₛ-swapₛₛ-p t m e m<t e<t xs)
+
   sucₛₛ-swapₛₛ : ∀{fv} → ∀ t m e → fst m < t → fst e < t → (q : SState fv) → sucₛₛ (swapₛₛ m e q) t ≡ swapₛₛ (fext m) (fext e) (sucₛₛ q t)
   sucₛₛ-swapₛₛ t m e m<t e<t 0b = refl
   sucₛₛ-swapₛₛ t m e m<t e<t 1b = refl
-  sucₛₛ-swapₛₛ t m e m<t e<t (( [ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lsuc-lswap-Fin t m e m<t e<t secr)
-  sucₛₛ-swapₛₛ t m e m<t e<t (( [ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lsuc-lswap-Fin t m e m<t e<t secr)
+  sucₛₛ-swapₛₛ t m e m<t e<t (xs ᵃ) = cong (λ x → x ᵃ) (sucₛₛ-swapₛₛ-p t m e m<t e<t xs)
+  sucₛₛ-swapₛₛ t m e m<t e<t (xs ᵐ) = cong (λ x → x ᵐ) (sucₛₛ-swapₛₛ-p t m e m<t e<t xs)
   sucₛₛ-swapₛₛ t m e m<t e<t (q ∪ q₁) = cong₂ _∪_ (sucₛₛ-swapₛₛ t m e m<t e<t q)  (sucₛₛ-swapₛₛ t m e m<t e<t q₁)
   sucₛₛ-swapₛₛ t m e m<t e<t (q · q₁) = cong₂ _·_ (sucₛₛ-swapₛₛ t m e m<t e<t q) (sucₛₛ-swapₛₛ t m e m<t e<t q₁)
   sucₛₛ-swapₛₛ t m e m<t e<t (ν q) = cong ν_ (sucₛₛ-swapₛₛ (suc t) (fsuc m) (fsuc e) m<t e<t q)
 
+  sucₛₛ-swapₛₛ>-p : ∀{fv} → ∀ t m e → t ≤ fst m → t ≤ fst e → (xs : SParticle fv) →
+                 L.map (λ x → sucₚ x t)
+                 (L.map
+                  (λ x →
+                     [ lswapFin m e (State.CParticle.secr x) ] State.CParticle.def x)
+                  xs)
+                 ≡
+                 L.map
+                 (λ x →
+                    [ lswapFin (fsuc m) (fsuc e) (State.CParticle.secr x) ]
+                    State.CParticle.def x)
+                 (L.map (λ x → sucₚ x t) xs)
+  sucₛₛ-swapₛₛ>-p t m e m>t e>t [] = refl
+  sucₛₛ-swapₛₛ>-p t m e m>t e>t (x ∷ xs) = cong₂ _∷_ (cong (λ vs → [ vs ] (CP.def x)) (lsuc-lswap>-Fin t m e m>t e>t (CP.secr x))) (sucₛₛ-swapₛₛ>-p t m e m>t e>t xs)
+
+
   sucₛₛ-swapₛₛ> : ∀{fv} → ∀ t m e → t ≤ fst m → t ≤ fst e → (q : SState fv) → sucₛₛ (swapₛₛ m e q) t ≡ swapₛₛ (fsuc m) (fsuc e) (sucₛₛ q t)
   sucₛₛ-swapₛₛ> t m e m>t e>t 0b = refl
   sucₛₛ-swapₛₛ> t m e m>t e>t 1b = refl
-  sucₛₛ-swapₛₛ> t m e m>t e>t (( [ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lsuc-lswap>-Fin t m e m>t e>t secr)
-  sucₛₛ-swapₛₛ> t m e m>t e>t (( [ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lsuc-lswap>-Fin t m e m>t e>t secr)
+  sucₛₛ-swapₛₛ> t m e m>t e>t (xs ᵃ) = cong (λ x → x ᵃ) (sucₛₛ-swapₛₛ>-p t m e m>t e>t xs)
+  sucₛₛ-swapₛₛ> t m e m>t e>t (xs ᵐ) = cong (λ x → x ᵐ) (sucₛₛ-swapₛₛ>-p t m e m>t e>t xs)
   sucₛₛ-swapₛₛ> t m e m>t e>t (q ∪ q₁) = cong₂ _∪_ (sucₛₛ-swapₛₛ> t m e m>t e>t q)  (sucₛₛ-swapₛₛ> t m e m>t e>t q₁)
   sucₛₛ-swapₛₛ> t m e m>t e>t (q · q₁) = cong₂ _·_ (sucₛₛ-swapₛₛ> t m e m>t e>t q) (sucₛₛ-swapₛₛ> t m e m>t e>t q₁)
   sucₛₛ-swapₛₛ> t m e m>t e>t (ν q) = cong ν_ (sucₛₛ-swapₛₛ> (suc t) (fsuc m) (fsuc e) m>t e>t q)
 
-
+  swapₛₛ-swapₛₛ-p : ∀{fv} → ∀ t1 t2 e1 e2 → ¬ (t1 ≡ e1) → ¬ (t1 ≡ e2) →  ¬ (t2 ≡ e1) → ¬ (t2 ≡ e2)
+                 → (xs : SParticle fv) →
+                  L.map
+                  (λ x →
+                     [ lswapFin t1 t2 (State.CParticle.secr x) ] State.CParticle.def x)
+                  (L.map
+                   (λ x →
+                      [ lswapFin e1 e2 (State.CParticle.secr x) ] State.CParticle.def x)
+                   xs)
+                  ≡
+                  L.map
+                  (λ x →
+                     [ lswapFin e1 e2 (State.CParticle.secr x) ] State.CParticle.def x)
+                  (L.map
+                   (λ x →
+                      [ lswapFin t1 t2 (State.CParticle.secr x) ] State.CParticle.def x)
+                   xs)
+  swapₛₛ-swapₛₛ-p t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 [] = refl
+  swapₛₛ-swapₛₛ-p t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (x ∷ xs) = cong₂ _∷_ (cong (λ vs → [ vs ] (CP.def x)) (lswap-lswap-Fin t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (CP.secr x))) (swapₛₛ-swapₛₛ-p t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 xs)
 
   swapₛₛ-swapₛₛ : ∀{fv} → ∀ t1 t2 e1 e2 → ¬ (t1 ≡ e1) → ¬ (t1 ≡ e2) →  ¬ (t2 ≡ e1) → ¬ (t2 ≡ e2) → (q : SState fv)
                 → swapₛₛ t1 t2 (swapₛₛ e1 e2 q) ≡ swapₛₛ e1 e2 (swapₛₛ t1 t2 q)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 0b = refl
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 1b = refl
-  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (([ secr ] c) ᵃ) = cong (λ vs → ([ vs ] c) ᵃ) (lswap-lswap-Fin t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 secr)
-  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (([ secr ] c) ᵐ) = cong (λ vs → ([ vs ] c) ᵐ) (lswap-lswap-Fin t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 secr)
+  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (xs ᵃ) = cong (λ x → x ᵃ) (swapₛₛ-swapₛₛ-p t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 xs)
+  swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (xs ᵐ) = cong (λ x → x ᵐ) (swapₛₛ-swapₛₛ-p t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 xs)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (q ∪ q₁) = cong₂ _∪_ (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q) (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q₁)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (q · q₁) = cong₂ _·_ (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q) (swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 q₁)
   swapₛₛ-swapₛₛ t1 t2 e1 e2 t1≢e1 t1≢e2 t2≢e1 t2≢e2 (ν q) = cong ν_ (swapₛₛ-swapₛₛ (fsuc t1) (fsuc t2) (fsuc e1) (fsuc e2) (t1≢e1 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) (t1≢e2 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) (t2≢e1 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) (t2≢e2 ∘ λ a → Fin-fst-≡ (injSuc (fst (PathPΣ a)))) q)
@@ -159,24 +215,63 @@ module 1C {ℓ} (C : ∀ k → Type ℓ) where
 --     l1 n m a b (squash₁ .a .b r r₁ i) = squash₁ (swapₛₛ n m a) (swapₛₛ n m b) (l1 n m a b r) (l1 n m a b r₁) i
 
 
+  subst-swapₛₛ-p : ∀ {fv} {k} n (m t : Fin (suc (suc n) + k)) → (mrl : fst m ≤ suc n) → (trl : fst t ≤ suc n)
+                → (vs : Vec (Fin fv) k) → (xs : SParticle (suc (suc n) + k)) →
+                 L.map
+                 (λ x →
+                    [
+                    lswapFin (fst m , to-≤ (≤-trans {fst m} {suc n} mrl (k≤k+n n)))
+                    (fst t , to-≤ (≤-trans {fst t} {suc n} trl (k≤k+n n))) (State.CParticle.secr x)
+                    ] State.CParticle.def x)
+                 (L.map
+                  (λ x →
+                     [ sbst (sbsuc (suc (suc n)) vs) (State.CParticle.secr x) ]
+                     State.CParticle.def x)
+                  xs)
+                 ≡
+                 L.map
+                 (λ x →
+                    [ sbst (sbsuc (suc (suc n)) vs) (State.CParticle.secr x) ]
+                    State.CParticle.def x)
+                 (L.map
+                  (λ x →
+                     [ lswapFin m t (State.CParticle.secr x) ] State.CParticle.def x)
+                  xs)
+  subst-swapₛₛ-p n m t mrl trl vs [] = refl
+  subst-swapₛₛ-p n m t mrl trl vs (x ∷ xs) = cong₂ _∷_ (cong (λ a → [ a ] (CP.def x)) (sbst-swap n m t mrl trl vs (CP.secr x))) (subst-swapₛₛ-p n m t mrl trl vs xs)
+
   subst-swapₛₛ : ∀ {fv} {k} n (m t : Fin (suc (suc n) + k)) → (mrl : fst m ≤ suc n) → (trl : fst t ≤ suc n) → (vs : Vec (Fin fv) k) (q : SState (suc (suc n) + k)) →
                 swapₛₛ (fst m , to-≤ (≤-trans {fst m} {suc n} {suc (n + fv)} mrl (k≤k+n n))) (fst t , to-≤ (≤-trans {fst t} {suc n} {suc (n + fv)} trl (k≤k+n n))) (substₛₛ (sbsuc (suc (suc n)) vs) q) ≡ substₛₛ (sbsuc (suc (suc n)) vs) (swapₛₛ m t q)
   subst-swapₛₛ n m t mrl trl vs 0b = refl
   subst-swapₛₛ n m t mrl trl vs 1b = refl
-  subst-swapₛₛ n m t mrl trl vs (( [ secr ] c) ᵃ) = cong (λ a → ([ a ] c) ᵃ) (sbst-swap n m t mrl trl vs secr)
-  subst-swapₛₛ n m t mrl trl vs (( [ secr ] c) ᵐ) = cong (λ a → ([ a ] c) ᵐ) (sbst-swap n m t mrl trl vs secr)
+  subst-swapₛₛ n m t mrl trl vs (xs ᵃ) = cong (λ x → x ᵃ) (subst-swapₛₛ-p n m t mrl trl vs xs)
+  subst-swapₛₛ n m t mrl trl vs (xs ᵐ) = cong (λ x → x ᵐ) (subst-swapₛₛ-p n m t mrl trl vs xs)
   subst-swapₛₛ n m t mrl trl vs (q ∪ q₁) = cong₂ _∪_ (subst-swapₛₛ n m t mrl trl vs q) (subst-swapₛₛ n m t mrl trl vs q₁)
   subst-swapₛₛ n m t mrl trl vs (q · q₁) = cong₂ _·_ (subst-swapₛₛ n m t mrl trl vs q) (subst-swapₛₛ n m t mrl trl vs q₁)
   subst-swapₛₛ n m t mrl trl vs (ν q) = cong ν_ (subst-swapₛₛ (suc n) (fsuc m) (fsuc t) mrl trl vs q)
 
-
+  subst-sucₛₛ-p : ∀ {fv} {k} n (vs : Vec (Fin fv) k) → (xs : SParticle (n + k)) →
+                L.map (λ x → sucₚ x n)
+                (L.map
+                 (λ x →
+                    [ sbst (sbsuc n vs) (State.CParticle.secr x) ]
+                    State.CParticle.def x)
+                 xs)
+                ≡
+                L.map
+                (λ x →
+                   [ sbst (sbsuc (suc n) vs) (State.CParticle.secr x) ]
+                   State.CParticle.def x)
+                (L.map (λ x → sucₚ x n) xs)
+  subst-sucₛₛ-p n vs [] = refl
+  subst-sucₛₛ-p n vs (x ∷ xs) = cong₂ _∷_ (cong (λ s → [ s ] (CP.def x)) (sbst-suc n vs (CP.secr x))) (subst-sucₛₛ-p n vs xs)
 
   subst-sucₛₛ : ∀ {fv} {k} n (vs : Vec (Fin fv) k) (q : SState (n + k)) →
                 sucₛₛ (substₛₛ (sbsuc n vs) q) n ≡ substₛₛ (sbsuc (suc n) vs) (sucₛₛ q n)
   subst-sucₛₛ n vs 0b = refl
   subst-sucₛₛ n vs 1b = refl
-  subst-sucₛₛ n vs (( [ secr ] c) ᵃ) = cong (λ s → ([ s ] c) ᵃ) (sbst-suc n vs secr)
-  subst-sucₛₛ n vs (( [ secr ] c) ᵐ) = cong (λ s → ([ s ] c) ᵐ) (sbst-suc n vs secr)
+  subst-sucₛₛ n vs (xs ᵃ) = cong (λ x → x ᵃ) (subst-sucₛₛ-p n vs xs)
+  subst-sucₛₛ n vs (xs ᵐ) = cong (λ x → x ᵐ) (subst-sucₛₛ-p n vs xs)
   subst-sucₛₛ n vs (q ∪ q₁) = cong₂ _∪_ (subst-sucₛₛ n vs q) (subst-sucₛₛ n vs q₁)
   subst-sucₛₛ n vs (q · q₁) = cong₂ _·_ (subst-sucₛₛ n vs q) (subst-sucₛₛ n vs q₁)
   subst-sucₛₛ n vs (ν q) = cong ν_ (subst-sucₛₛ (1 + n) vs q)
@@ -326,12 +421,14 @@ module _ {ℓ1} {ℓ2} {C1 : ∀ k → Type ℓ1} {C2 : ∀ k → Type ℓ2} whe
   module S2 = State C2
 
   open S2
+  
+  module CP = S1.CParticle
 
   mapₛₛ : ∀{fv} → (∀{k} → C1 k → C2 k) → (q : S1.SState fv) → S2.SState fv
   mapₛₛ f 0b = 0b
   mapₛₛ f 1b = 1b
-  mapₛₛ f (( [ secr ] c) ᵃ) = ([ secr ] (f c)) ᵃ
-  mapₛₛ f (( [ secr ] c) ᵐ) = ([ secr ] (f c)) ᵐ
+  mapₛₛ f (xs ᵃ) = (L.map (λ x → [ CP.secr x ] (f (CP.def x))) xs) ᵃ
+  mapₛₛ f (xs ᵐ) = (L.map (λ x → [ CP.secr x ] (f (CP.def x))) xs) ᵐ
   mapₛₛ f (lq ∪ rq) = mapₛₛ f lq ∪ mapₛₛ f rq 
   mapₛₛ f (lq · rq) = mapₛₛ f lq · mapₛₛ f rq 
   mapₛₛ f (ν q) = ν mapₛₛ f q

@@ -7,6 +7,7 @@ open import Cubical.Data.Sum
 open import Cubical.Data.Unit
 open import Cubical.Data.Sigma
 open import Cubical.Data.Vec as V
+import Cubical.Data.List as L
 open import Cubical.Data.Fin hiding (_/_)
 import Cubical.Data.FinData as FD
 open import Cubical.Data.Bool hiding (isProp≤ ; _≤_ ; _≟_)
@@ -46,11 +47,16 @@ record CParticle (fv : ℕ) : Type ℓ where
     secr : Vec (Fin fv) k
     def : C k
 
+open CParticle
+
+SParticle : ℕ → Type ℓ
+SParticle fv = L.List (CParticle fv)
+
 data SState : ℕ → Type ℓ where  
   0b      : ∀{fv} → SState fv
   1b      : ∀{fv} → SState fv
-  _ᵐ       : ∀{fv} → CParticle fv → SState fv
-  _ᵃ       : ∀{fv} → CParticle fv → SState fv
+  _ᵐ       : ∀{fv} → SParticle fv → SState fv
+  _ᵃ       : ∀{fv} → SParticle fv → SState fv
   _∪_     : ∀{fv} → (lq : SState fv) → (rq : SState fv) → SState fv
   _·_     : ∀{fv} → (lq : SState fv) → ( rq : SState fv) → SState fv
   ν_      : ∀{fv} → SState (suc fv) → SState fv
@@ -64,8 +70,8 @@ sucₚ ([ secr ] def) n = [ lsuc<?Fin secr n ] def
 sucₛₛ : ∀{fv} → (q : SState fv) → ℕ → SState (suc fv)
 sucₛₛ 0b n = 0b
 sucₛₛ 1b n = 1b
-sucₛₛ (p ᵃ) n = (sucₚ p n) ᵃ
-sucₛₛ (p ᵐ) n = (sucₚ p n) ᵐ
+sucₛₛ (p ᵃ) n = (L.map (λ x → sucₚ x n) p) ᵃ
+sucₛₛ (p ᵐ) n = (L.map (λ x → sucₚ x n) p) ᵐ
 sucₛₛ (lq ∪ rq) n = sucₛₛ lq n ∪ sucₛₛ rq n
 sucₛₛ (lq · rq) n = sucₛₛ lq n · sucₛₛ rq n
 sucₛₛ (ν q) n = ν sucₛₛ q (suc n)
@@ -77,8 +83,8 @@ sucₛₛ[ suc n ] q = sucₛₛ (sucₛₛ[ n ] q) (suc n)
 swapₛₛ : ∀{fv} → Fin fv → Fin fv → (q : SState fv) → SState fv
 swapₛₛ m n 0b = 0b
 swapₛₛ m n 1b = 1b
-swapₛₛ m n (([ secr ] c) ᵃ) = ([ lswapFin m n secr ] c) ᵃ 
-swapₛₛ m n (( [ secr ] c) ᵐ) = ([ lswapFin m n secr ] c) ᵐ
+swapₛₛ m n (xs ᵃ) = (L.map (λ x → [ lswapFin m n (secr x) ] (def x)) xs) ᵃ
+swapₛₛ m n (xs ᵐ) = (L.map (λ x → [ lswapFin m n (secr x) ] (def x)) xs) ᵐ
 swapₛₛ m n (lq ∪ rq) = swapₛₛ m n lq ∪ swapₛₛ m n rq
 swapₛₛ m n (lq · rq) = swapₛₛ m n lq · swapₛₛ m n rq
 swapₛₛ m n (ν q) = ν swapₛₛ (fsuc m) (fsuc n) q
@@ -86,8 +92,8 @@ swapₛₛ m n (ν q) = ν swapₛₛ (fsuc m) (fsuc n) q
 id+ : ∀{fv} → (m : ℕ) → SState fv → SState (fv + suc m)
 id+ m 0b = 0b
 id+ m 1b = 0b
-id+ {fv} m (( [ secr ] c) ᵃ)  = ([ V.map (inject≤ O.≤SumLeft) secr ] c) ᵃ
-id+ {fv} m (( [ secr ] c) ᵐ)  = ([ V.map (inject≤ O.≤SumLeft) secr ] c) ᵐ
+id+ {fv} m (xs ᵃ)  = (L.map (λ x → [ V.map (inject≤ O.≤SumLeft) (secr x) ] (def x)) xs) ᵃ
+id+ {fv} m (xs ᵐ)  = (L.map (λ x → [ V.map (inject≤ O.≤SumLeft) (secr x) ] (def x)) xs) ᵐ
 id+ m (q1 ∪ q2) = id+ m q1 ∪ id+ m q2
 id+ m (q1 · q2) = id+ m q1 · id+ m q2
 id+ m (ν q) = ν id+ m q
@@ -99,8 +105,8 @@ id+ m (ν q) = ν id+ m q
 substₛₛ : ∀{fv k} → Vec (Fin fv) k → SState k → SState fv
 substₛₛ vs 0b = 0b
 substₛₛ vs 1b = 1b
-substₛₛ vs (( [ secr ] c) ᵃ) = ([ sbst vs secr ] c) ᵃ
-substₛₛ vs (( [ secr ] c) ᵐ) = ([ sbst vs secr ] c) ᵐ
+substₛₛ vs (xs ᵃ) = (L.map (λ x → [ sbst vs (secr x) ] (def x)) xs) ᵃ
+substₛₛ vs (xs ᵐ) = (L.map (λ x → [ sbst vs (secr x) ] (def x)) xs) ᵐ
 substₛₛ vs (q ∪ q₁) = substₛₛ vs q ∪ substₛₛ vs q₁
 substₛₛ vs (q · q₁) = substₛₛ vs q · substₛₛ vs q₁
 substₛₛ vs (ν q) = ν substₛₛ (sbsuc 1 vs) q

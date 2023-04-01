@@ -18,6 +18,7 @@ open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Fin
+open import Cubical.Data.List
 import Cubical.Data.FinData as FD
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Nat.Order.Recursive
@@ -32,61 +33,15 @@ import State.Properties
 import ActorM
 open import Projection
 open import Common
+open import BSet
 
-module Types {ℓ ℓ' : _} (prM : UMTypePr ℓ ℓ') where
-
-open ActorM prM 
-
-open TypPred
-
-open MsgT
-
-open module StM = State (MsgT) renaming (Particle to MsgP)
-open module StTP = State (TypPred) renaming (Particle to PredP)
-
-open MsgP
-open PredP
-
--- A property on messages.
-BSet : (k : ℕ) → Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
-BSet k = (mp : MsgP k) → Type
-
--- The property holds for all messages.
-⊨ : ∀{k} → BSet k → Set ℓ
-⊨ P = ∀ a → P a 
-
-⊥B : ∀{k} → BSet k
-⊥B mp = ⊥
-
-_↦_ : ∀{k} → BSet k → BSet k → BSet k
-_↦_ P Q mp = P mp → Q mp
-
-_&&_ : ∀{k} → BSet k → BSet k → BSet k
-(a && b) mp = a mp × b mp
-
-_||_ : ∀{k} → BSet k → BSet k → BSet k
-(a || b) mp = a mp ⊎ b mp
-
-
-¬B : ∀{k} → BSet k → BSet k
-¬B a mp = ¬ (a mp)
-
--- I do not like this definition, because we need to prove the negation
--- 
-_─_ : ∀{k} → BSet k → BSet k → BSet k
-(a ─ b) = a && (¬B b)
-
-Bsucₚ : ∀{k} → BSet (suc k) → BSet k
-Bsucₚ a mp = a (StM.sucₚ mp 0)
-
-Bpredₚ : ∀{k} → BSet k → BSet (suc k)
-Bpredₚ {k} a ([ secr ] def) = Σ (Vec (Fin k) _) (λ scr → secr ≡ lsuc<?Fin scr 0 → a (StM.[ scr ] def))
+module Types {ℓ} where
 
 -- Provides a predicates on the msgs needed by the environment so that the term always reduces.
 
 data GType (k : ℕ) : Type (ℓ-suc ℓ) where
-  _ᵐ : BSet k → GType k
-  _ᵃ : BSet k → GType k
+  _ᵐ : BSet {ℓ} k → GType k
+  _ᵃ : BSet {ℓ} k → GType k
   _&_ : (l r : GType k) → GType k
   _∣_ : (l r : GType k) → GType k
   -- μ is not useful for behavioral types, they are transformed with the use of μeG to GType k
@@ -160,7 +115,7 @@ data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
   -- DUAL
   _←ₐ_ : ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
 
-  &mr :  ∀ (l r : BSet k) →  ((l ᵐ) & ( r ᵐ)) ⊑ ((l || r) ᵐ)
+  &mr  :  ∀ (l r : BSet k) →  ((l ᵐ) & ( r ᵐ)) ⊑ ((l || r) ᵐ)
   -- DUAL
   |ar2 : ∀ (l r : BSet k) →  ((l || r) ᵃ) ⊑ ((l ᵃ) ∣ (r ᵃ))
 
@@ -168,7 +123,7 @@ data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
   -- |mr :  ∀ (l r : BSet k) →  ((l && r) ᵐ) ⊑ ((l ᵐ) ∣ ( r ᵐ))
   -- its dual (l ᵃ) & (r ᵃ) ⊑ (l && r) ᵃ
 
-  |ar :  ∀ (l r : BSet k) →  ((l ᵃ) ∣ ( r ᵃ)) ⊑ ((l && r) ᵃ)
+  |ar  :  ∀ (l r : BSet k) →  ((l ᵃ) ∣ ( r ᵃ)) ⊑ ((l && r) ᵃ)
   -- DUAL
   &mr2 : ∀ (l r : BSet k) → ((l && r) ᵐ) ⊑ ((l ᵐ) & (r ᵐ))
 
@@ -234,11 +189,11 @@ cut2 {k} {μ m} {a} x = {!!}
 -- with deterministic computation, and their properties, and then transform this to the non-deterministic case. This can be done, the question is how useful it can be.
 
 
-BPred : ∀{k} → PredP k → BSet k
-BPred {k} A MP =
-  let (n , rl) = nsecr (def MP)
-      (osecrm , nsecrm) = V.split (FD.fromℕ' _ n rl) (secr MP)
-      csecr = compSecr osecrm (secr A)
+-- BPred : ∀{k} → PredP k → BSet k
+-- BPred {k} A MP =
+--   let (n , rl) = nsecr (def MP)
+--       (osecrm , nsecrm) = V.split (FD.fromℕ' _ n rl) (secr MP)
+--       csecr = compSecr osecrm (secr A)
       
-  in (fst (nsecr (def MP)) ≡ Pns (def A)) × (csecr ≡ just (Ps (def A))) × Pt (def A) (umT (def MP))
+--   in (fst (nsecr (def MP)) ≡ Pns (def A)) × (csecr ≡ just (Ps (def A))) × Pt (def A) (umT (def MP))
 

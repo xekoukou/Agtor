@@ -11,7 +11,7 @@ open import Cubical.Data.Unit
 open import Cubical.Data.Sum
 open import Cubical.Data.Maybe
 open import Cubical.Data.Vec as V
-open import Cubical.Data.List as L
+import Cubical.Data.List as L
 open import Cubical.Data.Sigma
 open import Cubical.Data.Nat
 open import Cubical.Data.Fin
@@ -47,17 +47,16 @@ interleaved mutual
   -- A Particle is either a msg or an Actor.
   -- Both messages and actors have continuations, because we want to take the dual of an actor, which 
   -- needs to have a continuation.
-  record ParticleT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ'))
+  data ParticleT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ'))
 
   module StT = State ParticleT
 
 -- The continuation
   record PredContT (k : ℕ) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
-    inductive
+    coinductive
     field
       pred : Pred k
       decPt  : ∀ A → Dec ((Pt pred) A)
-      secr : List (Fin (m pred))
       δᶜT : ∀ A → { p : ∥ (Pt pred) A ∥₁ } → ⟨ ⟦ A ⟧ ⟩ → StT.SState (k + (Pns pred))
 
   open PredContT
@@ -65,58 +64,58 @@ interleaved mutual
 -- For the formulation of the subtype, the existence of δT guarantees the reduction.
 -- but it is not zero, with regards to the bahavior type of the system.
 -- δT needs to be removed for behavioral types.
-  record ParticleT k where
-    coinductive
-    field
-      δᶜTs : List (PredContT k)
-      δT    : StT.SState k
+  data ParticleT k where
+    δᶜTP : PredContT k → ParticleT k
+    δTP  : StT.SState k → ParticleT k
 
   open ParticleT
 
 interleaved mutual
 
-  data Particle {k : ℕ} (Typ : ParticleT k) : Type (ℓ-suc (ℓ-max ℓ ℓ'))
-  record Actor {k : ℕ} (Typ : ParticleT k) : Type (ℓ-suc (ℓ-max ℓ ℓ'))
+  data Particle {k : ℕ} : (Typ : ParticleT k) → Type (ℓ-suc (ℓ-max ℓ ℓ'))
   
-  record Msg {k : ℕ} (Typ : ParticleT k) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
+  record Msg {k : ℕ} (Typ : PredContT k) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
     inductive
     field
       mtyp : UMType
       val  : ⟨ ⟦ mtyp ⟧ ⟩
-      mpred : Pred k
-      mcond : (Pt mpred) mtyp
-      inPart : mpred ∈ (L.map PredContT.pred (δᶜTs Typ))
+      mcond : (Pt (pred Typ)) mtyp
 
   module StV = State (λ k → (Σ (ParticleT k) Particle))
 
   data _withType_ : ∀{fv} → StV.SState fv → StT.SState fv → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ'))
 
   record PredCont {k : ℕ} (predC : PredContT k) : Type (ℓ-suc (ℓ-max ℓ ℓ')) where
-    inductive
+    coinductive
     field
       δᶜ  : ∀ A → { p : ∥ (Pt (pred predC)) A ∥₁ } → (v : ⟨ ⟦ A ⟧ ⟩) → Σ (StV.SState (k + (Pns (pred predC)))) (_withType ((δᶜT predC) A {p} v))
 
   
   data Particle {k} Typ where
-    msg : Msg Typ → Particle Typ
-    actor : Actor Typ → Particle Typ
+    msg : ∀{p} → Msg p → Particle (δᶜTP p)
+    actorδᶜ : ∀{p} → PredCont p → Particle (δᶜTP p)
+    actorδ  : ∀{p} → (v : StV.SState k) → (v withType p) → Particle (δTP p)
 
-  record Actor {k} Typ where
-    coinductive
-    field
-      δᶜs  : ListP PredCont (δᶜTs Typ)
-      δ    : Σ (StV.SState k) (_withType (δT Typ))
+  data acTyp {fv} : StV.SParticle fv → StT.SParticle fv → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) where
+    a[] : acTyp L.[] L.[]
+    aδ : ∀{k sv sf} → {secr : Vec (Fin fv) k} → {p : StT.SState k} → (v : StV.SState k) → (e : v withType p) → acTyp sv sf → acTyp (State.[ secr ] ((δTP p) , (actorδ v e)) L.∷ sv) ((StT.[ secr ] δTP p) L.∷ sf)
+    aδᶜ : ∀{k sv sf} → {secr : Vec (Fin fv) k} → {p : PredContT k} → (v : PredCont p) → acTyp sv sf
+         → acTyp (State.[ secr ] ((δᶜTP p) , actorδᶜ v) L.∷ sv) ((StT.[ secr ] δᶜTP p) L.∷ sf)
+
+  data mTyp {fv} : StV.SParticle fv → StT.SParticle fv → Type (ℓ-max (ℓ-suc ℓ) (ℓ-suc ℓ')) where
+    m[] : mTyp L.[] L.[]
+    mδᶜ : ∀{k sv sf} → {secr : Vec (Fin fv) k} → {p : PredContT k} → (v : Msg p) → mTyp sv sf
+         → mTyp (State.[ secr ] ((δᶜTP p) , msg v) L.∷ sv) ((StT.[ secr ] δᶜTP p) L.∷ sf)
 
 
   data _withType_ where
     wT0b : ∀{fv} → _withType_ {fv} StV.0b StT.0b
     wT1b : ∀{fv} → _withType_ {fv} StV.1b StT.1b
     _wT∪_ : ∀{fv} → ∀{v1 v2 t1 t2} → v1 withType t1 → v2 withType t2 → (v1 StV.∪ v2) withType (StT._∪_ {fv} t1 t2)
-    _wT·_  : ∀{fv} → ∀{v1 v2 t1 t2} → v1 withType t1 → v2 withType t2
-           → (v1 StV.· v2) withType (StT._·_ {fv} t1 t2)
-    wTν_  : ∀{fv} → ∀{v t} → v withType t → (StV.ν_ {fv} v) withType (StT.ν t)
-    wTᵃ  : ∀{fv k} → {secr : Vec (Fin fv) k} → ∀{ct}
-           → (act : Actor ct) → (StV.[ secr ] (ct , actor act) StV.ᵃ) withType (StT.[ secr ] ct StT.ᵃ)
-    wTᵐ  : ∀{fv k} → {secr : Vec (Fin fv) k} → ∀{ct}
-           → (m : Msg ct) → (StV.[ secr ] (ct , msg m) StV.ᵐ) withType (StT.[ secr ] ct StT.ᵐ)
+    _wT·_ : ∀{fv} → ∀{v1 v2 t1 t2} → v1 withType t1 → v2 withType t2
+            → (v1 StV.· v2) withType (StT._·_ {fv} t1 t2)
+    wTν_ : ∀{fv} → ∀{v t} → v withType t → (StV.ν_ {fv} v) withType (StT.ν t)
+    wTᵃ  : ∀{fv sv sf} → acTyp {fv} sv sf → (sv StV.ᵃ) withType (sf StT.ᵃ)
+    wTᵐ  : ∀{fv sv sf} → mTyp {fv} sv sf → (sv StV.ᵐ) withType (sf StT.ᵐ)
 
+  
