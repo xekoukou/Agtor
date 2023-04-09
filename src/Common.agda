@@ -38,6 +38,7 @@ data _∈_ {ℓ : Level} {A : Type ℓ} (x : A) : List A → Type ℓ where
   there : ∀{y xs} → x ∈ xs → x ∈ (y ∷ xs)
 
 
+
  -- All old Secrets should be known to the actor.
  -- first argument is the secrets of the msg
  -- returns the position of the secret to the actor list of secrets.

@@ -33,47 +33,48 @@ import State.Properties
 import ActorM
 open import Projection
 open import Common
-open import BSet
 
-module Types {ℓ} where
+module STypes {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
+
+open import BSet MsgP mpsuc
 
 -- Provides a predicates on the msgs needed by the environment so that the term always reduces.
 
-data GType (k : ℕ) : Type (ℓ-suc ℓ) where
-  _ᵐ : BSet {ℓ} k → GType k
-  _ᵃ : BSet {ℓ} k → GType k
-  _&_ : (l r : GType k) → GType k
-  _∣_ : (l r : GType k) → GType k
-  -- μ is not useful for behavioral types, they are transformed with the use of μeG to GType k
-  μ_ : GType (suc k) → GType k
+data SType (k : ℕ) : Type (ℓ-suc ℓ) where
+  _ᵐ : BSet k → SType k
+  _ᵃ : BSet k → SType k
+  _&_ : (l r : SType k) → SType k
+  _∣_ : (l r : SType k) → SType k
+  -- μ is not useful for behavioral types, they are transformed with the use of μeG to SType k
+  μ_ : SType (suc k) → SType k
 
 
-0ᵐ : ∀{k} → GType k
+0ᵐ : ∀{k} → SType k
 0ᵐ = ⊥B ᵐ
 
 postulate
-  μeG : ∀{k} → GType (suc k) → GType k
+  μeG : ∀{k} → SType (suc k) → SType k
 
 -- 0 ᵐ indicates that one reduction will always happen.
 -- μ 0 ᵐ ≡ 0 ᵐ
 -- 0 ᵐ & x ≡ 0 ᵐ
 -- 0 ᵐ ∣ x ≡ x
 
-_ᵀ : ∀{k} → GType k → GType k
+_ᵀ : ∀{k} → SType k → SType k
 (x ᵐ) ᵀ = x ᵃ
 (x ᵃ) ᵀ = x ᵐ
 (g & g₁) ᵀ = (g ᵀ) ∣ (g₁ ᵀ)
 (g ∣ g₁) ᵀ = (g ᵀ) & (g₁ ᵀ)
 (μ g) ᵀ = μ (g ᵀ)
 
-dTT : ∀{k} → (g : GType k) → (g ᵀ) ᵀ ≡ g
+dTT : ∀{k} → (g : SType k) → (g ᵀ) ᵀ ≡ g
 dTT (x ᵐ) = refl
 dTT (x ᵃ) = refl
 dTT (g & g₁) = cong₂ _&_ (dTT g) (dTT g₁)
 dTT (g ∣ g₁) = cong₂ _∣_ (dTT g) (dTT g₁)
 dTT (μ g) = cong μ_ (dTT g)
 
-data _G_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
+data _G_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
   &ar : {L R : BSet k} → ((L ᵃ) & (R ᵃ)) G ((L || R) ᵃ)
   -- dual to previous
   |mr : {L R : BSet k} → ((L ᵐ) ∣ (R ᵐ)) G ((L || R) ᵐ)
@@ -83,13 +84,13 @@ data _G_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
 --  &mr : {L R : BSet k} → ((L ᵃ) ∣ (R ᵃ)) G ((L && R) ᵃ)
 
 --  &mr : {L R E : BSet k} → ⊨ ((L || R) ─→ E) → ⊨ (E ─→ (L || R)) → ((L ᵐ) & (R ᵐ)) G (E ᵐ)
---  -- If I introduce _ᵀ in GType, then the one is derivable from the second.
+--  -- If I introduce _ᵀ in SType, then the one is derivable from the second.
 --  &ar : {L R E : BSet k} → ⊨ ((L && R) ─→ E) → ⊨ (E ─→ (L && R)) → ((L ᵃ) & (R ᵃ)) G (E ᵃ)
 --  ∣mr : {L R E : BSet k} → ⊨ ((L || R) ─→ E) → ⊨ (E ─→ (L || R)) → ((L ᵐ) ∣ (R ᵐ)) G (E ᵐ)
---  -- If I introduce _ᵀ in GType, then the one is derivable from the second.
+--  -- If I introduce _ᵀ in SType, then the one is derivable from the second.
 --  ∣ar : {L R E : BSet k} → ⊨ ((L || R) ─→ E) → ⊨ (E ─→ (L || R)) → ((L ᵃ) ∣ (R ᵃ)) G (E ᵃ)
---  0ᵐ& : {q : GType k} → (0ᵃ & q) G {!!}
---  0ᵐ∣ : {q : GType k} → {!!} G {!!}
+--  0ᵐ& : {q : SType k} → (0ᵃ & q) G {!!}
+--  0ᵐ∣ : {q : SType k} → {!!} G {!!}
 
 
 -- A ⊑ B means that if reduction can ALWAYS happen for B, then it will ALWAYS happen for A as well.
@@ -97,20 +98,20 @@ data _G_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
 -- happends for A as well.
 
 
-data _G2_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
-  G' : ∀ {m a : GType k} → m G a → m G2 a
+data _G2_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
+  G' : ∀ {m a : SType k} → m G a → m G2 a
 
   -- This is not useful for Behavior types, only for reduction types.
   -- cut is the only way to reduce the restrictions.
   cut : ∀ {m a : BSet k} → (((m || a) ᵐ) & (a ᵃ)) G2 ((m ᵐ) & (a ᵃ))
 
-data _G3_ {k} : GType k → GType k → Type (ℓ-suc ℓ) where
-  G : ∀ {m a : GType k} → m G a → m G3 a
+data _G3_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
+  G : ∀ {m a : SType k} → m G a → m G3 a
 
 
 
 -- IMPORTANT : The dual operator reverses the relation, it seems.
-data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
+data _⊑_ {k : ℕ} : SType k → SType k → Type (ℓ-suc ℓ) where
   _→ₘ_ : ∀ (l r : BSet k) → {mph : ⊨ (l ↦ r)} → (l ᵐ) ⊑ (r ᵐ)
   -- DUAL
   _←ₐ_ : ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
@@ -127,12 +128,12 @@ data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
   -- DUAL
   &mr2 : ∀ (l r : BSet k) → ((l && r) ᵐ) ⊑ ((l ᵐ) & (r ᵐ))
 
-  &r : (l r : GType k) → (l & r) ⊑ l
-  |rl : (l r : GType k) → l ⊑ (l ∣ r)
-  |rr : (l r : GType k) → r ⊑ (l ∣ r)
+  &r : (l r : SType k) → (l & r) ⊑ l
+  |rl : (l r : SType k) → l ⊑ (l ∣ r)
+  |rr : (l r : SType k) → r ⊑ (l ∣ r)
 
-  &r2 : ∀(l1 l2 r1 r2 : GType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 & l2) ⊑ (r1 & r2)
-  |r2 : ∀(l1 l2 r1 r2 : GType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 ∣ l2) ⊑ (r1 ∣ r2)
+  &r2 : ∀(l1 l2 r1 r2 : SType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 & l2) ⊑ (r1 & r2)
+  |r2 : ∀(l1 l2 r1 r2 : SType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 ∣ l2) ⊑ (r1 ∣ r2)
 
 -- This is derivable from  &ar and _←ₐ_
 --   &r  :  ∀ (l r c : BSet k) → {mph : ⊨ ((l ─→ c) && (r  ─→ c)) } → (c ᵃ) ⊑ ((l ᵃ) & ( r ᵃ))
@@ -143,16 +144,16 @@ data _⊑_ {k : ℕ} : GType k → GType k → Type (ℓ-suc ℓ) where
 -- lᵐ & r ᵐ ∣  (l && r) ᵐ
 
   -- μeG only contains msgs from the outside world, thus it exludes msgs that are internal to q, that could lead to reduction.
-  μ2  : ∀{q : GType (suc k)} → (μeG q) ⊑ (μ q)
+  μ2  : ∀{q : SType (suc k)} → (μeG q) ⊑ (μ q)
   
-  μ⊑  : ∀{q e : GType (suc k)} → q ⊑ e → (μ q) ⊑ (μ e)
+  μ⊑  : ∀{q e : SType (suc k)} → q ⊑ e → (μ q) ⊑ (μ e)
   -- Wrong : Consider q ⊑ e is less restrictive in both ends. And thus, we could add a term that reduces e , but not q, that is not taken into account
   -- because the restriction of μ, that only considers terms from the outside.
-  -- μ⊑2  : ∀{q e : GType (suc k)} → (μ q) ⊑ (μ e) → q ⊑ e
+  -- μ⊑2  : ∀{q e : SType (suc k)} → (μ q) ⊑ (μ e) → q ⊑ e
   μ-cut : ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || Bpredₚ a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
   μ-cut2 : ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || Bsucₚ a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
 
-cut2 : ∀{k} → ∀ {m a : GType k} → a ⊑ (m ᵀ) → (a & m) ⊑ 0ᵐ
+cut2 : ∀{k} → ∀ {m a : SType k} → a ⊑ (m ᵀ) → (a & m) ⊑ 0ᵐ
 cut2 {k} {x₁ ᵐ} {x₂ ᵃ} x = {!!}
 cut2 {k} {x₁ ᵃ} {a} x = {!!}
 cut2 {k} {m ∣ m₁} {a} x = {!!}

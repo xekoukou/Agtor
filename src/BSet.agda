@@ -27,34 +27,30 @@ open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
-import State
-open import State.Lemma
-import State.Properties
-import ActorM
-open import Projection
-open import Common
 
-module BSet {ℓ} where
+module BSet {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
 
-postulate
-  MsgP : ℕ → Type ℓ
+
 
 -- A property on messages
-BSet : (k : ℕ) → Type (ℓ-max (ℓ-suc ℓ-zero) ℓ)
-BSet k = (mp : MsgP k) → Type
+BSet : (k : ℕ) → Type (ℓ-suc ℓ)
+BSet k = (mp : MsgP k) → Type ℓ
 
 -- The property holds for all messages.
-⊨ : ∀{k} → BSet k → Set ℓ
+⊨ : ∀{k} → BSet k → Type ℓ
 ⊨ P = ∀ a → P a 
 
 ⊥B : ∀{k} → BSet k
-⊥B mp = ⊥
+⊥B mp = ⊥*
 
 _↦_ : ∀{k} → BSet k → BSet k → BSet k
 (P ↦ Q) mp = P mp → Q mp
 
 _&&_ : ∀{k} → BSet k → BSet k → BSet k
 (a && b) mp = a mp × b mp
+
+_≡ᵇ_ : ∀{k} → BSet k → BSet k → Type ℓ
+A ≡ᵇ B = ⊨ ((A ↦ B) && (B ↦ A))
 
 _||_ : ∀{k} → BSet k → BSet k → BSet k
 (a || b) mp = a mp ⊎ b mp
@@ -68,11 +64,10 @@ _||_ : ∀{k} → BSet k → BSet k → BSet k
 _─_ : ∀{k} → BSet k → BSet k → BSet k
 (a ─ b) = a && (¬B b)
 
+Bsucₚ : ∀{k} → BSet (suc k) → BSet k
+Bsucₚ a mp = a (mpsuc mp)
 
-postulate 
-  Bsucₚ : ∀{k} → BSet (suc k) → BSet k
-  Bpredₚ : ∀{k} → BSet k → BSet (suc k)
+Bpredₚ : ∀{k} → BSet k → BSet (suc k)
+Bpredₚ {k} a mp = Σ (MsgP k) λ pmp → Σ (mpsuc pmp ≡ mp) λ _ → a pmp
 
--- Bsucₚ a mp = a (StM.sucₚ mp 0)
--- Bpredₚ {k} a ([ secr ] def) = Σ (Vec (Fin k) _) (λ scr → secr ≡ lsuc<?Fin scr 0 → a (StM.[ scr ] def))
 

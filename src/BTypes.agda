@@ -33,22 +33,61 @@ import State.Properties
 import ActorM
 open import Projection
 open import Common
-open import BSet
 
-module BTypes {ℓ} where
+module BTypes {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
+
+open import BSet MsgP mpsuc
+
+Pos : ℕ → Type (ℓ-suc ℓ)
+Pos k = BSet k × BSet k
 
 -- Behavioral types describe the msgs that can be received and sent at a specific state.
 -- it is the external behavior of a system and thus should be the target of abstraction.
 -- Two systems should be considered equal if they have the same BTypes.
-data BType (k : ℕ) : Type (ℓ-suc ℓ) where
-  _ᵐ : BSet {ℓ} k → BType k
-  _ᵃ : BSet {ℓ} k → BType k
-  -- If we have two superpositions that have a common sets of msgs, then we can split them,  like this.
-  -- (l1 ∪ e) ∣ (l2 ∪ e) ----> (l1 ∣ l2) & e
-  _∣_ : (l r : BType k) → BType k
-  -- Here _&_ can be merged if there is no _|_ , aka superposition.
-  _&_ : (l r : BType k) → BType k
+-- (They also need to be reducible, thus they must respect a subtype property/contract.)
+BType : (k : ℕ) → Type (ℓ-suc ℓ)
+BType k = List (BSet k × BSet k)
 
--- If we add continuations here, maybe we could describe the system in all communication steps.
--- we can possibly describe the reduction of separate systems, and then through transformations of the behavioral types
--- and their continuations, derive the reduction of the general system from the reductions of the specific system.
+--  _ᵐ,_ᵃ : BSet k → BSet k → BType k
+--  --_∣_ inducates the superposition due to the different states a system can be in.
+--  _∣_ : (l r : BType k) → BType k
+
+-- -- If we add continuations here, maybe we could describe the system in all communication steps.
+-- -- we can possibly describe the reduction of separate systems, and then through transformations of the behavioral types
+-- -- and their continuations, derive the reduction of the general system from the reductions of the specific system.
+
+
+-- The superposition here matters.
+record _∈ᵐᵇᵗ_ {k} (msg : MsgP k) (btyp : BType k) : Type (ℓ-suc ℓ) where
+  field
+    {MBSet ABSet} : BSet k
+    mP : MBSet msg ⊎ ABSet msg
+    sup : (MBSet , ABSet) ∈ btyp
+
+record _∈ᵇᵗ_ {k} (p : Pos k) (btyp : BType k) : Type (ℓ-suc ℓ) where
+  field
+    {MBSet ABSet} : BSet k
+    meq : fst p ≡ᵇ MBSet
+    aeq : snd p ≡ᵇ ABSet
+    sup : (MBSet , ABSet) ∈ btyp
+
+_⊆ᵇᵗ_ : ∀{k} → (btyp1 btyp2 : BType k) → Type (ℓ-suc ℓ)
+btyp1 ⊆ᵇᵗ btyp2 = ∀ p → p ∈ᵇᵗ btyp1 → p ∈ᵇᵗ btyp2
+
+_≡ᵇᵗ_ : ∀{k} → (btyp1 btyp2 : BType k) → Type (ℓ-suc ℓ)
+btyp1 ≡ᵇᵗ btyp2 = (btyp1 ⊆ᵇᵗ btyp2) × (btyp2 ⊆ᵇᵗ btyp1)
+
+module dsfd (A : ℕ → Type ℓ) (_⊑_ : ∀{k} → A k → A k → Type (ℓ-suc ℓ)) (pr : ∀{k} → A k → BType k) where
+
+  record GType {k} (btyp : BType k) : Type (ℓ-suc ℓ) where
+    coinductive
+    field
+      stᶜT : (msg : MsgP k) → msg ∈ᵐᵇᵗ btyp → A k -- this should be without any cuts.
+      δᶜT : (msg : MsgP k) → (cnd : msg ∈ᵐᵇᵗ btyp) → GType (pr (stᶜT msg cnd))
+      stT : A k 
+      δT  : GType (pr stT)
+
+-- global types have subtypes in which the behavioral types are equal, but the
+-- structural type is a subtype, thus we have directional abstraction, inherited from the
+-- structural type.
+  data _⊑ᵍ_ : ∀{k} → ∀{btyp1 btyp2 : BType k} → GType btyp1 → GType btyp2 → Type {!!} where
