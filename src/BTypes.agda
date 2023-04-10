@@ -77,17 +77,31 @@ btyp1 ⊆ᵇᵗ btyp2 = ∀ p → p ∈ᵇᵗ btyp1 → p ∈ᵇᵗ btyp2
 _≡ᵇᵗ_ : ∀{k} → (btyp1 btyp2 : BType k) → Type (ℓ-suc ℓ)
 btyp1 ≡ᵇᵗ btyp2 = (btyp1 ⊆ᵇᵗ btyp2) × (btyp2 ⊆ᵇᵗ btyp1)
 
-module dsfd (A : ℕ → Type ℓ) (_⊑_ : ∀{k} → A k → A k → Type (ℓ-suc ℓ)) (pr : ∀{k} → A k → BType k) where
+module dsfd (SType : ℕ → Type ℓ) (_⊑_ : ∀{k} → SType k → SType k → Type (ℓ-suc ℓ)) where
 
-  record GType {k} (btyp : BType k) : Type (ℓ-suc ℓ) where
+  record GType k : Type (ℓ-suc ℓ) where
+    constructor gtype
     coinductive
     field
-      stᶜT : (msg : MsgP k) → msg ∈ᵐᵇᵗ btyp → A k -- this should be without any cuts.
-      δᶜT : (msg : MsgP k) → (cnd : msg ∈ᵐᵇᵗ btyp) → GType (pr (stᶜT msg cnd))
-      stT : A k 
-      δT  : GType (pr stT)
+      btyp : BType k
+      styp : SType k
+      δᶜT : (msg : MsgP k) → (cnd : msg ∈ᵐᵇᵗ btyp) → GType k
+      -- here in the absence of new reduction, we simply return the same type. Instead, we should check the SType
+      -- only when reduction is guaranteed, should we return a δT
+      δT  : GType k
 
 -- global types have subtypes in which the behavioral types are equal, but the
 -- structural type is a subtype, thus we have directional abstraction, inherited from the
 -- structural type.
-  data _⊑ᵍ_ : ∀{k} → ∀{btyp1 btyp2 : BType k} → GType btyp1 → GType btyp2 → Type {!!} where
+  record _⊑ᵍ_ {k} (gt1 gt2 : GType k) : Type (ℓ-suc ℓ) where
+    coinductive
+    open GType
+    field
+      beq : btyp gt1 ≡ᵇᵗ btyp gt2
+      srel : styp gt1 ⊑ styp gt2
+      -- both conditions are the same, simplify this.
+      δᶜT : (msg : MsgP k) → (cnd1 : msg ∈ᵐᵇᵗ (btyp gt1)) → (cnd2 : msg ∈ᵐᵇᵗ (btyp gt2))
+            → (δᶜT gt1) msg cnd1 ⊑ᵍ δᶜT gt2 msg cnd2
+      δTl : δT gt1 ⊑ᵍ gt2
+      δTr : gt1 ⊑ᵍ δT gt2
+
