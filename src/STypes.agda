@@ -45,20 +45,32 @@ data SType (k : ℕ) : Type (ℓ-suc ℓ) where
   _ᵃ : BSet k → SType k
   _&_ : (l r : SType k) → SType k
   _∣_ : (l r : SType k) → SType k
-  -- μ is not useful for behavioral types, they are transformed with the use of μeG to SType k
   μ_ : SType (suc k) → SType k
 
 
 0ᵐ : ∀{k} → SType k
 0ᵐ = ⊥B ᵐ
 
-postulate
-  μeG : ∀{k} → SType (suc k) → SType k
-
 -- 0 ᵐ indicates that one reduction will always happen.
 -- μ 0 ᵐ ≡ 0 ᵐ
 -- 0 ᵐ & x ≡ 0 ᵐ
 -- 0 ᵐ ∣ x ≡ x
+
+
+μeG : ∀{k} → SType (suc k) → SType k
+μeG (x ᵐ) = Bsucₚ x ᵐ
+μeG (x ᵃ) = Bsucₚ x ᵃ
+μeG (g & g₁) = μeG g & μeG g₁
+μeG (g ∣ g₁) = μeG g ∣ μeG g₁
+μeG (μ g) = μ μeG g
+
+rmμ : ∀{k} → SType k → SType k
+rmμ (x ᵐ) = x ᵐ
+rmμ (x ᵃ) = x ᵃ
+rmμ (g & g₁) = rmμ g & rmμ g₁
+rmμ (g ∣ g₁) = rmμ g ∣ rmμ g₁
+rmμ (μ g) = μeG g
+
 
 _ᵀ : ∀{k} → SType k → SType k
 (x ᵐ) ᵀ = x ᵃ
@@ -79,7 +91,6 @@ data _G_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
   -- dual to previous
   |mr : {L R : BSet k} → ((L ᵐ) ∣ (R ᵐ)) G ((L || R) ᵐ)
 
-
 --   not true since we can have two different messages x ∈ L ∧ y ∈ R but none in L ∧ R
 --  &mr : {L R : BSet k} → ((L ᵃ) ∣ (R ᵃ)) G ((L && R) ᵃ)
 
@@ -93,10 +104,7 @@ data _G_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
 --  0ᵐ∣ : {q : SType k} → {!!} G {!!}
 
 
--- A ⊑ B means that if reduction can ALWAYS happen for B, then it will ALWAYS happen for A as well.
--- thus if we prove that the msgs needs for reduction are B⊥ , we have proven that reduction
--- happends for A as well.
-
+-- A ⊑ B means that if reduction happens for B for Context C, then it will also happen for A.
 
 data _G2_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
   G' : ∀ {m a : SType k} → m G a → m G2 a
@@ -104,36 +112,37 @@ data _G2_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
   -- This is not useful for Behavior types, only for reduction types.
   -- cut is the only way to reduce the restrictions.
   cut : ∀ {m a : BSet k} → (((m || a) ᵐ) & (a ᵃ)) G2 ((m ᵐ) & (a ᵃ))
+  cut` : ∀ {m a : BSet k} → (((m || a) ᵃ) ∣ (a ᵐ)) G2 ((m ᵃ) ∣ (a ᵐ))
 
-data _G3_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
-  G : ∀ {m a : SType k} → m G a → m G3 a
+  -- cut`` : ∀ {m a : BSet k} → ((m ᵐ) & ((a || m) ᵃ)) G2 ((m ᵐ) & (a ᵃ)) ----> wrong only one direction
+  -- the correct direction follows from ←ₐ.
 
 
 
 -- IMPORTANT : The dual operator reverses the relation, it seems.
-data _⊑_ {k : ℕ} : SType k → SType k → Type (ℓ-suc ℓ) where
-  _→ₘ_ : ∀ (l r : BSet k) → {mph : ⊨ (l ↦ r)} → (l ᵐ) ⊑ (r ᵐ)
+data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
+  _→ₘ_ : {k : ℕ} → ∀ (l r : BSet k) → {mph : ⊨ (l ↦ r)} → (l ᵐ) ⊑ (r ᵐ)
   -- DUAL
-  _←ₐ_ : ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
+  _←ₐ_ : {k : ℕ} → ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
 
-  &mr  :  ∀ (l r : BSet k) →  ((l ᵐ) & ( r ᵐ)) ⊑ ((l || r) ᵐ)
+  &mr  : {k : ℕ} →  ∀ (l r : BSet k) →  ((l ᵐ) & ( r ᵐ)) ⊑ ((l || r) ᵐ)
   -- DUAL
-  |ar2 : ∀ (l r : BSet k) →  ((l || r) ᵃ) ⊑ ((l ᵃ) ∣ (r ᵃ))
+  |ar2 : {k : ℕ} → ∀ (l r : BSet k) →  ((l || r) ᵃ) ⊑ ((l ᵃ) ∣ (r ᵃ))
 
   -- this is a consequence of _→ₘ_ and |mr
   -- |mr :  ∀ (l r : BSet k) →  ((l && r) ᵐ) ⊑ ((l ᵐ) ∣ ( r ᵐ))
   -- its dual (l ᵃ) & (r ᵃ) ⊑ (l && r) ᵃ
 
-  |ar  :  ∀ (l r : BSet k) →  ((l ᵃ) ∣ ( r ᵃ)) ⊑ ((l && r) ᵃ)
+  |ar  :  {k : ℕ} → ∀ (l r : BSet k) →  ((l ᵃ) ∣ ( r ᵃ)) ⊑ ((l && r) ᵃ)
   -- DUAL
-  &mr2 : ∀ (l r : BSet k) → ((l && r) ᵐ) ⊑ ((l ᵐ) & (r ᵐ))
+  &mr2 : {k : ℕ} → ∀ (l r : BSet k) → ((l && r) ᵐ) ⊑ ((l ᵐ) & (r ᵐ))
 
-  &r : (l r : SType k) → (l & r) ⊑ l
-  |rl : (l r : SType k) → l ⊑ (l ∣ r)
-  |rr : (l r : SType k) → r ⊑ (l ∣ r)
+  &r : {k : ℕ} → (l r : SType k) → (l & r) ⊑ l
+  |rl : {k : ℕ} → (l r : SType k) → l ⊑ (l ∣ r)
+  |rr : {k : ℕ} → (l r : SType k) → r ⊑ (l ∣ r)
 
-  &r2 : ∀(l1 l2 r1 r2 : SType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 & l2) ⊑ (r1 & r2)
-  |r2 : ∀(l1 l2 r1 r2 : SType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 ∣ l2) ⊑ (r1 ∣ r2)
+  &r2 : {k : ℕ} → ∀(l1 l2 r1 r2 : SType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 & l2) ⊑ (r1 & r2)
+  |r2 : {k : ℕ} → ∀(l1 l2 r1 r2 : SType k) → l1 ⊑ r1 → l2 ⊑ r2 → (l1 ∣ l2) ⊑ (r1 ∣ r2)
 
 -- This is derivable from  &ar and _←ₐ_
 --   &r  :  ∀ (l r c : BSet k) → {mph : ⊨ ((l ─→ c) && (r  ─→ c)) } → (c ᵃ) ⊑ ((l ᵃ) & ( r ᵃ))
@@ -144,18 +153,19 @@ data _⊑_ {k : ℕ} : SType k → SType k → Type (ℓ-suc ℓ) where
 -- lᵐ & r ᵐ ∣  (l && r) ᵐ
 
   -- μeG only contains msgs from the outside world, thus it exludes msgs that are internal to q, that could lead to reduction.
-  μ2  : ∀{q : SType (suc k)} → (μeG q) ⊑ (μ q)
+  μ2  : {k : ℕ} → ∀{q : SType (suc k)} → (μ q) ⊑ (μeG q)
   
-  μ⊑  : ∀{q e : SType (suc k)} → q ⊑ e → (μ q) ⊑ (μ e)
+  μ⊑  : {k : ℕ} → ∀{q e : SType (suc k)} → q ⊑ e → (μ q) ⊑ (μ e)
   -- Wrong : Consider q ⊑ e is less restrictive in both ends. And thus, we could add a term that reduces e , but not q, that is not taken into account
   -- because the restriction of μ, that only considers terms from the outside.
   -- μ⊑2  : ∀{q e : SType (suc k)} → (μ q) ⊑ (μ e) → q ⊑ e
-  μ-cut : ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || Bpredₚ a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
-  μ-cut2 : ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || Bsucₚ a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
+  μ-cut : {k : ℕ} → ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || Bpredₚ a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
+  μ-cut2 : {k : ℕ} → ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || Bsucₚ a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
 
 cut2 : ∀{k} → ∀ {m a : SType k} → a ⊑ (m ᵀ) → (a & m) ⊑ 0ᵐ
-cut2 {k} {x₁ ᵐ} {x₂ ᵃ} x = {!!}
+cut2 {k} {x₁ ᵐ} {a} x = {!!}
 cut2 {k} {x₁ ᵃ} {a} x = {!!}
+cut2 {k} {m & m₁} {a} x = {!!}
 cut2 {k} {m ∣ m₁} {a} x = {!!}
 cut2 {k} {μ m} {a} x = {!!}
 

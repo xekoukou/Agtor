@@ -38,15 +38,19 @@ module BTypes {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → Msg
 
 open import BSet MsgP mpsuc
 
-Pos : ℕ → Type (ℓ-suc ℓ)
-Pos k = BSet k × BSet k
+data Pos (k : ℕ) : Type (ℓ-suc ℓ) where
+  _ᵐ,_ᵃ : BSet k → BSet k → Pos k
+
+_≡ᵖ_ : ∀{k} → Pos k → Pos k → Type ℓ
+(mq ᵐ, aq ᵃ) ≡ᵖ (mw ᵐ, aw ᵃ) = (mq ≡ᵇ mw) × (aq ≡ᵇ aw)
+
 
 -- Behavioral types describe the msgs that can be received and sent at a specific state.
 -- it is the external behavior of a system and thus should be the target of abstraction.
 -- Two systems should be considered equal if they have the same BTypes.
 -- (They also need to be reducible, thus they must respect a subtype property/contract.)
 BType : (k : ℕ) → Type (ℓ-suc ℓ)
-BType k = List (BSet k × BSet k)
+BType k = List (Pos k)
 
 --  _ᵐ,_ᵃ : BSet k → BSet k → BType k
 --  --_∣_ inducates the superposition due to the different states a system can be in.
@@ -62,14 +66,14 @@ record _∈ᵐᵇᵗ_ {k} (msg : MsgP k) (btyp : BType k) : Type (ℓ-suc ℓ) w
   field
     {MBSet ABSet} : BSet k
     mP : MBSet msg ⊎ ABSet msg
-    sup : (MBSet , ABSet) ∈ btyp
+    sup : (MBSet ᵐ, ABSet ᵃ) ∈ btyp
 
 record _∈ᵇᵗ_ {k} (p : Pos k) (btyp : BType k) : Type (ℓ-suc ℓ) where
   field
-    {MBSet ABSet} : BSet k
-    meq : fst p ≡ᵇ MBSet
-    aeq : snd p ≡ᵇ ABSet
-    sup : (MBSet , ABSet) ∈ btyp
+    p` : Pos k
+    -- We treat btypes that accept the same messages as the same.
+    eqp : p ≡ᵖ p`
+    sup : p` ∈ btyp
 
 _⊆ᵇᵗ_ : ∀{k} → (btyp1 btyp2 : BType k) → Type (ℓ-suc ℓ)
 btyp1 ⊆ᵇᵗ btyp2 = ∀ p → p ∈ᵇᵗ btyp1 → p ∈ᵇᵗ btyp2
