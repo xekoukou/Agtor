@@ -208,3 +208,27 @@ cut2 {k} {μ m} {a} x = {!!}
       
 --   in (fst (nsecr (def MP)) ≡ Pns (def A)) × (csecr ≡ just (Ps (def A))) × Pt (def A) (umT (def MP))
 
+-------------------------------------------------------------
+
+-- Projections for their use in Coevolution
+-- In essence in coevolution, we do not care about superposition | or for &.
+-- For this to work , we need to make sure that we always have reduction, thus the term is not stuck.
+-- this is possible with the use of STypes, in other words we cannot close a term t with μ / ν unless some conditions are met.
+-- For all cases, we have reduction.
+
+
+{-# TERMINATING #-}
+projₘ : ∀{k} → SType k →  BSet k
+projₘ (x ᵐ) mp = x mp
+projₘ (x ᵃ) mp = Lift ⊥
+projₘ (s & s₁) mp = projₘ s mp ⊎ projₘ s₁ mp
+projₘ (s ∣ s₁) mp = projₘ s mp ⊎ projₘ s₁ mp
+projₘ (μ s) mp = projₘ (μeG s) mp
+
+{-# TERMINATING #-}
+projₐ : ∀{k} → SType k →  BSet k
+projₐ (x ᵐ) mp = x mp
+projₐ (x ᵃ) mp = Lift ⊥
+projₐ (s & s₁) mp = projₐ s mp ⊎ projₐ s₁ mp
+projₐ (s ∣ s₁) mp = projₐ s mp ⊎ projₐ s₁ mp
+projₐ (μ s) mp = projₐ (μeG s) mp
