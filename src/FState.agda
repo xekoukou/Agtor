@@ -18,18 +18,14 @@ open import Cubical.Algebra.CommMonoid
 open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
-import State
 
-module FState {ℓ ℓ'} (C : ∀ n → Type ℓ) where
+module OpTerm {ℓ ℓ'} (C : ∀ n → Type ℓ) (CisSet : ∀{n} → isSet (C n)) where
 
-module St = State C
-open St
-
-record FFState (n : ℕ) : Type (ℓ-max ℓ (ℓ-suc ℓ')) where
+record OpenTerm (n : ℕ) : Type (ℓ-max ℓ (ℓ-suc ℓ')) where
   constructor FSt
   field 
     ⟨_⟩ : Type ℓ'
-    fs : ⟨_⟩ → State n
+    fs : ⟨_⟩ → C n
 
 open FFState
 
@@ -55,7 +51,7 @@ data FDom {n : ℕ} : FState n → Type (ℓ-max ℓ (ℓ-suc ℓ')) where
        → (dp2 : PathP (λ i → FDom (p2 i)) dx dy) → SquareP (λ i j → FDom (squash/ x y p1 p2 i j)) dp1 dp2 refl refl
 
 
-_$_ : {n : ℕ} → (os : FState n) → FDom os → State n
+_$_ : {n : ℕ} → (os : FState n) → FDom os → C n
 .([ _ ]) $ vl {ffst} x = (fs ffst) x
 .(eq/ _ (FSt _ (ffst1 .fs ∘ _)) (frel {_} {ffst1} {A} {f} {g} rt) i) $ eqd {ffst1} {A} v2 {f} {g} rt i = refl {x = ffst1 .fs (f v2)} i
-.(squash/ _ _ p1 p2 i j) $ sqd {x} {y} p1 p2 dx dy dp1 dp2 i j = squash/ (x $ dx) (y $ dy) (cong₂ _$_ p1 dp1) (cong₂ _$_ p2 dp2) i j
+.(squash/ _ _ p1 p2 i j) $ sqd {x} {y} p1 p2 dx dy dp1 dp2 i j = CisSet (x $ dx) (y $ dy) (cong₂ _$_ p1 dp1) (cong₂ _$_ p2 dp2) i j

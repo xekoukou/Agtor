@@ -27,7 +27,7 @@ open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
-open import OpTerm
+import OpTerm
 
 module Coevolution {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
 
@@ -55,18 +55,32 @@ msg ∈ⁱ input = (input ᵐ) msg ⊎ (input ᵃ) msg
 _⊆ⁱ_ : ∀{k} → (typ1 typ2 : Input k) → Type ℓ
 typ1 ⊆ⁱ typ2 = ∀ p → p ∈ⁱ typ1 → p ∈ⁱ typ2
 
-module dsfd (Pns : ∀{k} → MsgP k → ℕ) (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (_⊑_ : ∀{k} → SType k → SType k → Type (ℓ-suc ℓ)) where
+module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (_⊑_ : ∀{k} → SType k → SType k → Type (ℓ-suc ℓ)) where
 
-  record CType (k : ℕ) : Type ℓ where
-    coinductive
-    field
-    -- here we need to generalize FFSTate to have FSType so as to be able to add those types with _&_
-    -- so as to use it at δT
-      stype : SType k
-      δᶜT : (msg : MsgP k) → (cnd : msg ∈ⁱ (stype toI)) → CType (k + Pns msg)
-      -- Here we should't just have CType, because when we add two functions, then we have a parameter t, which
-      -- we do not care about, but we have it , thus look at the above.
-      δT  : CType k
+  interleaved mutual
+   
+    record CType (k : ℕ) : Type (ℓ-suc ℓ)
+
+    open OpTerm {_} {ℓ} SType {!!}
+  
+    record CType k where
+      coinductive
+      field
+      -- here we need to generalize FFSTate to have FSType so as to be able to add those types with _&_
+      -- so as to use it at δT
+        stype : OpTerm k
+        δᶜT : (msg : MsgP k) → (cnd : msg ∈ⁱ (stype toI)) → CType k
+        -- Here we should't just have CType, because when we add two functions, then we have a parameter t, which
+        -- we do not care about, but we have it , thus look at the above.
+        δT  : CType k
+  
+  
+
+
+
+
+
+
 
 -- -- -- global types have subtypes in which the behavioral types are equal, but the
 -- -- -- structural type is a subtype, thus we have directional abstraction, inherited from the
