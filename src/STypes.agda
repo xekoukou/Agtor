@@ -27,12 +27,12 @@ open import Cubical.Algebra.Semilattice
 open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
-import State
-open import State.Lemma
-import State.Properties
-import ActorM
+-- import State
+-- open import State.Lemma
+-- import State.Properties
+-- import ActorM
 open import Projection
-open import Common
+-- open import Common
 
 module STypes {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
 

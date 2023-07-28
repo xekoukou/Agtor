@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --guardedness #-}
 
 open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Prelude
@@ -18,7 +18,6 @@ open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Fin
-open import Cubical.Data.List
 import Cubical.Data.FinData as FD
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Nat.Order.Recursive
@@ -29,7 +28,7 @@ open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
 import OpTerm
 
-module Coevolution {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
+module Convolution {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
 
 open import BSet MsgP mpsuc
 
@@ -41,6 +40,9 @@ record Input (k : ℕ) : Type (ℓ-suc ℓ) where
 
 open Input
 
+_⊎ⁱ_ : ∀{k} → Input k → Input k → Input k
+a ⊎ⁱ b = ((a ᵐ) || (b ᵐ)) ᵐ, (a ᵃ) || (b ᵃ) ᵃ 
+
 _≡ⁱ_ : ∀{k} → Input k → Input k → Type ℓ
 (mq ᵐ, aq ᵃ) ≡ⁱ (mw ᵐ, aw ᵃ) = (mq ≡ᵇ mw) × (aq ≡ᵇ aw)
 
@@ -49,35 +51,49 @@ _≡ⁱ_ : ∀{k} → Input k → Input k → Type ℓ
 -- -- we can possibly describe the reduction of separate systems, and then through transformations of the behavioral types
 -- -- and their continuations, derive the reduction of the general system from the reductions of the specific system.
 
-_∈ⁱ_ : ∀{k} → (msg : MsgP k) → (input : Input k) → Type ℓ
-msg ∈ⁱ input = (input ᵐ) msg ⊎ (input ᵃ) msg
+_∋ⁱ_ : ∀{k} → (input : Input k) → (msg : MsgP k) → Type ℓ
+input ∋ⁱ msg = ∥ (input ᵐ) msg ∥₁ ⊎ ∥ (input ᵃ) msg ∥₁
 
 _⊆ⁱ_ : ∀{k} → (typ1 typ2 : Input k) → Type ℓ
-typ1 ⊆ⁱ typ2 = ∀ p → p ∈ⁱ typ1 → p ∈ⁱ typ2
+typ1 ⊆ⁱ typ2 = ∀ p → typ1 ∋ⁱ p → typ2 ∋ⁱ p
 
 module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (_⊑_ : ∀{k} → SType k → SType k → Type (ℓ-suc ℓ)) where
 
-  interleaved mutual
+  record CType (k : ℕ) : Type ℓ
    
-    record CType (k : ℕ) : Type (ℓ-suc ℓ)
-
-    open OpTerm {_} {ℓ} SType {!!}
+  open OpTerm 
   
-    record CType k where
-      coinductive
-      field
-      -- here we need to generalize FFSTate to have FSType so as to be able to add those types with _&_
-      -- so as to use it at δT
-        stype : OpTerm k
-        δᶜT : (msg : MsgP k) → (cnd : msg ∈ⁱ (stype toI)) → CType k
-        -- Here we should't just have CType, because when we add two functions, then we have a parameter t, which
-        -- we do not care about, but we have it , thus look at the above.
-        δT  : CType k
+  record CType k where
+    coinductive
+    field
+    -- here we need to generalize FFSTate to have FSType so as to be able to add those types with _&_
+    -- so as to use it at δT
+      PST : SType k
+      δᶜT : (msg : MsgP k) → (cnd : (PST toI) ∋ⁱ msg) → CType k
+      -- Here we should't just have CType, because when we add two functions, then we have a parameter t, which
+      -- we do not care about, but we have it , thus look at the above.
+      δT  : CType k
   
   
 
+  open CType
+
+  module _ (_&_ : ∀{k} → SType k → SType k → SType k) (_∣_ : ∀{k} → SType k → SType k → SType k) (l1 : ∀{k} → (x y : SType k) → ((x ∣ y) toI) ≡ ((x toI) ⊎ⁱ (y toI))) where
+
+-- Wrong since we need to concatenate same conditions ????
+    _ee_ : ∀{k} → CType k → CType k → CType k
+    PST (x ee y) = PST x ∣ PST y
+    δᶜT (x ee y) = {!!}
+    δT (x ee y) = {!!}
+    
+    _ww_ : ∀{k} → CType k → CType k → CType k
+    PST (_ww_ x y) = PST x & PST y
+    δᶜT (_ww_ x y) = {!!}
+    δT (_ww_ x y) = ((δT x ww y) ee (x ww δT y)) ee {!!} 
 
 
+    _⅋_ : ∀{k} → CType k ᵖ ℓ → CType k ᵖ ℓ → CType k ᵖ ℓ
+    (Pa ⅋ Pb) x = Σ (Σ (CType _) Pa) (λ a → Σ (Σ (CType _) Pb) {!x ≡ a!})
 
 
 
