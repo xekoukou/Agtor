@@ -51,10 +51,11 @@ data SType (k : ℕ) : Type (ℓ-suc ℓ) where
 0ᵐ : ∀{k} → SType k
 0ᵐ = ⊥B ᵐ
 
--- 0 ᵐ indicates that one reduction will always happen.
--- μ 0 ᵐ ≡ 0 ᵐ
--- 0 ᵐ & x ≡ 0 ᵐ
--- 0 ᵐ ∣ x ≡ x
+1ᵃ : ∀{k} → SType k
+1ᵃ = ⊤B ᵃ
+
+-- 0ᵐ & r ᵃ reduces always
+-- 1ᵃ & m ᵐ reduces always
 
 
 μeG : ∀{k} → SType (suc k) → SType k
@@ -104,7 +105,6 @@ data _G_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
 --  0ᵐ∣ : {q : SType k} → {!!} G {!!}
 
 
--- A ⊑ B means that if reduction happens for B for Context C, then it will also happen for A.
 
 data _G2_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
   G' : ∀ {m a : SType k} → m G a → m G2 a
@@ -118,6 +118,8 @@ data _G2_ {k} : SType k → SType k → Type (ℓ-suc ℓ) where
   -- the correct direction follows from ←ₐ.
 
 
+
+-- A ⊑ B means that if reduction happens for B for Context C, then it will also happen for A.
 
 -- IMPORTANT : The dual operator reverses the relation, it seems.
 data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
@@ -152,6 +154,19 @@ data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
 
 -- lᵐ & r ᵐ ∣  (l && r) ᵐ
 
+  -- obvious from →ₘ
+  cut1 : {k : ℕ} → ∀ {m a : BSet k} → (((m ─ a) ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & (a ᵃ))
+  -- Non-obvious
+  cut2 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & (a ᵃ)) ⊑ (((m ─ a) ᵐ) & (a ᵃ))
+
+  cut6 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & ((a || m) ᵃ))
+
+  cut3 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) ∣ (a ᵃ)) ⊑ ((m ᵐ) ∣ ((a || m) ᵃ))
+  cut5 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) ∣ ((a || m) ᵃ)) ⊑ ((m ᵐ) ∣ (a ᵃ))
+  -- Follows directly from &r2 and ←ₐ
+  cut4 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & ((a || m) ᵃ)) ⊑ ((m ᵐ) & (a ᵃ))
+  
+
   -- μeG only contains msgs from the outside world, thus it exludes msgs that are internal to q, that could lead to reduction.
   μ2  : {k : ℕ} → ∀{q : SType (suc k)} → (μ q) ⊑ (μeG q)
   
@@ -162,12 +177,12 @@ data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
   μ-cut : {k : ℕ} → ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || Bpredₚ a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
   μ-cut2 : {k : ℕ} → ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || Bsucₚ a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
 
-cut2 : ∀{k} → ∀ {m a : SType k} → a ⊑ (m ᵀ) → (a & m) ⊑ 0ᵐ
-cut2 {k} {x₁ ᵐ} {a} x = {!!}
-cut2 {k} {x₁ ᵃ} {a} x = {!!}
-cut2 {k} {m & m₁} {a} x = {!!}
-cut2 {k} {m ∣ m₁} {a} x = {!!}
-cut2 {k} {μ m} {a} x = {!!}
+cu : ∀{k} → ∀ {m a : SType k} → a ⊑ (m ᵀ) → (a & m) ⊑ (m & (m ᵀ)) 
+cu {k} {x₁ ᵐ} {a} x = {!!}
+cu {k} {x₁ ᵃ} {a} x = {!!}
+cu {k} {m & m₁} {a} x = {!!}
+cu {k} {m ∣ m₁} {a} x = {!!}
+cu {k} {μ m} {a} x = {!!}
 
 
 

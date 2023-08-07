@@ -43,6 +43,9 @@ BSet k = (mp : MsgP k) → Type ℓ
 ⊥B : ∀{k} → BSet k
 ⊥B mp = ⊥*
 
+⊤B : ∀{k} → BSet k
+⊤B mp = Unit*
+
 _↦_ : ∀{k} → BSet k → BSet k → BSet k
 (P ↦ Q) mp = P mp → Q mp
 

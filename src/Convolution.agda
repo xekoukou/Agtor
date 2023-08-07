@@ -62,14 +62,15 @@ module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (
   record CType (k : ℕ) : Type ℓ
    
   open OpTerm 
-  
+
   record CType k where
     coinductive
     field
     -- here we need to generalize FFSTate to have FSType so as to be able to add those types with _&_
     -- so as to use it at δT
       PST : SType k
-      δᶜT : (msg : MsgP k) → (cnd : (PST toI) ∋ⁱ msg) → CType k
+      δᶜT : (msg : MsgP k) → CType k
+      δᶜTC : ∀ msg → ¬ ((PST toI) ∋ⁱ msg) → (δᶜT msg) ≡ {!!}
       -- Here we should't just have CType, because when we add two functions, then we have a parameter t, which
       -- we do not care about, but we have it , thus look at the above.
       δT  : CType k
@@ -89,7 +90,7 @@ module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (
     _ww_ : ∀{k} → CType k → CType k → CType k
     PST (_ww_ x y) = PST x & PST y
     δᶜT (_ww_ x y) = {!!}
-    δT (_ww_ x y) = ((δT x ww y) ee (x ww δT y)) ee {!!} 
+    δT (_ww_ x y) = δT x ww y
 
 
     _⅋_ : ∀{k} → CType k ᵖ ℓ → CType k ᵖ ℓ → CType k ᵖ ℓ
