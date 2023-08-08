@@ -34,7 +34,7 @@ open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
 open import Projection
 -- open import Common
 
-module STypes {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
+module STypesNotes {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
 
 open import BSet MsgP mpsuc
 
@@ -63,6 +63,7 @@ data SType (k : ℕ) : Type (ℓ-suc ℓ) where
 μeG (x ᵃ) = Bsucₚ x ᵃ
 μeG (g & g₁) = μeG g & μeG g₁
 μeG (g ∣ g₁) = μeG g ∣ μeG g₁
+-- This is wrong, we need the generalized version of Bsucₚ
 μeG (μ g) = μ μeG g
 
 rmμ : ∀{k} → SType k → SType k
@@ -127,6 +128,7 @@ data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
   -- DUAL
   _←ₐ_ : {k : ℕ} → ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
 
+  -- a consequence of →ₘ and &r
   &mr  : {k : ℕ} →  ∀ (l r : BSet k) →  ((l ᵐ) & ( r ᵐ)) ⊑ ((l || r) ᵐ)
   -- DUAL
   |ar2 : {k : ℕ} → ∀ (l r : BSet k) →  ((l || r) ᵃ) ⊑ ((l ᵃ) ∣ (r ᵃ))
@@ -135,6 +137,7 @@ data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
   -- |mr :  ∀ (l r : BSet k) →  ((l && r) ᵐ) ⊑ ((l ᵐ) ∣ ( r ᵐ))
   -- its dual (l ᵃ) & (r ᵃ) ⊑ (l && r) ᵃ
 
+  -- a consequence of ∣r2 and ←ₐ
   |ar  :  {k : ℕ} → ∀ (l r : BSet k) →  ((l ᵃ) ∣ ( r ᵃ)) ⊑ ((l && r) ᵃ)
   -- DUAL
   &mr2 : {k : ℕ} → ∀ (l r : BSet k) → ((l && r) ᵐ) ⊑ ((l ᵐ) & (r ᵐ))
@@ -156,20 +159,31 @@ data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
 
   -- obvious from →ₘ
   cut1 : {k : ℕ} → ∀ {m a : BSet k} → (((m ─ a) ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & (a ᵃ))
+
   -- Non-obvious
-  cut2 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & (a ᵃ)) ⊑ (((m ─ a) ᵐ) & (a ᵃ))
+  -- Because of →ₘ , we can avoid  using (m ─ a).
+  cut2 : {k : ℕ} → ∀ {m a : BSet k} → (((m || a) ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & (a ᵃ))
 
-  cut6 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & ((a || m) ᵃ))
-
+  -- non-obvious DUAL to previous
   cut3 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) ∣ (a ᵃ)) ⊑ ((m ᵐ) ∣ ((a || m) ᵃ))
+
+
+  -- Not true
+  -- cut6 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & (a ᵃ)) ⊑ ((m ᵐ) & ((a || m) ᵃ))
+
+  -- obvious
   cut5 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) ∣ ((a || m) ᵃ)) ⊑ ((m ᵐ) ∣ (a ᵃ))
   -- Follows directly from &r2 and ←ₐ
   cut4 : {k : ℕ} → ∀ {m a : BSet k} → ((m ᵐ) & ((a || m) ᵃ)) ⊑ ((m ᵐ) & (a ᵃ))
   
 
   -- μeG only contains msgs from the outside world, thus it exludes msgs that are internal to q, that could lead to reduction.
+  -- This is wrong, because a Predicate inside an μ can accept msgs both from outside the world and inside.
+  -- μeG only takes into account exterior msgs, but for μ q , we can not make that choice ourselves, the msg might
+  -- require a responce from inside the μ.
   μ2  : {k : ℕ} → ∀{q : SType (suc k)} → (μ q) ⊑ (μeG q)
-  
+  -- Here we need to assume that internally we have reduction, otherwise, we wouldn't be able to close with
+  -- μ . Thus reduction need only be proved externally.
   μ⊑  : {k : ℕ} → ∀{q e : SType (suc k)} → q ⊑ e → (μ q) ⊑ (μ e)
   -- Wrong : Consider q ⊑ e is less restrictive in both ends. And thus, we could add a term that reduces e , but not q, that is not taken into account
   -- because the restriction of μ, that only considers terms from the outside.
@@ -177,13 +191,25 @@ data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
   μ-cut : {k : ℕ} → ∀{a : BSet k} → {m : BSet (suc k)} → ((μ ((m || Bpredₚ a) ᵐ)) & (a ᵃ)) ⊑ ((μ (m ᵐ)) & (a ᵃ))
   μ-cut2 : {k : ℕ} → ∀{m : BSet k} → {a : BSet (suc k)} → ((μ (a ᵃ)) & ((m || Bsucₚ a) ᵐ)) ⊑ ((μ (a ᵃ)) & (m ᵐ))
 
-cu : ∀{k} → ∀ {m a : SType k} → a ⊑ (m ᵀ) → (a & m) ⊑ (m & (m ᵀ)) 
+cu : ∀{k} → ∀ {m a : SType k} → a ⊑ m → (a & (m ᵀ)) ⊑ (m & (m ᵀ)) 
 cu {k} {x₁ ᵐ} {a} x = {!!}
 cu {k} {x₁ ᵃ} {a} x = {!!}
 cu {k} {m & m₁} {a} x = {!!}
 cu {k} {m ∣ m₁} {a} x = {!!}
 cu {k} {μ m} {a} x = {!!}
 
+-- a ⊑ a
+-- a & a ᵀ always reduces
+-- a ⊑ m
+-- a & m ᵀ always reduces
+
+-- a ᵀ & k reduces
+-- m ᵀ & k does not reduce
+
+dd : ∀{k} → ∀ {m a : SType k} → a ⊑ m → (m ᵀ) ⊑ (a ᵀ)
+-- a ⊑
+
+dd = {!!}
 
 
 -- (a ᵐ & b ᵐ) & c ᵃ ----> (a || b) ᵐ  --- > this cannot work

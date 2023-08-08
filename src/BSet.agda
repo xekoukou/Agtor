@@ -28,7 +28,7 @@ open import Cubical.Foundations.HLevels
 open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
 
-module BSet {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
+module BSet {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → ℕ → MsgP (suc k)) where
 
 
 
@@ -67,10 +67,10 @@ _||_ : ∀{k} → BSet k → BSet k → BSet k
 _─_ : ∀{k} → BSet k → BSet k → BSet k
 (a ─ b) = a && (¬B b)
 
-Bsucₚ : ∀{k} → BSet (suc k) → BSet k
-Bsucₚ a mp = a (mpsuc mp)
+Bsucₚ : ∀{k} → BSet (suc k) → ℕ → BSet k
+Bsucₚ a n mp = a (mpsuc mp n)
 
-Bpredₚ : ∀{k} → BSet k → BSet (suc k)
-Bpredₚ {k} a mp = Σ (MsgP k) λ pmp → Σ (mpsuc pmp ≡ mp) λ _ → a pmp
+Bpredₚ : ∀{k} → BSet k → ℕ → BSet (suc k)
+Bpredₚ {k} a n mp = Σ (MsgP k) λ pmp → Σ (mpsuc pmp n ≡ mp) λ _ → a pmp
 
 
