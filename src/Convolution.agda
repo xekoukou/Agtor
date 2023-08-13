@@ -28,7 +28,7 @@ open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
 import OpTerm
 
-module Convolution {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → MsgP (suc k)) where
+module Convolution {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → ℕ → MsgP (suc k)) where
 
 open import BSet MsgP mpsuc
 
@@ -69,7 +69,7 @@ module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (
     -- here we need to generalize FFSTate to have FSType so as to be able to add those types with _&_
     -- so as to use it at δT
       PST : SType k
-      δᶜT : (msg : MsgP k) → CType k
+      δᶜT : (msg : MsgP k) → Maybe (CType k)
       δᶜTC : ∀ msg → ¬ ((PST toI) ∋ⁱ msg) → (δᶜT msg) ≡ {!!}
       -- Here we should't just have CType, because when we add two functions, then we have a parameter t, which
       -- we do not care about, but we have it , thus look at the above.
@@ -81,16 +81,24 @@ module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (
 
   module _ (_&_ : ∀{k} → SType k → SType k → SType k) (_∣_ : ∀{k} → SType k → SType k → SType k) (l1 : ∀{k} → (x y : SType k) → ((x ∣ y) toI) ≡ ((x toI) ⊎ⁱ (y toI))) where
 
--- Wrong since we need to concatenate same conditions ????
+    {-# TERMINATING #-}
+    _mee_ : ∀{k} → Maybe (CType k) → Maybe (CType k) → Maybe (CType k)
+    _mww_ : ∀{k} → Maybe (CType k) → Maybe (CType k) → Maybe (CType k)
+    _ww_ : ∀{k} → CType k → CType k → CType k
     _ee_ : ∀{k} → CType k → CType k → CType k
+
+    _mee_ x y = x >>=M λ x → y >>=M λ y → just (x ee y)
+    _mww_ x y = {!!}
+
     PST (x ee y) = PST x ∣ PST y
-    δᶜT (x ee y) = {!!}
+    δᶜT (x ee y) msg = (δᶜT x msg) mee δᶜT y msg
+    δᶜTC (x ee y) = {!!}
     δT (x ee y) = {!!}
     
-    _ww_ : ∀{k} → CType k → CType k → CType k
     PST (_ww_ x y) = PST x & PST y
-    δᶜT (_ww_ x y) = {!!}
-    δT (_ww_ x y) = δT x ww y
+    δᶜT (_ww_ x y) msg = ((δᶜT x msg) mww (just y)) mee ((just y) mww (δᶜT x msg))
+    δᶜTC (_ww_ x y) = {!!}
+    δT (_ww_ x y) = (δT x ww y) ee (x ww δT y)
 
 
     _⅋_ : ∀{k} → CType k ᵖ ℓ → CType k ᵖ ℓ → CType k ᵖ ℓ

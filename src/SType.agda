@@ -92,6 +92,8 @@ dTT (μ g) = cong μ_ (dTT g)
 -- IMPORTANT : The dual operator reverses the relation, it seems.
 data _⊑_ : {k : ℕ} → SType k → SType k → Type (ℓ-suc ℓ) where
   refl⊑ :{k : ℕ} → (r : SType k) →  r ⊑ r
+  trans⊑ : {k : ℕ} → (r l m : SType k) → r ⊑ l → l ⊑ m → r ⊑ m
+
   _→ₘ_ : {k : ℕ} → ∀ (l r : BSet k) → {mph : ⊨ (l ↦ r)} → (l ᵐ) ⊑ (r ᵐ)
   -- DUAL
   _←ₐ_ : {k : ℕ} → ∀ (l r : BSet k) → {mph : ⊨ (r ↦ l)} → (l ᵃ) ⊑ (r ᵃ)
@@ -137,6 +139,7 @@ dd {_} {.((_ ᵐ) ∣ (_ ᵐ))} {.((_ || _) ᵐ)} |mr2 = &ar1
 dd {_} {.((_ ᵐ) & (_ ᵃ))} {.(((_ || _) ᵐ) & (_ ᵃ))} cut1 = cut2
 dd {_} {.(((_ || _) ᵃ) ∣ (_ ᵐ))} {.((_ ᵃ) ∣ (_ ᵐ))} cut2 = cut1
 dd {_} {.(μ _)} {.(μ _)} (μ⊑ ieq) = μ⊑ (dd ieq)
+dd {_} {m} {a} (trans⊑ .a l .m ieq1 ieq2) = trans⊑ _ _ _ (dd ieq2) (dd ieq1)
 
 -- a ᵀ is the maximal context under which a reduces.
 -- This looks like a universal property.
