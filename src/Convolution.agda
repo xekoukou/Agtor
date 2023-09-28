@@ -18,6 +18,7 @@ open import Cubical.Data.Bool hiding (_≤_ ; _≟_)
 open import Cubical.Relation.Nullary
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Fin
+open import Cubical.Data.List
 import Cubical.Data.FinData as FD
 open import Cubical.Data.Nat hiding (_·_)
 open import Cubical.Data.Nat.Order.Recursive
@@ -28,7 +29,7 @@ open import Cubical.HITs.PropositionalTruncation
 open import Cubical.HITs.SetQuotients as SQ renaming ([_] to ⟨_⟩ₛ)
 import OpTerm
 
-module Convolution {ℓ} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → ℕ → MsgP (suc k)) where
+module Convolution {ℓ ℓ'} (MsgP : ℕ → Type ℓ) (mpsuc : ∀{k} → MsgP k → ℕ → MsgP (suc k)) where
 
 open import BSet MsgP mpsuc
 
@@ -56,6 +57,44 @@ input ∋ⁱ msg = ∥ (input ᵐ) msg ∥₁ ⊎ ∥ (input ᵃ) msg ∥₁
 
 _⊆ⁱ_ : ∀{k} → (typ1 typ2 : Input k) → Type ℓ
 typ1 ⊆ⁱ typ2 = ∀ p → typ1 ∋ⁱ p → typ2 ∋ⁱ p
+
+
+module dfsff (SType : Type ℓ) where
+
+  data Secret : Type where
+
+
+  LSecret : Type
+  LSecret = List Secret
+
+  _∈_ : Secret → LSecret → Type
+
+  Diff∈ : ∀{x y ls} → x ∈ ls → y ∈ ls → Type 
+
+  DiffProof : LSecret → Type
+  DiffProof ls = ∀{x y} → (xin : x ∈ ls) → (yin : y ∈ ls) → Diff∈ xin yin → ¬ (x ≡ y)  
+
+  record DiffSecrets : Type where
+    field
+      lsec : LSecret
+      diffPr : DiffProof lsec 
+
+  open DiffSecrets
+
+  record Open (A : Type ℓ) : Type (ℓ-suc ℓ) where
+    field
+      Dom : Type
+      fun : Dom × DiffSecrets → A
+
+
+  ofun : ∀{A : Type ℓ'} → Open {!!} → Type {!!}
+  ofun {A = A} os = {!!}
+  
+
+  record Actor : Type {!!} where
+    field
+      OST : Open SType
+
 
 module dsfd (SType : ℕ → Type ℓ) (_toI : ∀{k} → SType k → Input k) (_⊑_ : ∀{k} → SType k → SType k → Type (ℓ-suc ℓ)) where
 
