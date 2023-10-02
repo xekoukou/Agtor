@@ -6,6 +6,7 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Function
 open import Cubical.Data.Nat
+open import Cubical.Data.Fin
 import Cubical.Data.Equality as E
 open import Cubical.HITs.PropositionalTruncation
 

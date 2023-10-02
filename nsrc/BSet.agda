@@ -10,7 +10,7 @@ open import Naturals.Order
 open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 
-module BSet (fe : funext 𝓤 𝓤) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
+module BSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
 
 open PropositionalTruncation pt
 
@@ -58,19 +58,45 @@ _&&_ : BSet → BSet → BSet
 _≡ᵇ_ : BSet → BSet → 𝓤 ̇
 A ≡ᵇ B = ⊨ ((A ─→ B) && (B ─→ A))
 
+¬ᵇ : BSet → BSet
+⟨ ¬ᵇ A ⟩ mp = ¬ (⟨ A ⟩ mp)
+-is-prop (¬ᵇ A) mp = Π-is-prop fe λ _ → 𝟘-is-prop
+-is-decidable (¬ᵇ A) mp with -is-decidable A mp
+... | inl x = inr (λ ¬f → ¬f x)
+... | inr x = inl x
+
+-- I do not like this definition, because we need to prove the negation
+--  update : But since we have decidability anyway, this is provable immediately
+_─_ : BSet → BSet → BSet
+(a ─ b) = a && (¬ᵇ b)
+
+_|x|_ : BSet → BSet → BSet
+⟨ a |x| b ⟩ mp = ⟨ ¬ᵇ (a && b) ⟩ mp × (⟨ a ⟩ mp + ⟨ b ⟩ mp)
+-is-prop (a |x| b) mp
+ = Σ-is-prop
+    (¬ᵇ (a && b) .-is-prop mp)
+    (λ ¬pa&b → +-is-prop (a .-is-prop mp)
+    (b .-is-prop mp)
+    λ pa pb → ¬pa&b (pa , pb))
+-is-decidable (a |x| b) mp with a .-is-decidable mp | b .-is-decidable mp
+... | inl x | inl y = inr (λ (z , _) → z (x , y))
+... | inl x | inr y = inl ((λ (_ , e) → y e) , inl x)
+... | inr x | inl y = inl ((λ (e , _) → x e) , inr y)
+... | inr x | inr y = inr λ { (_ , inl z) → x z ; (_ , inr z) → y z}
+
+-- I use this definition because of the proof of is-prop
 _||_ : BSet → BSet → BSet
-⟨ a || b ⟩ mp = ∥ ⟨ a ⟩ mp + ⟨ b ⟩ mp ∥
-(a || b) .-is-prop mp = ∥∥-is-prop
-(a || b) .-is-decidable mp with a .-is-decidable mp | b .-is-decidable mp
-... | inl x | q = inl ∣ inl x ∣
-... | inr x | inl y = inl ∣ inr y ∣
-... | inr x | inr y = inr (∥∥-rec 𝟘-is-prop (λ { (inl z) → x z
-                                               ; (inr z) → y z}))
+a || b = (a && b) |x| (a |x| b)
 
--- ¬B : BSet → BSet
--- ¬B a mp = ¬ (a mp)
 
--- -- I do not like this definition, because we need to prove the negation
--- -- 
--- _─_ : BSet → BSet → BSet
--- (a ─ b) = a && (¬B b)
+
+-- -- We do not use this because we have decidability of prop
+-- _||_ : BSet → BSet → BSet
+-- ⟨ a || b ⟩ mp = ∥ ⟨ a ⟩ mp + ⟨ b ⟩ mp ∥
+-- (a || b) .-is-prop mp = ∥∥-is-prop
+-- (a || b) .-is-decidable mp with a .-is-decidable mp | b .-is-decidable mp
+-- ... | inl x | q = inl ∣ inl x ∣
+-- ... | inr x | inl y = inl ∣ inr y ∣
+-- ... | inr x | inr y = inr (∥∥-rec 𝟘-is-prop (λ { (inl z) → x z
+--                                                ; (inr z) → y z}))
+
