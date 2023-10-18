@@ -99,6 +99,7 @@ module axiom-names {C : 𝓤 ̇ } {E : 𝓤 ̇ } {str : structure C E} (ax : axi
  ∣-idem : T∣-idem
  ∣-idem = pr₂ (pr₂ (pr₂ ax))
 
+
 module _ (C : 𝓤 ̇) (E : 𝓤 ̇ ) where
 
  𝟚C-semi : 𝓤 ̇
