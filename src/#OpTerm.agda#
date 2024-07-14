@@ -6,7 +6,6 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Function
 open import Cubical.Data.Nat
-open import Cubical.Data.Fin
 import Cubical.Data.Equality as E
 open import Cubical.HITs.PropositionalTruncation
 
@@ -27,7 +26,7 @@ C ᵖ ℓ' = C → Type ℓ'
 [_] P = ∀ x → P x
 
 OpTerm : {A : Type ℓ'} → {C : Type ℓ} → (f : A → C) → C ᵖ ℓ-max ℓ' ℓ
-OpTerm f = λ y → ∥ E.fiber f y ∥₁
+OpTerm f = λ x → ∥ E.fiber f x ∥₁
 
 eqOpTExt : {A B : Type ℓ'} → {C : Type ℓ} → {f : A → C} → {g : B → C} → (∀ x → OpTerm f x → OpTerm g x)
            → (∀ x → OpTerm g x → OpTerm f x)

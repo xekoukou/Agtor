@@ -13,9 +13,10 @@ open import Naturals.Addition renaming (_+_ to _+ℕ_)
 open import Notation.General
 open import UF.Sets
 open import UF.Base
-open import MLTT.Two renaming (₀ to ⇒ ; ₁ to ⇐)
+open import MLTT.Two renaming (₀ to 𝕞 ; ₁ to 𝕒)
 
 open import Free
+open import Common
 
 module SType2  (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓥 ̇ ) where
 
@@ -23,59 +24,81 @@ open import BSet fe pt Msg
 
 open BSet
 
-OSet : ∀ 𝓤 → 𝓤ω
-OSet 𝓤 = free-icsring {𝓤} (λ _ → 𝟚 × BSet)
+Val : 𝟚 × BSet → 𝓥 ̇
+Val (𝕒 , bSet) = 𝟙
+Val (𝕞 , bSet) = Σ ⟨ bSet ⟩
 
-module OSet {𝓤} (r : OSet 𝓤) = free-icsring r
+VSet : ∀ 𝓤 → (𝓤 ⁺) ⊔ (𝓥 ⁺) ̇
+VSet 𝓤 = free-icsring {𝓤 = 𝓤} (Σ Val)
 
-
-
-
-
-module Context {𝓤 𝓥} (Secret : 𝓤 ̇) where
+module Context {𝓥 𝓦} (Secret : 𝓥 ̇) where
 
 -- TODO Secrets are unique ??? Hey, we dont need this because we perform the construction ??
 
- data Ctx : (n : ℕ) → 𝓤 ⁺ ̇  where
-  `ᶜ : 𝓤 ̇  → Ctx zero
-  _∶ᶜ_ : ∀{n} → (X : 𝓤 ̇ ) → (X → Ctx n) → Ctx (succ n)
+ data Ctx : (n : ℕ) → 𝓥 ⁺ ̇  where
+  []ᶜ : Ctx zero
+  _∶ᶜ_ : ∀{n} → (X : 𝓥 ̇ ) → (X → Ctx n) → Ctx (succ n)
 
- λCtx : ℕ → ℕ → 𝓤 ⁺ ̇
+ _++ᶜ_ : ∀{a b} → Ctx a → Ctx b → Ctx (b +ℕ a)
+ []ᶜ ++ᶜ cb = cb
+ (X ∶ᶜ xs) ++ᶜ cb = X ∶ᶜ λ x → xs x ++ᶜ cb
+
+ λCtx : ℕ → ℕ → 𝓥 ⁺ ̇
  λCtx k n = Vector Secret k → Ctx n
 
 
- Vars : ∀{k n} → Vector Secret k → λCtx k n → 𝓤 ̇
+ Vars : ∀{k n} → Vector Secret k → λCtx k n → 𝓥 ̇
  Vars x v = l1 (v x) where
-  l1 : ∀{k} → Ctx k → Set 𝓤
-  l1 (`ᶜ X) = X
+  l1 : ∀{k} → Ctx k → Set 𝓥
+  l1 []ᶜ = 𝟙
   l1 (X ∶ᶜ xs) = Σ x ꞉ _ , l1 (xs x)
 
 
- Open : (C : 𝓥 ̇ ) → Σ k ꞉ ℕ , Σ n ꞉ ℕ , (Vector Secret k) × λCtx k n
-      → (𝓤 ⊔ 𝓥)̇ 
- Open  C (k , _ , (secrets , λctx)) = Vector Secret k × Vars secrets λctx → C
+ Open : (C : 𝓦 ̇ ) → Σ k ꞉ ℕ , Σ n ꞉ ℕ , λCtx k n
+      → (𝓥 ⊔ 𝓦)̇ 
+ Open  C (k , _ , λctx) = Σ secrets ꞉ Vector Secret k , Vars secrets λctx → C
 
- OpenΣ : (C : 𝓥 ̇) → (𝓤 ⁺ ⊔ 𝓥) ̇
+ OpenΣ : (C : 𝓦 ̇) → (𝓥 ⁺ ⊔ 𝓦) ̇
  OpenΣ C = Σ (Open C)
 
-module _ (Secret : 𝓥 ̇) where
 
- open Context {𝓥} {𝓥 ⁺} Secret
+ module _ (c : comm-sgroup {𝓦}) where
+  module C = comm-sgroup c
 
- record ParticleT (C : 𝓤ω ) : {!!} where
+-- For this to be a commutative group, we need to revert to the "image" of OpenΣ
+  opgroup : comm-sgroup {𝓤 = (𝓥 ⁺) ⊔ 𝓦}
+  comm-sgroup.E opgroup = OpenΣ C.E
+  comm-sgroup.str opgroup ((k1 , n1 , λC1) , o1) ((k2 , n2 , λC2) , o2) = ((k2 +ℕ k1) , (n2 +ℕ n1) , λ vs → let (vs1 , vs2) = splitv k1 k2 vs in λC1 vs1 ++ᶜ λC2 vs2) , λ (vs , vars) → let (xvs1 , xvs2) = splitv k1 k2 vs in o1 (xvs1 , {!!}) C.* o2 (xvs2 , {!!})
+  comm-sgroup.ax opgroup = {!!}
+ 
+
+module _ {𝓤} (Secret : 𝓥 ̇) where
+
+ open Context {𝓥} {𝓥 ⁺ ⊔ 𝓤 ⁺} Secret
+
+ record ParticleT (C : 𝓦 ̇ ) : 𝓥 ⁺ ⊔ 𝓦 ̇  where
   field
    dom : BSet
-   fun : {!!} -- Maybe ((mp : Msg) → { ⟨ dom ⟩ mp } → C)
+   fun : Maybe ((mp : Msg) → { ⟨ dom ⟩ mp } → C)
 
- Sheaf : (C : 𝓤ω) → {!!}
- Sheaf C = free-comm-sgroup (ParticleT C)
+ Sheaf : {!!}
+ Sheaf = free-comm-sgroup {𝓤 = 𝓤} {!!} -- (λ C → ParticleT (OpenΣ (OSet 𝓤 × C)))
 
- record ensembleT : {!!} where
-  coinductive
-  field
-   {u} : _
-   o : OSet u
-   r : Sheaf ensembleT
+ SheafT : 𝓥 ⁺ ⊔ 𝓤 ⁺ ̇ 
+ SheafT = free-comm-sgroup {𝓤 = 𝓤} {!!} -- (λ C → ParticleT (OpenΣ (OSet 𝓤 × C)))
+
+ SheafV : 𝓥 ⁺ ⊔ 𝓤 ⁺ ̇ 
+ SheafV = free-comm-sgroup {𝓤 = 𝓤} {!!} -- (λ C → ParticleT (OpenΣ (VSet 𝓤 × C)))
+
+module SheafT {𝓤} {Secret : 𝓥 ̇ } (s : SheafT {𝓤} Secret) = free-comm-sgroup s
+module SheafV {𝓤} {Secret : 𝓥 ̇ } (s : SheafV {𝓤} Secret) = free-comm-sgroup s
+
+module _ {𝓤} {Secret : 𝓥 ̇} (s : SheafT {𝓤} Secret) where
+
+ -- open SheafT s
+
+
+
 
 --  -- eliminator should be for any universe
 --   elim : {C : O → 𝓤 ̇}

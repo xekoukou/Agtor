@@ -10,10 +10,7 @@ open import Naturals.Order
 open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 
-module BSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
-
-open PropositionalTruncation pt
-
+module BSet (fe : Fun-Ext) (Msg : 𝓤 ̇) where
 
 -- A property on messages
 -- TODO Should the predicates have the same universe with the message ?
@@ -39,10 +36,10 @@ open BSet
 ⊤B .-is-prop mp = 𝟙-is-prop
 ⊤B .-is-decidable mp = inl ⋆
 
-_─→_ : BSet → BSet → BSet
-⟨ P ─→ Q ⟩ mp = ⟨ P ⟩ mp → ⟨ Q ⟩ mp
-(P ─→ Q) .-is-prop mp = Π-is-prop fe (λ _ → (Q .-is-prop) mp)
-(P ─→ Q) .-is-decidable mp with Q .-is-decidable mp
+_⟶_ : BSet → BSet → BSet
+⟨ P ⟶ Q ⟩ mp = ⟨ P ⟩ mp → ⟨ Q ⟩ mp
+(P ⟶ Q) .-is-prop mp = Π-is-prop fe (λ _ → (Q .-is-prop) mp)
+(P ⟶ Q) .-is-decidable mp with Q .-is-decidable mp
 ... | inl q = inl λ _ → q
 ... | inr q with P .-is-decidable mp
 ... | inl p = inr λ x → q (x p)
@@ -57,7 +54,7 @@ _&&_ : BSet → BSet → BSet
 ... | inl x | inr y = inr λ (w , e) → y e
 
 _≡ᵇ_ : BSet → BSet → 𝓤 ̇
-A ≡ᵇ B = ⊨ ((A ─→ B) && (B ─→ A))
+A ≡ᵇ B = ⊨ ((A ⟶ B) && (B ⟶ A))
 
 ¬ᵇ : BSet → BSet
 ⟨ ¬ᵇ A ⟩ mp = ¬ (⟨ A ⟩ mp)
