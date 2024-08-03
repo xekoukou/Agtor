@@ -232,7 +232,7 @@ module _ where
 
 
  _∣ᶠ_ : (x y : SType) → SType
- qx ∣ᶠ qy = exC-embed ((⊤B , ⊤B) , λ { x (inl q) → Q.f qx ; x (inr q) → Q.f qy })
+ qx ∣ᶠ qy = z ((⊤B , ⊤B) , λ { x (inl q) → qx ; x (inr q) → qy })
 
 
 --  _&ᶠ_ : (x y : ExC SType) → SType
@@ -255,7 +255,7 @@ module _ where
 
  _&ᶠ_ : (x y : SType) → SType
  supPos (qx &ᶠ qy) = supPos qx &ᵖ supPos qy
- inner (qx &ᶠ qy) = {!!} &ᶠ {!!} where -- (inner qx ∣ᶠ inner qy) ∣ᶠ ({!!} &ᶠ {!!}) where -- z ((bsaX && bsmY , (bsaY && bsmX)) ,
+ inner (qx &ᶠ qy) = (inner qx ∣ᶠ inner qy) ∣ᶠ ({!!} &ᶠ {!!}) where -- z ((bsaX && bsmY , (bsaY && bsmX)) ,
  -- λ { x (inl (bsaX , bsmY)) → {!!} &ᶠ {!!}
  --   ; x (inr (bsaY , bsmX)) → {!!} }) where
   excX = extern qx
