@@ -1,5 +1,7 @@
 # Agtor, the god of asynchronous communication.
 
+*The readme needs updating.*
+
 This is an attempt at a dependently typed actor language. This is highly experimental with a low probability of actually working.
 
 We start by putting the constraint that communication should be type safe, disregarding how it happens, ie disregarding the problem
