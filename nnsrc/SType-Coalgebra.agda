@@ -12,7 +12,7 @@ open import Naturals.Order
 open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 
-module SCoAlgebra (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) where
+module SType-Coalgebra (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) where
 
 open PropositionalTruncation pt
 open import BSet fe pt Msg

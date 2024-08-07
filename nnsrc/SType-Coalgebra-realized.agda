@@ -11,15 +11,12 @@ open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 open import UF.Base
 
-
--- This version tries to use coinductive records instead of a coalgebra.
-
-module SType3 (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : _) (Msg : 𝓤 ̇) where
+module SType-Coalgebra-realized (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : _) (Msg : 𝓤 ̇) where
 
 open PropositionalTruncation pt
 open import BSet fe pt Msg
 open import PSet fe pt Msg
-open import SCoAlgebra fe pt UA Msg
+open import SType-Coalgebra fe pt UA Msg
 
 
 record SType : 𝓤 ⁺⁺ ̇  where
