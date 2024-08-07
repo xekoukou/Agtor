@@ -48,8 +48,9 @@ record CoAlgebra : 𝓤 ⁺⁺ ⁺ ̇  where
 
 
 module CoAlgebra-morphism (b a : CoAlgebra) where
- module A = CoAlgebra a
- module B = CoAlgebra b
+ private
+  module A = CoAlgebra a
+  module B = CoAlgebra b
 
  record coalg-morphism (f : A.E → B.E) : 𝓤 ⁺⁺ ̇  where
   constructor co-morph 
@@ -61,10 +62,11 @@ module CoAlgebra-morphism (b a : CoAlgebra) where
 -- Final Coalgebra universal property
 
 module Final-CoAlgebra-universal (final-co : CoAlgebra) where
+ open CoAlgebra
  open CoAlgebra-morphism final-co
 
  uniT : 𝓤 ⁺⁺ ⁺ ̇
- uniT = ∀ a → ∃! (coalg-morphism a)
+ uniT = ∀ a → Σ mo ꞉ Σ (coalg-morphism a) , ((b : Σ (coalg-morphism a)) → pr₁ mo ＝ pr₁ b) 
 
 record Final-CoAlgebra : 𝓤 ⁺⁺ ⁺ ̇  where
  field
@@ -90,7 +92,7 @@ module co-iso (fc : Final-CoAlgebra) where
  E f-co = F Q.E
  f f-co = Fm Q.f
 
- inv-morph : is-singleton (Σ (coalg-morphism Q.co f-co))
+ inv-morph : _
  inv-morph = Q.uni f-co
 
  inv = inv-morph .pr₁ .pr₁
@@ -104,7 +106,14 @@ module co-iso (fc : Final-CoAlgebra) where
  di-comm (pr₂ morph-Id) = refl
 
  inv∘Qf=id : inv ∘ Q.f ＝ (λ x → x)
- inv∘Qf=id = ap pr₁ (singletons-are-props (Q.uni Q.co) morph morph-Id) 
+ inv∘Qf=id = l2 ⁻¹ ∙ l3 where
+  l1 = Q.uni Q.co
+  C = pr₁ l1
+  l2 : pr₁ C ＝ pr₁ morph
+  l2 = pr₂ l1 morph
+
+  l3 : pr₁ C ＝ pr₁ morph-Id
+  l3 = pr₂ l1 morph-Id
 
  Qf∘inv=id : Q.f ∘ inv ＝ (λ x → x)
  Qf∘inv=id = inv-morph .pr₁ .pr₂ .di-comm ⁻¹ ∙ ap Fm inv∘Qf=id
@@ -250,3 +259,4 @@ module embed (fc : Final-CoAlgebra) where
 
  _∣ᶠ_ : Q.E → Q.E → Q.E
  a ∣ᶠ b = Q.uni ∣P'-co .pr₁ .pr₁ ((𝟙 {𝓤} + 𝟙 {𝓤}) , (λ { (inl _) → Q.f a ; (inr _) → Q.f b}))
+
