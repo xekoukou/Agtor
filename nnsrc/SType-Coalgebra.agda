@@ -11,21 +11,25 @@ open import UF.Subsingletons
 open import Naturals.Order
 open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
+open import UF.Sets
 
-module SType-Coalgebra (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) where
+open import Lists
+
+module SType-Coalgebra (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇ ) (s-is-set : is-set Secret) (dc : (ascrs scrs : List Secret) → is-decidable (scrs ⊃ ascrs × ascrs ⊃ scrs)) where
 
 open PropositionalTruncation pt
 open import BSet fe pt Msg
-open import PSet fe pt Msg
+open import SBSet fe pt Msg Secret s-is-set dc
+open import PSet fe pt Msg Secret s-is-set dc
 
 ExCG : 𝓤 ⁺⁺ ̇  → 𝓤 ⁺⁺ ̇
 ExCG X = Σ D ꞉ 𝓤 ̇  , (D → X)
 
 ExC : 𝓤 ⁺⁺ ̇  → 𝓤 ⁺⁺ ̇
-ExC X = ( Σ B ꞉ BSet × BSet , (∀ x → ⟨ B .pr₁ ⟩ x + ⟨ B .pr₂ ⟩ x → X))
+ExC X = ( Σ B ꞉ S×BSet × S×BSet , (∀ x → ⟨ B .pr₁ ⟩× x + ⟨ B .pr₂ ⟩× x → X))
 
 ExC→G : ∀ X → ExC X → ExCG X
-ExC→G X (a , b) = (Σ x ꞉ Msg , ⟨ pr₁ a ⟩ x + ⟨ pr₂ a ⟩ x) , λ (x , p) → b x p
+ExC→G X (a , b) = (Σ x ꞉ S×Msg , ⟨ pr₁ a ⟩× x + ⟨ pr₂ a ⟩× x) , λ (x , p) → b x p
 
 -- We define the coalgebra of a functor F
 
@@ -145,21 +149,21 @@ module embed (fc : Final-CoAlgebra) where
  
  pr₁ (pr₂ (ExCGP (D , var))) = (Σ d ꞉ D , (𝟚 + Σ ⟨ bax d && bmy d ⟩ + Σ ⟨ bay d && bmx d ⟩)) , λ { (d , inl ₀) → x d , Q.f (iy d)
      ; (d , inl ₁) → y d , Q.f (ix d)
-     ; (d , inr (inl (mp , (xa , ym)))) → (Q.f (pr₂ (nxcf d) mp (inl xa))) , (Q.f (pr₂ (nycf d) mp (inr ym)))
-     ; (d , inr (inr (mp , (ya , xm)))) → (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))} where
+     ; (d , inr (inl (mp , (xa , ym)))) → ? -- (Q.f (pr₂ (nxcf d) mp (inl xa))) , (Q.f (pr₂ (nycf d) mp (inr ym)))
+     ; (d , inr (inr (mp , (ya , xm)))) → ?} where -- (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))} where
   nxcf : D → ExC Q.E
   nxcf d = pr₂ (pr₂ (pr₁ (var d)))
   nycf : D → ExC Q.E
   nycf d = pr₂ (pr₂ (pr₂ (var d)))
 
-  bax : D → BSet
+  bax : D → S×BSet
   bax d = pr₁ (pr₁ (nxcf d))
-  bmx : D → BSet
+  bmx : D → S×BSet
   bmx d = pr₂ (pr₁ (nxcf d))
 
-  bay : D → BSet
+  bay : D → S×BSet
   bay d = pr₁ (pr₁ (nycf d))
-  bmy : D → BSet
+  bmy : D → S×BSet
   bmy d = pr₂ (pr₁ (nycf d))
 
   y : D → F Q.E
@@ -216,47 +220,49 @@ module embed (fc : Final-CoAlgebra) where
           ; (d , inr py) → Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
 
 
- ExCGP-co : CoAlgebra
- E ExCGP-co = ExCG (F Q.E × F Q.E)
- f ExCGP-co = ExCGP
+ -- ExCGP-co : CoAlgebra
+ -- E ExCGP-co = ExCG (F Q.E × F Q.E)
+ -- f ExCGP-co = ExCGP
 
- _&ᶠ_ : Q.E → Q.E → Q.E
- a &ᶠ b = Q.uni ExCGP-co .pr₁ .pr₁ (𝟙 , (λ x → Q.f a , Q.f b))
-
-
+ -- _&ᶠ_ : Q.E → Q.E → Q.E
+ -- a &ᶠ b = Q.uni ExCGP-co .pr₁ .pr₁ (𝟙 , (λ x → Q.f a , Q.f b))
 
 
- ∣P' : ExCG (F Q.E) → F (ExCG (F Q.E))
- pr₁ (∣P' (D , f)) = Var→PSet (D , pr₁ ∘ f)
- pr₁ (pr₂ (∣P' (D , f))) = D , (Q.f ∘ pr₁ ∘ pr₂ ∘ f)
- pr₂ (pr₂ (∣P' (D , f)))
-  =   (DVar→×BSet (_ , λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d))
-    , λ { mp (inl _) →   Varᵇ→Set (D , (pr₁ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
-                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inl v))}
-        ; mp (inr _) →   Varᵇ→Set (D , (pr₂ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
-                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inr v))}}
-
- --Maybe this is easier to understand.
- -- With this definition, one understands that when we receive a msg, we actually also learn something about the prior superposition. The previous definition does not make this clear.
- ∣P : (F Q.E + 𝟙 {𝓤}) × F Q.E → F ((F Q.E + 𝟙 {𝓤}) × F Q.E)
- ∣P (inl (px , x , (bax , bmx) , fx) , (py , y , (bay , bmy) , fy))
-   =   (px ∣ᵖ py)
-     , ((inl (Q.f x)) ,   (Q.f y))
-     , ((bax || bay) , (bmx || bmy))
-       , (λ { x (inl (inl (vx , vy))) → inl (Q.f (fx x (inl vx))) , Q.f (fy x (inl vy)) 
-            ; x (inl (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inl vx))
-            ; x (inl (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inl vy))
-            ; x (inr (inl (vx , vy))) → inl (Q.f (fx x (inr vx))) , Q.f (fy x (inr vy)) 
-            ; x (inr (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inr vx))
-            ; x (inr (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inr vy))
-            })
- ∣P (inr _ , (py , y , (bay , bmy) , fy)) = py , ((inr ⋆) , (Q.f y)) , ((bay , bmy) , (λ x p → (inr ⋆) , (Q.f (fy x p))))
 
 
- ∣P'-co : CoAlgebra
- E ∣P'-co = ExCG (F Q.E)
- f ∣P'-co = ∣P'
+ -- ∣P' : ExCG (F Q.E) → F (ExCG (F Q.E))
+ -- pr₁ (∣P' (D , f)) = Var→PSet (D , pr₁ ∘ f)
+ -- pr₁ (pr₂ (∣P' (D , f))) = D , (Q.f ∘ pr₁ ∘ pr₂ ∘ f)
+ -- pr₂ (pr₂ (∣P' (D , f)))
+ --  =   (DVar→×BSet (_ , λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d))
+ --    , λ { mp (inl _) →   Varᵇ→Set (D , (pr₁ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
+ --                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inl v))}
+ --        ; mp (inr _) →   Varᵇ→Set (D , (pr₂ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
+ --                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inr v))}}
 
- _∣ᶠ_ : Q.E → Q.E → Q.E
- a ∣ᶠ b = Q.uni ∣P'-co .pr₁ .pr₁ ((𝟙 {𝓤} + 𝟙 {𝓤}) , (λ { (inl _) → Q.f a ; (inr _) → Q.f b}))
+ -- --Maybe this is easier to understand.
+ -- -- With this definition, one understands that when we receive a msg, we actually also learn something about the prior superposition. The previous definition does not make this clear.
+ -- ∣P : (F Q.E + 𝟙 {𝓤}) × F Q.E → F ((F Q.E + 𝟙 {𝓤}) × F Q.E)
+ -- ∣P (inl (px , x , (bax , bmx) , fx) , (py , y , (bay , bmy) , fy))
+ --   =   (px ∣ᵖ py)
+ --     , ((inl (Q.f x)) ,   (Q.f y))
+ --     , ((bax || bay) , (bmx || bmy))
+ --       , (λ { x (inl (inl (vx , vy))) → inl (Q.f (fx x (inl vx))) , Q.f (fy x (inl vy)) 
+ --            ; x (inl (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inl vx))
+ --            ; x (inl (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inl vy))
+ --            ; x (inr (inl (vx , vy))) → inl (Q.f (fx x (inr vx))) , Q.f (fy x (inr vy)) 
+ --            ; x (inr (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inr vx))
+ --            ; x (inr (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inr vy))
+ --            })
+ -- ∣P (inr _ , (py , y , (bay , bmy) , fy)) = py , ((inr ⋆) , (Q.f y)) , ((bay , bmy) , (λ x p → (inr ⋆) , (Q.f (fy x p))))
+
+
+ -- ∣P'-co : CoAlgebra
+ -- E ∣P'-co = ExCG (F Q.E)
+ -- f ∣P'-co = ∣P'
+
+ -- _∣ᶠ_ : Q.E → Q.E → Q.E
+ -- a ∣ᶠ b = Q.uni ∣P'-co .pr₁ .pr₁ ((𝟙 {𝓤} + 𝟙 {𝓤}) , (λ { (inl _) → Q.f a ; (inr _) → Q.f b}))
+
+
 

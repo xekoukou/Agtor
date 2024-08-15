@@ -116,8 +116,8 @@ DVarᵇ = Σ D ꞉ 𝓤 ̇  , (D → BSet × BSet)
 DVar→×BSet : DVarᵇ → BSet × BSet
 DVar→×BSet (D , f) = Var→BSet (D , pr₁ ∘ f) , Var→BSet (D , pr₂ ∘ f)
 
--- DVarᵇ→Set : DVarᵇ → Msg → 𝓤 ̇
--- DVarᵇ→Set (D , f) mp = Varᵇ→Set (D , pr₁ ∘ f) mp × Varᵇ→Set (D , pr₂ ∘ f) mp
+DVarᵇ→Set : DVarᵇ → Msg → 𝓤 ̇
+DVarᵇ→Set (D , f) mp = Varᵇ→Set (D , pr₁ ∘ f) mp × Varᵇ→Set (D , pr₂ ∘ f) mp
 
 -- -- We do not use this because we have decidability of prop
 -- _||_ : BSet → BSet → BSet
