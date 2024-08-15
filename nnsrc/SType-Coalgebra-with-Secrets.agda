@@ -12,14 +12,19 @@ open import Naturals.Order
 open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 open import UF.Sets
+open import UF.Base
 
 open import Lists
 
-module SType-Coalgebra (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) where
+module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) where
 
 open PropositionalTruncation pt
-open import BSet fe pt Msg
-open import PSet fe pt Msg
+
+S×Msg : 𝓤 ̇
+S×Msg = List Secret × (Msg + Secret)
+
+open import BSet fe pt S×Msg
+open import PSet fe pt S×Msg
 
 ExCG : 𝓤 ⁺⁺ ̇  → 𝓤 ⁺⁺ ̇
 ExCG X = Σ D ꞉ 𝓤 ̇  , (D → X)
@@ -28,19 +33,36 @@ ExC : 𝓤 ⁺⁺ ̇  → 𝓤 ⁺⁺ ̇
 ExC X = ( Σ B ꞉ BSet × BSet , (∀ x → ⟨ B .pr₁ ⟩ x + ⟨ B .pr₂ ⟩ x → X))
 
 ExC→G : ∀ X → ExC X → ExCG X
-ExC→G X (a , b) = (Σ x ꞉ Msg , ⟨ pr₁ a ⟩ x + ⟨ pr₂ a ⟩ x) , λ (x , p) → b x p
+ExC→G X (a , b) = (Σ x ꞉ S×Msg , ⟨ pr₁ a ⟩ x + ⟨ pr₂ a ⟩ x) , λ (x , p) → b x p
 
 -- We define the coalgebra of a functor F
 
--- We may need to add all the secrets here as well, for every part of the type and state to use it.
--- both the PSet and the two types.
-
 -- This is a functor
 F : 𝓤 ⁺⁺ ̇  → 𝓤 ⁺⁺ ̇
-F X = PSet × X × ExC X
+F X = (PSet × PSet) × (𝟙 {𝓤 ⁺⁺} + X) × ExC (𝟙 {𝓤 ⁺⁺} + X)
+
+-- TODO We need to split the structure to internal reducible structure and externally reducible one.
+
+R₊ : ∀{X Y : 𝓤 ⁺⁺ ̇} → (f : X → Y) → (𝟙 {𝓤 ⁺⁺} + X) → (𝟙 {𝓤 ⁺⁺} + Y)
+R₊ f (inl x) = inl _
+R₊ f (inr x) = inr (f x)
+
+R₊-comp : ∀{X Y Z : 𝓤 ⁺⁺ ̇} → (f : X → Y) → (g : Z → X) → ∀ x → (R₊ f) (R₊ g x) ＝ R₊ (f ∘ g) x
+R₊-comp f g (inl x) = refl
+R₊-comp f g (inr x) = refl
+
+R₊-id : ∀{X : 𝓤 ⁺⁺ ̇} → R₊ id ∼ id {X = 𝟙 + X}
+R₊-id (inl _) = refl
+R₊-id (inr _) = refl
 
 Fm : ∀{X Y} → (f : X → Y) → F X → F Y
-Fm f (p , x , (bset , g)) = p , f x , (bset , (λ x bs → f (g x bs)))
+Fm f (p , x , (bset , g)) = p , (R₊ f) x , (bset , (λ x bs → (R₊ f) (g x bs)))
+
+Fm-comp :  ∀{X Y Z : 𝓤 ⁺⁺ ̇} → (f : X → Y) → (g : Z → X) → ∀ x → (Fm f) (Fm g x) ＝ Fm (f ∘ g) x
+Fm-comp f g (p , x , e) = to-Σ-＝ (refl , (to-×-＝' (R₊-comp f g x , ap (λ z → pr₁ e , z) (dfunext fe λ x → dfunext fe λ bs → R₊-comp f g (pr₂ e x bs)))))
+
+Fm-id : ∀{X : 𝓤 ⁺⁺ ̇} → Fm id ∼ id {X = F X}
+Fm-id (p , x , e) = to-Σ-＝ (refl , (to-×-＝' (R₊-id x , ap (λ z → pr₁ e , z) (dfunext fe λ x → dfunext fe λ bs → R₊-id (pr₂ e x bs)))))
 
 -- CoAlgebra
 
@@ -102,11 +124,13 @@ module co-iso (fc : Final-CoAlgebra) where
 
  morph : Σ (coalg-morphism Q.co Q.co)
  pr₁ morph = inv ∘ Q.f
- di-comm (pr₂ morph) = ap (_∘ Q.f) (inv-morph .pr₁ .pr₂ .di-comm) 
+ di-comm (pr₂ morph) =  dfunext fe (λ x → Fm-comp (pr₁ (inv-morph .pr₁)) Q.f (Q.f x)) ⁻¹ ∙ ap (_∘ Q.f) (inv-morph .pr₁ .pr₂ .di-comm) 
+
 
  morph-Id : Σ (coalg-morphism Q.co Q.co)
  pr₁ morph-Id = λ x → x
- di-comm (pr₂ morph-Id) = refl
+ di-comm (pr₂ morph-Id) with (R₊ {X = Q.E} id) | dfunext fe (R₊-id {Q.E})
+ ... | .(λ x → x) | refl = refl
 
  inv∘Qf=id : inv ∘ Q.f ＝ (λ x → x)
  inv∘Qf=id = l2 ⁻¹ ∙ l3 where
@@ -119,7 +143,7 @@ module co-iso (fc : Final-CoAlgebra) where
   l3 = pr₂ l1 morph-Id
 
  Qf∘inv=id : Q.f ∘ inv ＝ (λ x → x)
- Qf∘inv=id = inv-morph .pr₁ .pr₂ .di-comm ⁻¹ ∙ ap Fm inv∘Qf=id
+ Qf∘inv=id = inv-morph .pr₁ .pr₂ .di-comm ⁻¹ ∙ (dfunext fe (λ x → Fm-comp (pr₁ (inv-morph .pr₁)) Q.f x) ∙ (ap Fm inv∘Qf=id ∙ dfunext fe Fm-id))
 
  QE=FQE : Q.E ＝ F Q.E
  QE=FQE = eqtoid (UA _) Q.E (F Q.E) (qinveq Q.f (inv , (λ x → ap (λ f → f x) inv∘Qf=id) , (λ x → ap (λ f → f x) Qf∘inv=id)))
@@ -144,15 +168,28 @@ module embed (fc : Final-CoAlgebra) where
 -- introduces this variance when the two systems interact with each other
  ExCGP : ExCG (F Q.E × F Q.E) → F (ExCG (F Q.E × F Q.E))
  -- The PSet
- pr₁ (ExCGP (D , var)) = &ᵈᵖ (D , λ d → (pr₁ (pr₁ (var d))) , ((pr₁ (pr₂ (var d)))))
+ pr₁ (ExCGP (D , var))
+ -- External PSet
+  =   &ᵈᵖ (D , λ d → (pr₁ (pr₁ (pr₁ (var d)))) , (pr₁ ((pr₁ (pr₂ (var d))))))
+ -- Internal PSet
+    , &ᵈᵖ (D , λ d → (pr₂ (pr₁ (pr₁ (var d)))) , (pr₂ ((pr₁ (pr₂ (var d))))))
  
- pr₁ (pr₂ (ExCGP (D , var))) = (Σ d ꞉ D , (𝟚 + Σ ⟨ bax d && bmy d ⟩ + Σ ⟨ bay d && bmx d ⟩)) , λ { (d , inl ₀) → x d , Q.f (iy d)
-     ; (d , inl ₁) → y d , Q.f (ix d)
-     ; (d , inr (inl (mp , (xa , ym)))) → (Q.f (pr₂ (nxcf d) mp (inl xa))) , (Q.f (pr₂ (nycf d) mp (inr ym)))
-     ; (d , inr (inr (mp , (ya , xm)))) → (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))} where
-  nxcf : D → ExC Q.E
+ pr₁ (pr₂ (ExCGP (D , var)))
+ -- The new internal reduction case, it describes the possible internal reduction of the system if possible.
+
+ -- The new Variance
+ -- It takes 3 cases
+ -- 1. Internal reduction of system A
+ -- 2. internal reduction of system B
+ -- 3. communication between A and B
+  =   (Σ d ꞉ D , (𝟚 + Σ ⟨ bax d && bmy d ⟩ + Σ ⟨ bay d && bmx d ⟩))
+    , λ { (d , inl ₀) → ? -- x d , Q.f (iy d)
+        ; (d , inl ₁) → ? -- y d , Q.f (ix d)
+        ; (d , inr (inl (mp , (xa , ym)))) → ? -- (Q.f (pr₂ (nxcf d) mp (inl xa))) , (Q.f (pr₂ (nycf d) mp (inr ym)))
+     ; (d , inr (inr (mp , (ya , xm)))) → ?} where -- (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))} where
+  nxcf : D → ExC (𝟙 + Q.E)
   nxcf d = pr₂ (pr₂ (pr₁ (var d)))
-  nycf : D → ExC Q.E
+  nycf : D → ExC (𝟙 + Q.E)
   nycf d = pr₂ (pr₂ (pr₂ (var d)))
 
   bax : D → BSet
@@ -171,10 +208,10 @@ module embed (fc : Final-CoAlgebra) where
   x : D → F Q.E
   x d = pr₁ (var d)
 
-  iy : D → Q.E
+  iy : D → 𝟙 + Q.E
   iy d = pr₁ (pr₂ (pr₂ (var d)))
  
-  ix : D → Q.E
+  ix : D → 𝟙 + Q.E
   ix d = pr₁ (pr₂ (pr₁ (var d)))
 
  pr₂ (pr₂ (ExCGP (D , var))) = e where
