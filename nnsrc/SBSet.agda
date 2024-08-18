@@ -14,7 +14,7 @@ open import UF.Base
 
 open import Lists
 
-module SBSet2 (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇ ) (s-is-set : is-set Secret) (dc : (ascrs scrs : List Secret) → is-decidable (scrs ⊃ ascrs × ascrs ⊃ scrs)) (dc∈ : ∀ x → (ascrs : List (List Secret)) → is-decidable (Σ y ꞉ _ , (x ⊃ y × y ⊃ x) × (y ∈ ascrs))) where
+module SBSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇ ) (s-is-set : is-set Secret) (dc : (ascrs scrs : List Secret) → is-decidable (scrs ⊃ ascrs × ascrs ⊃ scrs)) (dc∈ : ∀ x → (ascrs : List (List Secret)) → is-decidable (Σ y ꞉ _ , (x ⊃ y × y ⊃ x) × (y ∈ ascrs))) where
 
 open PropositionalTruncation pt
 open import BSet {𝓤} fe pt Msg

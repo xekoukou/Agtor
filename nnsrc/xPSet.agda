@@ -15,21 +15,21 @@ open import UF.Base
 open import Lists
 open import Maybe
 
-module PSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
+module xPSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
 
 open import MLTT.Two renaming (₀ to 𝕞 ; ₁ to 𝕒) public
 
 open PropositionalTruncation pt
-open import BSet fe pt Msg
+open import xBSet fe pt Msg Secret s-is-set dec
 
 
-_ᵗ : 𝟚 × BSet → 𝟚 × BSet
+_ᵗ : 𝟚 × ×BSet → 𝟚 × ×BSet
 (𝕞 , x) ᵗ = 𝕒 , x
 (𝕒 , x) ᵗ = 𝕞 , x
 
 record &PSet : 𝓤 ⁺ ̇  where
  field
-  &⟨_⟩ : (o : 𝟚 × BSet) → 𝓤 ̇ 
+  &⟨_⟩ : (o : 𝟚 × ×BSet) → 𝓤 ̇ 
   &-is-prop : ∀ o → is-prop (&⟨_⟩ o)
 
 
@@ -56,7 +56,7 @@ _∣ᵖ_ : PSet → PSet → PSet
 ∣-is-prop (A ∣ᵖ B) o = ∥∥-is-prop
 
 _ᵀ : PSet → PSet
-∣⟨ A ᵀ ⟩ o = ∥ (∀ x → (p : ∣⟨ A ⟩ x) → Σ y ꞉ 𝟚 × BSet , &⟨ x ⟩ y × &⟨ o ⟩ (y ᵗ)) ∥
+∣⟨ A ᵀ ⟩ o = ∥ (∀ x → (p : ∣⟨ A ⟩ x) → Σ y ꞉ 𝟚 × ×BSet , &⟨ x ⟩ y × &⟨ o ⟩ (y ᵗ)) ∥
 ∣-is-prop (A ᵀ) o = ∥∥-is-prop
 
 Var : { D : 𝓤 ̇ } → 𝓤 ⁺⁺ ̇

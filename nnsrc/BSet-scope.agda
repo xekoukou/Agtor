@@ -17,9 +17,7 @@ open import UF.Base
 open import Lists
 open import Maybe
 
-module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
-
-open list-decidable dec
+module Scope (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
 
 open PropositionalTruncation pt
 
@@ -267,12 +265,12 @@ module embed (fc : Final-CoAlgebra) where
           ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
   pr₂ e mp@(_ , inr scr) (inl v)
     =   (Σ d ꞉ D , ⟨ bax d ⟩ mp + ⟨ bay d ⟩ mp)
-      , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
-          ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
+      , λ { (d , inl px) → remove dec scr (scope d) , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
+          ; (d , inr py) → remove dec scr (scope d) , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
   pr₂ e mp@(_ , inr scr) (inr w)
     =   (Σ d ꞉ D , ⟨ bmx d ⟩ mp + ⟨ bmy d ⟩ mp)
-      , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
-          ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
+      , λ { (d , inl px) → remove dec scr (scope d) , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
+          ; (d , inr py) → remove dec scr (scope d) , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
 
 
  ExCGP-co : CoAlgebra
