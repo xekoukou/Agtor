@@ -1,4 +1,5 @@
-{-# OPTIONS --safe --without-K --exact-split #-}
+{-# OPTIONS --without-K --exact-split #-}
+--TODO PUT safe flag again
 
 open import MLTT.Spartan hiding (𝟚)
 open import MLTT.Negation
@@ -32,20 +33,20 @@ _⇔_ : (A B : 𝓤 ̇) → 𝓤 ̇
 A ⇔ B = (A → B) × (B → A)
 
 ×BSet : 𝓤 ⁺ ̇
-×BSet = Σ bs ꞉ BSet , ∀ ascrs scrs x → scrs ⊃ ascrs × ascrs ⊃ scrs → ⟨ bs ⟩ (ascrs , x) ⇔ (⟨ bs ⟩ (scrs , x))
+×BSet = Σ bs ꞉ BSet' , ∀ ascrs scrs x → scrs ⊃ ascrs × ascrs ⊃ scrs → ⟨ bs ⟩' (ascrs , x) ⇔ (⟨ bs ⟩' (scrs , x))
 
-_bset : ×BSet → BSet
+_bset : ×BSet → BSet'
 _bset bs = bs .pr₁
 
 -- The property holds for all messages.
 ×⊨ : ×BSet → 𝓤 ̇
-×⊨ P = ∀ a → ⟨ P bset ⟩ a 
+×⊨ P = ∀ a → ⟨ P bset ⟩' a 
 
 ×⊥B : ×BSet
-×⊥B = ⊥B , λ ascrs scrs _ _ → id , id
+×⊥B = ⊥B toBSet' , λ ascrs scrs _ _ → id , id
 
 ×⊤B : ×BSet
-×⊤B = ⊤B , λ ascrs scrs _ _ → id , id
+×⊤B = ⊤B toBSet' , λ ascrs scrs _ _ → id , id
 
 -- _⟶_ : BSet → BSet → BSet
 -- ⟨ P ⟶ Q ⟩ mp = ⟨ P ⟩ mp → ⟨ Q ⟩ mp
@@ -58,9 +59,12 @@ _bset bs = bs .pr₁
 
 _×&&_ : ×BSet → ×BSet → ×BSet
 a ×&& b
- =   ((a bset) && (b bset))
+ =   ((a bset) &&' (b bset))
    , λ ascrs scrs x eq → (λ (z , y) → (a .pr₂ scrs ascrs x ((eq .pr₂) , (eq .pr₁)) .pr₂ z) , (b .pr₂ scrs ascrs x ((eq .pr₂) , (eq .pr₁)) .pr₂ y))
    , λ (z , y) → (a .pr₂ ascrs scrs x eq .pr₂ z) , (b .pr₂ ascrs scrs x eq .pr₂ y)
+
+
+
 
 -- _≡ᵇ_ : BSet → BSet → 𝓤 ̇
 -- A ≡ᵇ B = ⊨ ((A ⟶ B) && (B ⟶ A))
@@ -96,42 +100,45 @@ a ×&& b
 -- a ||' b = (a && b) |x| (a |x| b)
 
 
+_×||_ : ×BSet → ×BSet → ×BSet
+(a ×|| b) .pr₁ = (a bset) ||' (b bset)
+(a ×|| b) .pr₂ ascrs scrs msg eq = help {ascrs} {scrs} {msg} where
+ postulate
+  help : {ascrs scrs : List Secret}
+         {msg : Msg + Secret} →
+         ⟨ pr₁ (a ×|| b) ⟩' (ascrs , msg) ⇔ ⟨ pr₁ (a ×|| b) ⟩' (scrs , msg)
+
+
+×Varᵇ : 𝓤 ⁺ ̇
+×Varᵇ = Σ D ꞉ 𝓤 ̇  , (D → ×BSet)
+
+Var→×BSet : ×Varᵇ → ×BSet
+Var→×BSet (D , f)
+ =  Var→BSet (D , pr₁ ∘ f)
+ -- Can this be simplified ?
+  , λ ascrs scrs msg (eq1 , eq2) → (λ x → ∥∥-rec ∥∥-is-prop (λ { (d , e) → ∣ d , (f d) .pr₂ ascrs scrs msg (eq1 , eq2) .pr₁ e ∣}) x) , (λ x → ∥∥-rec ∥∥-is-prop (λ { (d , e) → ∣ d , (f d) .pr₂ ascrs scrs msg (eq1 , eq2) .pr₂ e ∣}) x)
+
+×Varᵇ→Set : ×Varᵇ → S×Msg → 𝓤 ̇
+×Varᵇ→Set (D , f) mp = (Σ x ꞉ D , ⟨ (f x) bset ⟩' mp)
+
+
+×DVarᵇ : 𝓤 ⁺ ̇
+×DVarᵇ = Σ D ꞉ 𝓤 ̇  , (D → ×BSet × ×BSet)
+
+-- Redundant
+DVar→×BSet : ×DVarᵇ → ×BSet × ×BSet
+DVar→×BSet (D , f) = Var→×BSet (D , pr₁ ∘ f) , Var→×BSet (D , pr₂ ∘ f)
+
+×DVarᵇ→Set : ×DVarᵇ → S×Msg → 𝓤 ̇
+×DVarᵇ→Set (D , f) mp = ×Varᵇ→Set (D , pr₁ ∘ f) mp × ×Varᵇ→Set (D , pr₂ ∘ f) mp
+
+-- -- We do not use this because we have decidability of prop
 -- _||_ : BSet → BSet → BSet
--- ⟨ a || b ⟩ mp = ⟨ a && b ⟩ mp + ⟨ ¬ᵇ (a && b) ⟩ mp × (⟨ a ⟩ mp + ⟨ b ⟩ mp)
--- -is-prop (a || b) mp (inl x) (inl y) = ap inl ((a && b) .-is-prop mp x y)
--- -is-prop (a || b) mp (inl x) (inr y) = 𝟘-elim (pr₁ y x)
--- -is-prop (a || b) mp (inr x) (inl y) = 𝟘-elim (pr₁ x y)
--- -is-prop (a || b) mp (inr x) (inr y) = ap inr ((a |x| b) .-is-prop mp x y)
-
-
--- Varᵇ : 𝓤 ⁺ ̇
--- Varᵇ = Σ D ꞉ 𝓤 ̇  , (D → BSet)
-
--- Var→BSet : Varᵇ → BSet
--- ⟨ Var→BSet (D , f) ⟩ mp = ∥ (Σ x ꞉ D , ⟨ f x ⟩ mp) ∥
--- -is-prop (Var→BSet (d , f)) _ = ∥∥-is-prop
-
--- Varᵇ→Set : Varᵇ → Msg → 𝓤 ̇
--- Varᵇ→Set (D , f) mp = (Σ x ꞉ D , ⟨ f x ⟩ mp)
-
-
--- DVarᵇ : 𝓤 ⁺ ̇
--- DVarᵇ = Σ D ꞉ 𝓤 ̇  , (D → BSet × BSet)
-
--- -- Redundant
--- DVar→×BSet : DVarᵇ → BSet × BSet
--- DVar→×BSet (D , f) = Var→BSet (D , pr₁ ∘ f) , Var→BSet (D , pr₂ ∘ f)
-
--- DVarᵇ→Set : DVarᵇ → Msg → 𝓤 ̇
--- DVarᵇ→Set (D , f) mp = Varᵇ→Set (D , pr₁ ∘ f) mp × Varᵇ→Set (D , pr₂ ∘ f) mp
-
--- -- -- We do not use this because we have decidability of prop
--- -- _||_ : BSet → BSet → BSet
--- -- ⟨ a || b ⟩ mp = ∥ ⟨ a ⟩ mp + ⟨ b ⟩ mp ∥
--- -- (a || b) .-is-prop mp = ∥∥-is-prop
--- -- (a || b) .-is-decidable mp with a .-is-decidable mp | b .-is-decidable mp
--- -- ... | inl x | q = inl ∣ inl x ∣
--- -- ... | inr x | inl y = inl ∣ inr y ∣
--- -- ... | inr x | inr y = inr (∥∥-rec 𝟘-is-prop (λ { (inl z) → x z
--- --                                                ; (inr z) → y z}))
+-- ⟨ a || b ⟩ mp = ∥ ⟨ a ⟩ mp + ⟨ b ⟩ mp ∥
+-- (a || b) .-is-prop mp = ∥∥-is-prop
+-- (a || b) .-is-decidable mp with a .-is-decidable mp | b .-is-decidable mp
+-- ... | inl x | q = inl ∣ inl x ∣
+-- ... | inr x | inl y = inl ∣ inr y ∣
+-- ... | inr x | inr y = inr (∥∥-rec 𝟘-is-prop (λ { (inl z) → x z
+--                                                ; (inr z) → y z}))
 
