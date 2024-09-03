@@ -24,7 +24,7 @@ open list-decidable dec
 open PropositionalTruncation pt
 
 open import xBSet fe pt Msg Secret s-is-set dec
-open import xPSet fe pt Msg Secret s-is-set dec
+open import PSet ×BSet fe pt Msg
 open import Scope fe pt UA Msg Secret s-is-set dec
 
 -- non-empty variance
@@ -161,10 +161,10 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
  lscope [] q = q
  lscope (s ∷ ls) ((ex , inn) , x , ((BA , BM) , f))
   = let (a , b) = splitPM s ls ex
-    in (a , (b ∣ᵖ inn)) , x , ((splitLM s ls BA , splitLM s ls BM) , q s ls) where
+    in (a , (b ∣ᵖ inn)) , x , ((limitM s ls BA , limitM s ls BM) , q s ls) where
     q : ∀ s ls → (x : S×Msg) →
-        ⟨ pr₁ (splitLM s ls BA) ⟩' x +
-        ⟨ pr₁ (splitLM s ls BM) ⟩' x →
+        ⟨ pr₁ (limitM s ls BA) ⟩' x +
+        ⟨ pr₁ (limitM s ls BM) ⟩' x →
         Q.E
     q s [] mp@(ws , msg) d with (s ∈? ws)
     q s [] (ws , msg) (inl d) | inl _ = 𝟘-elim d

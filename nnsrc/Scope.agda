@@ -13,6 +13,8 @@ open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 open import UF.Sets
 open import UF.Base
+import UF.ImageAndSurjection
+
 
 open import Lists
 open import Maybe
@@ -20,6 +22,7 @@ open import Maybe
 module Scope (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
 
 open PropositionalTruncation pt
+open UF.ImageAndSurjection pt
 
 open import xBSet fe pt Msg Secret s-is-set dec
 open import PSet ×BSet fe pt Msg
@@ -47,11 +50,11 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  Lim pred mp ₀ = 𝟘
  Lim pred mp ₁ = pred mp
 
- limitP : Secret → BPred → BPred
- limitP s pred mp@(ls , msg) = scope-l1 s ls (Lim pred mp) (s ∈? ls)
+ limitPr : Secret → BPred → BPred
+ limitPr s pred mp@(ls , msg) = scope-l1 s ls (Lim pred mp) (s ∈? ls)
  
  limit' : Secret → BSet' → BSet'
- limit' s bs .pr₁ = limitP s ⟨ bs ⟩'
+ limit' s bs .pr₁ = limitPr s ⟨ bs ⟩'
  limit' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Lim ⟨ bs ⟩' mp) 𝟘-is-prop ((bs is-prop') (ls , msg)) (s ∈? ls)
 
  limit : Secret → ×BSet → ×BSet
@@ -69,11 +72,11 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  Compl pred mp ₀ = pred mp
  Compl pred mp ₁ = 𝟘
 
- complP : Secret → BPred → BPred
- complP s pred mp@(ls , msg) = scope-l1 s ls (Compl pred mp) (s ∈? ls)
+ complPr : Secret → BPred → BPred
+ complPr s pred mp@(ls , msg) = scope-l1 s ls (Compl pred mp) (s ∈? ls)
  
  compl' : Secret → BSet' → BSet'
- compl' s bs .pr₁ = complP s ⟨ bs ⟩'
+ compl' s bs .pr₁ = complPr s ⟨ bs ⟩'
  compl' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Compl ⟨ bs ⟩' mp) ((bs is-prop') (ls , msg)) 𝟘-is-prop (s ∈? ls)
 
 
@@ -93,107 +96,119 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
 -- TODO I believe there is a better way here, since most of this is redundant.
 
  splitPr : Secret → BPred → BPred × BPred
- splitPr s bs = limitP s bs , complP s bs
+ splitPr s bs = limitPr s bs , complPr s bs
 
  split : Secret → ×BSet → ×BSet × ×BSet
  split s bs = limit s bs , compl s bs
 
 
- splitLMPr : Secret → List Secret → BPred → BPred
- splitLMPr s [] bs = limitP s bs
- splitLMPr s (l ∷ ls) w = let w2 = limitP s w
-                              w3 = splitLMPr l ls w2
-                           in w3
+ limitMPr : Secret → List Secret → BPred → BPred
+ limitMPr s [] bs = limitPr s bs
+ limitMPr s (l ∷ ls) w = let w2 = limitPr s w
+                             w3 = limitMPr l ls w2
+                         in w3
 
- splitLM' : Secret → List Secret → BSet' → BSet'
- splitLM' s ls bs .pr₁ = splitLMPr s ls ⟨ bs ⟩'
- splitLM' s [] bs .pr₂ = limit' s bs .pr₂
- splitLM' s (l ∷ ls) bs .pr₂ = splitLM' l ls (limit' s bs) .pr₂
+ limitM' : Secret → List Secret → BSet' → BSet'
+ limitM' s ls bs .pr₁ = limitMPr s ls ⟨ bs ⟩'
+ limitM' s [] bs .pr₂ = limit' s bs .pr₂
+ limitM' s (l ∷ ls) bs .pr₂ = limitM' l ls (limit' s bs) .pr₂
 
 
- splitLM× : Secret → List Secret → ×BSet → ×BSet
- splitLM× s ls bs .pr₁ .pr₁ = splitLMPr s ls ⟨ bs bset ⟩'
- splitLM× s ls bs .pr₁ .pr₂ = splitLM' s ls (bs bset) .pr₂
- splitLM× s [] bs .pr₂ = limit s bs .pr₂
- splitLM× s (l ∷ ls) bs .pr₂ = splitLM× l ls (limit s bs) .pr₂
+ limitM× : Secret → List Secret → ×BSet → ×BSet
+ limitM× s ls bs .pr₁ .pr₁ = limitMPr s ls ⟨ bs bset ⟩'
+ limitM× s ls bs .pr₁ .pr₂ = limitM' s ls (bs bset) .pr₂
+ limitM× s [] bs .pr₂ = limit s bs .pr₂
+ limitM× s (l ∷ ls) bs .pr₂ = limitM× l ls (limit s bs) .pr₂
 
 -- This is the same as before but the properties are mixed with the structure.
- splitLM : Secret → List Secret → ×BSet → ×BSet
- splitLM s [] bs = limit s bs
- splitLM s (l ∷ ls) w = let w2 = limit s w
-                            w3 = splitLM l ls w2
-                        in w3
+ limitM : Secret → List Secret → ×BSet → ×BSet
+ limitM s [] bs = limit s bs
+ limitM s (l ∷ ls) w = let w2 = limit s w
+                           w3 = limitM l ls w2
+                       in w3
 
- splitRMPr : Secret → List Secret → BPred → BPred
- splitRMPr s [] bs = complP s bs
- splitRMPr s (l ∷ ls) w = let (w2 , a) = splitPr s w
-                              b = splitRMPr l ls w2
-                           in (λ mp → ((a mp) × (b mp)) + (¬ ((a mp) × (b mp)) × (a mp + b mp)))
+ complMPr : Secret → List Secret → BPred → BPred
+ complMPr s [] bs = complPr s bs
+ complMPr s (l ∷ ls) w = let (w2 , a) = splitPr s w
+                             b = complMPr l ls w2
+                         in (λ mp → ((a mp) × (b mp)) + (¬ ((a mp) × (b mp)) × (a mp + b mp)))
 
- splitRM' : Secret → List Secret → BSet' → BSet'
- splitRM' s ls bs .pr₁ = splitRMPr s ls ⟨ bs ⟩'
- splitRM' s [] bs .pr₂ = compl' s bs .pr₂
- splitRM' s (l ∷ ls) w .pr₂ = let w2 = limit' s w
-                                  b = compl' s w
-                                  c = splitRM' l ls w2
-                               in (b ||' c) .pr₂ 
+ complM' : Secret → List Secret → BSet' → BSet'
+ complM' s ls bs .pr₁ = complMPr s ls ⟨ bs ⟩'
+ complM' s [] bs .pr₂ = compl' s bs .pr₂
+ complM' s (l ∷ ls) w .pr₂ = let w2 = limit' s w
+                                 b = compl' s w
+                                 c = complM' l ls w2
+                             in (b ||' c) .pr₂ 
 
 
- splitRM× : Secret → List Secret → ×BSet → ×BSet
- splitRM× s ls bs .pr₁ .pr₁ = splitRMPr s ls ⟨ bs bset ⟩'
- splitRM× s ls bs .pr₁ .pr₂ = splitRM' s ls (bs bset) .pr₂
- splitRM× s [] w .pr₂ = compl s w .pr₂
- splitRM× s (l ∷ ls) w .pr₂ = let w2 = limit s w
-                                  b = compl s w
-                                  c = splitRM× l ls w2
-                              in (b ×|| c) .pr₂
+ complM× : Secret → List Secret → ×BSet → ×BSet
+ complM× s ls bs .pr₁ .pr₁ = complMPr s ls ⟨ bs bset ⟩'
+ complM× s ls bs .pr₁ .pr₂ = complM' s ls (bs bset) .pr₂
+ complM× s [] w .pr₂ = compl s w .pr₂
+ complM× s (l ∷ ls) w .pr₂ = let w2 = limit s w
+                                 b = compl s w
+                                 c = complM× l ls w2
+                             in (b ×|| c) .pr₂
 
 
 
 -- This is the previous version , equal to the above.
- splitRM : Secret → List Secret → ×BSet → ×BSet
- splitRM s [] bs = compl s bs
- splitRM s (l ∷ ls) w = let (w2 , b) = split s w
-                            c = splitRM l ls w2
-                        in (b ×|| c)  
+--  complM : Secret → List Secret → ×BSet → ×BSet
+--  complM s [] bs = compl s bs
+--  complM s (l ∷ ls) w = let (w2 , b) = split s w
+--                            c = complM l ls w2
+--                        in (b ×|| c)  
 
  
- splitM : Secret → List Secret → ×BSet → ×BSet × ×BSet
- splitM s ls bs = splitLM s ls bs , splitRM s ls bs
+ splitM× : Secret → List Secret → ×BSet → ×BSet × ×BSet
+ splitM× s ls bs = limitM× s ls bs , complM× s ls bs
  
 
-
+ restr : ∀{𝓤 𝓥} → {A : 𝓤 ̇ } → (P : A → 𝓥 ̇ ) → Σ P → A
+ restr P x =  x .pr₁
 
  limit&P : Secret → &PSet → &PSet
- &⟨ limit&P s ps ⟩ v = ∥ Σ o ꞉ 𝟚 × ×BSet , &⟨ ps ⟩ o × (o .pr₁ , limit s (o .pr₂) ＝ v) ∥
- limit&P s ps .&-is-prop _ = ∥∥-is-prop
+ &⟨ limit&P s ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , limit s bs) (restr &⟨ ps ⟩ x)
+ limit&P s ps .&-is-prop _ = ∃-is-prop
 
  compl&P : Secret → &PSet → &PSet
- &⟨ compl&P s ps ⟩ = {!!}
- compl&P s ps .&-is-prop = {!!}
+ &⟨ compl&P s ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , compl s bs) (restr &⟨ ps ⟩ x)
+ compl&P s ps .&-is-prop v = ∃-is-prop
 
  split&P : Secret → &PSet → &PSet × &PSet
- &⟨ split&P s ps .pr₁ ⟩ v = ∥ Σ o ꞉ 𝟚 × ×BSet , &⟨ ps ⟩ o × ((o .pr₁ , split s (pr₂ o) .pr₁) ＝ v) ∥
- split&P s ps .pr₁ .&-is-prop o = ∥∥-is-prop
- &⟨ split&P s ps .pr₂ ⟩ v = ∥ Σ o ꞉ 𝟚 × ×BSet , &⟨ ps ⟩ o × ((o .pr₁ , split s (pr₂ o) .pr₂) ＝ v) ∥
- split&P s ps .pr₂ .&-is-prop o = ∥∥-is-prop
- 
+ split&P s ps =  limit&P s ps , compl&P s ps
+
+ limit&PM : Secret → List Secret → &PSet → &PSet
+ &⟨ limit&PM s ls ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , limitM× s ls bs) (restr &⟨ ps ⟩ x)
+ limit&PM s ls ps .&-is-prop _ = ∃-is-prop
+
+ compl&PM : Secret → List Secret → &PSet → &PSet
+ &⟨ compl&PM s ls ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , complM× s ls bs) (restr &⟨ ps ⟩ x)
+ compl&PM s ls ps .&-is-prop v = ∃-is-prop
+
  split&PM : Secret → List Secret → &PSet → &PSet × &PSet
- &⟨ split&PM s ls ps .pr₁ ⟩ v = ∥ Σ o ꞉ 𝟚 × ×BSet , &⟨ ps ⟩ o × ((o .pr₁ , splitLM s ls (pr₂ o)) ＝ v) ∥
- split&PM s ls ps .pr₁ .&-is-prop o = ∥∥-is-prop
- &⟨ split&PM s ls ps .pr₂ ⟩ v = ∥ Σ o ꞉ 𝟚 × ×BSet , &⟨ ps ⟩ o × ((o .pr₁ , splitRM s ls (pr₂ o)) ＝ v) ∥
- split&PM s ls ps .pr₂ .&-is-prop o = ∥∥-is-prop
+ split&PM s ls ps = limit&PM s ls ps , compl&PM s ls ps
  
  
+ limitP : Secret → PSet → PSet
+ ∣⟨ limitP s ps ⟩ v = v ∈image limit&P s
+ limitP s ps .∣-is-prop v = ∃-is-prop
+
+ complP : Secret → PSet → PSet
+ ∣⟨ complP s ps ⟩ v = v ∈image compl&P s
+ complP s ps .∣-is-prop v = ∃-is-prop
+
  splitP : Secret → PSet → PSet × PSet
- ∣⟨ splitP s ps .pr₁ ⟩ v = ∥ Σ o ꞉ &PSet , split&P s o .pr₁ ＝ v ∥
- splitP s ps .pr₁ .∣-is-prop o = ∥∥-is-prop
- ∣⟨ splitP s ps .pr₂ ⟩ v = ∥ Σ o ꞉ &PSet , split&P s o .pr₂ ＝ v ∥
- splitP s ps .pr₂ .∣-is-prop o = ∥∥-is-prop
- 
+ splitP s ps = (limitP s ps) , (complP s ps)
+
+ limitPM : Secret → List Secret → PSet → PSet
+ ∣⟨ limitPM s ls ps ⟩ v = v ∈image limit&PM s ls
+ limitPM s ls ps .∣-is-prop v = ∃-is-prop
+
+ complPM : Secret → List Secret → PSet → PSet
+ ∣⟨ complPM s ls ps ⟩ v = v ∈image compl&PM s ls
+ complPM s ls ps .∣-is-prop v = ∃-is-prop
+
  splitPM : Secret → List Secret → PSet → PSet × PSet
- ∣⟨ splitPM s ls ps .pr₁ ⟩ v = ∥ Σ o ꞉ &PSet , split&PM s ls o .pr₁ ＝ v ∥
- splitPM s ls ps .pr₁ .∣-is-prop o = ∥∥-is-prop
- ∣⟨ splitPM s ls ps .pr₂ ⟩ v = ∥ Σ o ꞉ &PSet , split&PM s ls o .pr₂ ＝ v ∥
- splitPM s ls ps .pr₂ .∣-is-prop o = ∥∥-is-prop
- 
+ splitPM s ls ps = (limitPM s ls ps) , (complPM s ls ps)
