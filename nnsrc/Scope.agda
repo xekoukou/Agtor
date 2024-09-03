@@ -50,9 +50,16 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  Lim pred mp ₀ = 𝟘
  Lim pred mp ₁ = pred mp
 
+ Lim' : 𝓤 ̇  → 𝟚 → Set 𝓤
+ Lim' P ₀ = 𝟘
+ Lim' P ₁ = P
+
  limitPr : Secret → BPred → BPred
  limitPr s pred mp@(ls , msg) = scope-l1 s ls (Lim pred mp) (s ∈? ls)
  
+ limitPr' : Secret → 𝓤 ̇  → BPred
+ limitPr' s P mp@(ls , msg) = scope-l1 s ls (Lim' P) (s ∈? ls)
+
  limit' : Secret → BSet' → BSet'
  limit' s bs .pr₁ = limitPr s ⟨ bs ⟩'
  limit' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Lim ⟨ bs ⟩' mp) 𝟘-is-prop ((bs is-prop') (ls , msg)) (s ∈? ls)
@@ -108,6 +115,12 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
                              w3 = limitMPr l ls w2
                          in w3
 
+ limitMPr' : Secret → List Secret → 𝓤 ̇  → BPred
+ limitMPr' s [] bs mp = limitPr' s bs mp
+ limitMPr' s (l ∷ ls) bs mp = let w2 = limitPr' s bs mp
+                                  w3 = limitMPr' l ls w2 mp
+                              in w3
+
  limitM' : Secret → List Secret → BSet' → BSet'
  limitM' s ls bs .pr₁ = limitMPr s ls ⟨ bs ⟩'
  limitM' s [] bs .pr₂ = limit' s bs .pr₂
@@ -121,11 +134,11 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  limitM× s (l ∷ ls) bs .pr₂ = limitM× l ls (limit s bs) .pr₂
 
 -- This is the same as before but the properties are mixed with the structure.
- limitM : Secret → List Secret → ×BSet → ×BSet
- limitM s [] bs = limit s bs
- limitM s (l ∷ ls) w = let w2 = limit s w
-                           w3 = limitM l ls w2
-                       in w3
+--  limitM : Secret → List Secret → ×BSet → ×BSet
+--  limitM s [] bs = limit s bs
+--  limitM s (l ∷ ls) w = let w2 = limit s w
+--                            w3 = limitM l ls w2
+--                        in w3
 
  complMPr : Secret → List Secret → BPred → BPred
  complMPr s [] bs = complPr s bs

@@ -161,18 +161,25 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
  lscope [] q = q
  lscope (s ∷ ls) ((ex , inn) , x , ((BA , BM) , f))
   = let (a , b) = splitPM s ls ex
-    in (a , (b ∣ᵖ inn)) , x , ((limitM s ls BA , limitM s ls BM) , q s ls) where
+    in (a , (b ∣ᵖ inn)) , x , ((limitM× s ls BA , limitM× s ls BM) , q s ls) where
     q : ∀ s ls → (x : S×Msg) →
-        ⟨ pr₁ (limitM s ls BA) ⟩' x +
-        ⟨ pr₁ (limitM s ls BM) ⟩' x →
+        ⟨ pr₁ (limitM× s ls BA) ⟩' x +
+        ⟨ pr₁ (limitM× s ls BM) ⟩' x →
         Q.E
-    q s [] mp@(ws , msg) d with (s ∈? ws)
-    q s [] (ws , msg) (inl d) | inl _ = 𝟘-elim d
-    q s [] (ws , msg) (inr d) | inl _ = 𝟘-elim d
-    q s [] mp@(ws , msg) d | inr _ = f mp d
-    q s (l ∷ ls) mp@(ws , msg) d with (s ∈? ws)
-    ... | inl x = {!!}
-    ... | inr x = {!!}
+    q s [] mp@(ws , msg) d = l1 (s ∈? ws) d where
+     l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
+      Lim (BA .pr₁ .pr₁) (ws , msg) (+→𝟚 w) +
+      Lim (BM .pr₁ .pr₁) (ws , msg) (+→𝟚 w) → Q.E
+     l1 (inl x) (inl ())
+     l1 (inl x) (inr ())
+     l1 (inr x) d = f mp d
+
+    q s (l ∷ ls) mp@(ws , msg) d = {!l1 (s ∈? ws) d !} where
+     l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
+      limitMPr l ls (scope-l1 s ls (Lim (BA .pr₁ .pr₁) mp) (s ∈? ls)) (ws , msg) +
+      limitMPr l ls (limitPr s (BM .pr₁ .pr₁)) (ws , msg) → Q.E
+     l1 = {!!}
+
 
  limit-scope : List Secret × F Q.E × F Q.E → List Secret × (F Q.E) × (F Q.E)
  limit-scope (ls , a , b) = ls , lscope ls a , lscope ls b
