@@ -107,6 +107,15 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
                                 w3 = limitMPr l ls w2 mp
                             in w3
 
+ limitPr-𝟘 : ∀ s mp → limitPr s 𝟘 mp ＝ 𝟘
+ limitPr-𝟘 s  mp@(scr , _) with (s ∈? scr)
+ ... | inl x = refl
+ ... | inr x = refl
+ 
+ limitMPr-𝟘 : ∀ s ls mp → limitMPr s ls 𝟘 mp ＝ 𝟘
+ limitMPr-𝟘 s [] mp@(scr , _) = limitPr-𝟘 s mp
+ limitMPr-𝟘 s (l ∷ ls) mp = ap (λ z → limitMPr l ls z mp) (limitPr-𝟘 s mp) ∙ limitMPr-𝟘 l ls mp
+
  limitM' : Secret → List Secret → BSet' → BSet'
  limitM' s ls bs .pr₁ mp = limitMPr s ls (⟨ bs ⟩' mp) mp
  limitM' s [] bs .pr₂ = limit' s bs .pr₂

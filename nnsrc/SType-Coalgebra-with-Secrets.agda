@@ -168,17 +168,22 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
         Q.E
     q s [] mp@(ws , msg) d = l1 (s ∈? ws) d where
      l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
-      Lim (BA .pr₁ .pr₁) (ws , msg) (+→𝟚 w) +
-      Lim (BM .pr₁ .pr₁) (ws , msg) (+→𝟚 w) → Q.E
+      Lim ((BA .pr₁ .pr₁) (ws , msg)) (+→𝟚 w) +
+      Lim ((BM .pr₁ .pr₁) (ws , msg)) (+→𝟚 w) → Q.E
      l1 (inl x) (inl ())
      l1 (inl x) (inr ())
      l1 (inr x) d = f mp d
 
-    q s (l ∷ ls) mp@(ws , msg) d = {!l1 (s ∈? ws) d !} where
+    q s (l ∷ ls) mp@(ws , msg) d = l1 (s ∈? ws) d  where
      l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
-      limitMPr l ls (scope-l1 s ls (Lim (BA .pr₁ .pr₁) mp) (s ∈? ls)) (ws , msg) +
-      limitMPr l ls (limitPr s (BM .pr₁ .pr₁)) (ws , msg) → Q.E
-     l1 = {!!}
+      limitMPr l ls (Lim (BA .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) +
+      limitMPr l ls (Lim (BM .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) →
+      Q.E
+     l1 (inl x) d with limitMPr l ls 𝟘 mp | (limitMPr-𝟘 l ls mp)
+     l1 (inl x) (inl ()) | r | refl
+     l1 (inl x) (inr ()) | r | refl
+     l1 (inr x) d = q l ls (ws , msg) d
+
 
 
  limit-scope : List Secret × F Q.E × F Q.E → List Secret × (F Q.E) × (F Q.E)
@@ -187,158 +192,154 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
  var-limit-scope : ExCG (List Secret × F Q.E × F Q.E) → ExCG (List Secret × F Q.E × F Q.E)
  var-limit-scope (D , var) = D , λ x → limit-scope (var x)
  
--- -- This function combines the variance introduced by a function and the parallel composition
--- -- of two systems. We need to define it this way, because parallel composition
--- -- introduces this variance when the two systems interact with each other
+-- This function combines the variance introduced by a function and the parallel composition
+-- of two systems. We need to define it this way, because parallel composition
+-- introduces this variance when the two systems interact with each other
 
--- -- One of them needs to be non-empty, because if both are empty, then we can not expand
--- -- on the F functor.
---  ExCGP : ExCG (List Secret × F Q.E × F Q.E) → F (ExCG (List Secret × F Q.E × F Q.E))
---  -- The PSet
---  pr₁ (ExCGP (D , var))
---   = &ᵈᵖ ex , &ᵈᵖ inn where
---    scope = λ d → var d .pr₁
---    a = λ d → var d .pr₂ .pr₁
---    b = λ d → var d .pr₂ .pr₂
+-- One of them needs to be non-empty, because if both are empty, then we can not expand
+-- on the F functor.
+ ExCGP : ExCG (List Secret × F Q.E × F Q.E) → F (ExCG (List Secret × F Q.E × F Q.E))
+ -- The PSet
+ pr₁ (ExCGP (D , var))
+  = &ᵈᵖ ex , &ᵈᵖ inn where
+   scope = λ d → var d .pr₁
+   a = λ d → var d .pr₂ .pr₁
+   b = λ d → var d .pr₂ .pr₂
 
---    -- External PSet
---    ex = λ d → (pr₁ ∘ pr₁) (a d) , (pr₁ ∘ pr₁) (b d)
---    -- Internal PSet
---    inn = λ d → (pr₂ ∘ pr₁) (a d) , (pr₂ ∘ pr₁) (b d)
---  pr₁ (pr₂ (ExCGP (D , var)))
---  -- The new internal reduction case, it describes the possible internal reduction of the system if possible.
+   -- External PSet
+   ex = λ d → (pr₁ ∘ pr₁) (a d) , (pr₁ ∘ pr₁) (b d)
+   -- Internal PSet
+   inn = λ d → (pr₂ ∘ pr₁) (a d) , (pr₂ ∘ pr₁) (b d)
+ pr₁ (pr₂ (ExCGP (D , var)))
+ -- The new internal reduction case, it describes the possible internal reduction of the system if possible.
 
---  -- The new Variance
---  -- It takes 3 cases
---   = (Σ d ꞉ D , (𝟚 + Σ (λ msg → ⟨ (bax d ×&& bmy d) bset ⟩ msg + ⟨ (bay d ×&& bmx d) bset ⟩ msg)))
---  -- 1. Internal reduction of system X
---     , λ { (d , inl ₀) → scope d , x d , Q.f (iy d)
---  -- 2. internal reduction of system Y
---         ; (d , inl ₁) → scope d , y d , Q.f (ix d)
---  -- 3. communication between X and Y
---         ; (d , inr (mp@(ls , inr scr) , (inl (xa , ym)))) → (scr ∷ scope d) , Q.f (pr₂ (nxcf d) mp (inl xa)) , (Q.f (pr₂ (nycf d) mp (inr ym)))
---         ; (d , inr (mp@(ls , inr scr) , (inr (ya , xm)))) → (scr ∷ scope d) , (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))
---         ; (d , inr (mp@(ls , inl msg) , (inl (xa , ym)))) → scope d , (Q.f (pr₂ (nxcf d) mp (inl xa))) , (Q.f (pr₂ (nycf d) mp (inr ym)))
---         ; (d , inr (mp@(ls , inl msg) , (inr (ya , xm)))) → scope d , (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))} where
---   scope = λ d → var d .pr₁
---   x = λ d → var d .pr₂ .pr₁
---   y = λ d → var d .pr₂ .pr₂
+ -- The new Variance
+ -- It takes 3 cases
+  = (Σ d ꞉ D , (𝟚 + Σ (λ msg → ⟨ (bax d ×&& bmy d) bset ⟩' msg + ⟨ (bay d ×&& bmx d) bset ⟩' msg)))
+ -- 1. Internal reduction of system X
+    , λ { (d , inl ₀) → scope d , x d , Q.f (iy d)
+ -- 2. internal reduction of system Y
+        ; (d , inl ₁) → scope d , y d , Q.f (ix d)
+ -- 3. communication between X and Y
+        ; (d , inr (mp@(ls , inr scr) , (inl (xa , ym)))) → (scr ∷ scope d) , Q.f (pr₂ (nxcf d) mp (inl xa)) , (Q.f (pr₂ (nycf d) mp (inr ym)))
+        ; (d , inr (mp@(ls , inr scr) , (inr (ya , xm)))) → (scr ∷ scope d) , (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))
+        ; (d , inr (mp@(ls , inl msg) , (inl (xa , ym)))) → scope d , (Q.f (pr₂ (nxcf d) mp (inl xa))) , (Q.f (pr₂ (nycf d) mp (inr ym)))
+        ; (d , inr (mp@(ls , inl msg) , (inr (ya , xm)))) → scope d , (Q.f (pr₂ (nxcf d) mp (inr xm))) , (Q.f (pr₂ (nycf d) mp (inl ya)))} where
+  scope = λ d → var d .pr₁
+  x = λ d → var d .pr₂ .pr₁
+  y = λ d → var d .pr₂ .pr₂
 
---   nxcf : D → ExC Q.E
---   nxcf d = (pr₂ ∘ pr₂) (x d)
---   nycf : D → ExC Q.E
---   nycf d = pr₂ (pr₂ (y d))
+  nxcf : D → ExC Q.E
+  nxcf d = (pr₂ ∘ pr₂) (x d)
+  nycf : D → ExC Q.E
+  nycf d = pr₂ (pr₂ (y d))
 
---   bax : D → ×BSet
---   bax d = (pr₁ ∘ pr₁) (nxcf d)
---   bmx : D → ×BSet
---   bmx d = (pr₂ ∘ pr₁) (nxcf d)
+  bax : D → ×BSet
+  bax d = (pr₁ ∘ pr₁) (nxcf d)
+  bmx : D → ×BSet
+  bmx d = (pr₂ ∘ pr₁) (nxcf d)
 
---   bay : D → ×BSet
---   bay d = pr₁ (pr₁ (nycf d))
---   bmy : D → ×BSet
---   bmy d = pr₂ (pr₁ (nycf d))
+  bay : D → ×BSet
+  bay d = pr₁ (pr₁ (nycf d))
+  bmy : D → ×BSet
+  bmy d = pr₂ (pr₁ (nycf d))
 
---   iy : D → Q.E
---   iy d = pr₁ (pr₂ (y d))
+  iy : D → Q.E
+  iy d = pr₁ (pr₂ (y d))
  
---   ix : D → Q.E
---   ix d = (pr₁ ∘ pr₂) (x d)
+  ix : D → Q.E
+  ix d = (pr₁ ∘ pr₂) (x d)
 
---  pr₂ (pr₂ (ExCGP (D , var))) = e where
---   scope = λ d → var d .pr₁
---   x = λ d → var d .pr₂ .pr₁
---   y = λ d → var d .pr₂ .pr₂
+ pr₂ (pr₂ (ExCGP (D , var))) = e where
+  scope = λ d → var d .pr₁
+  x = λ d → var d .pr₂ .pr₁
+  y = λ d → var d .pr₂ .pr₂
 
---   nxcf : D → ExC Q.E
---   nxcf d = pr₂ (pr₂ (x d))
---   nycf : D → ExC Q.E
---   nycf d = pr₂ (pr₂ (y d))
+  nxcf : D → ExC Q.E
+  nxcf d = pr₂ (pr₂ (x d))
+  nycf : D → ExC Q.E
+  nycf d = pr₂ (pr₂ (y d))
 
---   bax : D → ×BSet
---   bax d = pr₁ (pr₁ (nxcf d))
---   bmx : D → ×BSet
---   bmx d = pr₂ (pr₁ (nxcf d))
+  bax : D → ×BSet
+  bax d = pr₁ (pr₁ (nxcf d))
+  bmx : D → ×BSet
+  bmx d = pr₂ (pr₁ (nxcf d))
 
---   bay : D → ×BSet
---   bay d = pr₁ (pr₁ (nycf d))
---   bmy : D → ×BSet
---   bmy d = pr₂ (pr₁ (nycf d))
+  bay : D → ×BSet
+  bay d = pr₁ (pr₁ (nycf d))
+  bmy : D → ×BSet
+  bmy d = pr₂ (pr₁ (nycf d))
 
---   ba : ×BSet
---   ⟨ ba .pr₁ ⟩ mp = ∥ Σ d ꞉ D , ⟨ ((bax d) ×|| (bay d)) bset ⟩ mp ∥
---   ba .pr₁ .-is-prop mp = ∥∥-is-prop
+  ba : ×BSet
+  ba = Var→×BSet (D , (λ d → (bax d) ×|| (bay d)))
 
---   bm : ×BSet
---   ⟨ bm .pr₁ ⟩ mp = ∥ Σ d ꞉ D , ⟨ ((bmx d) ×|| (bmy d)) bset ⟩ mp ∥
---   bm .pr₁ .-is-prop mp = ∥∥-is-prop
+  bm : ×BSet
+  bm = Var→×BSet (D , (λ d → (bmx d) ×|| (bmy d)))
 
---   e : ExC (ExCG (List Secret × F Q.E × F Q.E))
---   pr₁ e = ba , bm
---   pr₂ e mp@(_ , inl _) (inl v)
---     =   (Σ d ꞉ D , ⟨ (bax d) bset ⟩ mp + ⟨ (bay d) bset ⟩ mp)
---       , λ { (d , inl px) → scope d , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
---           ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
---   pr₂ e mp@(_ , inl _) (inr w)
---     =   (Σ d ꞉ D , ⟨ (bmx d) bset ⟩ mp + ⟨ (bmy d) bset ⟩ mp)
---       , λ { (d , inl px) → scope d , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
---           ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
---   pr₂ e mp@(_ , inr scr) (inl v)
---     =   (Σ d ꞉ D , ⟨ (bax d) bset ⟩ mp + ⟨ (bay d) bset ⟩ mp)
---       , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
---           ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
---   pr₂ e mp@(_ , inr scr) (inr w)
---     =   (Σ d ꞉ D , ⟨ (bmx d) bset ⟩ mp + ⟨ (bmy d) bset ⟩ mp)
---       , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
---           ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
+  e : ExC (ExCG (List Secret × F Q.E × F Q.E))
+  pr₁ e = ba , bm
+  pr₂ e mp@(_ , inl _) (inl v)
+    =   (Σ d ꞉ D , ⟨ (bax d) bset ⟩' mp + ⟨ (bay d) bset ⟩' mp)
+      , λ { (d , inl px) → scope d , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
+          ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
+  pr₂ e mp@(_ , inl _) (inr w)
+    =   (Σ d ꞉ D , ⟨ (bmx d) bset ⟩' mp + ⟨ (bmy d) bset ⟩' mp)
+      , λ { (d , inl px) → scope d , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
+          ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
+  pr₂ e mp@(_ , inr scr) (inl v)
+    =   (Σ d ꞉ D , ⟨ (bax d) bset ⟩' mp + ⟨ (bay d) bset ⟩' mp)
+      , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
+          ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
+  pr₂ e mp@(_ , inr scr) (inr w)
+    =   (Σ d ꞉ D , ⟨ (bmx d) bset ⟩' mp + ⟨ (bmy d) bset ⟩' mp)
+      , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
+          ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
 
 
---  ExCGP-co : CoAlgebra
---  E ExCGP-co = ExCG (List Secret × F Q.E × F Q.E)
---  f ExCGP-co = ExCGP ∘ var-limit-scope
+ ExCGP-co : CoAlgebra
+ E ExCGP-co = ExCG (List Secret × F Q.E × F Q.E)
+ f ExCGP-co = ExCGP ∘ var-limit-scope
 
---  _&ᶠ_ : Q.E → Q.E → Q.E
---  a &ᶠ b = Q.uni ExCGP-co .pr₁ .pr₁ (𝟙 , (λ x → [] , Q.f a , Q.f b))
+ _&ᶠ_ : Q.E → Q.E → Q.E
+ a &ᶠ b = Q.uni ExCGP-co .pr₁ .pr₁ (𝟙 , (λ x → [] , Q.f a , Q.f b))
 
 
 
 
---  ∣P' : ExCG (F Q.E) → F (ExCG (F Q.E))
---  pr₁ (∣P' (D , f)) = (Var→PSet (pr₁ ∘ pr₁ ∘ f)) , (Var→PSet (pr₂ ∘ pr₁ ∘ f))
---  pr₁ (pr₂ (∣P' (D , f))) = D , (Q.f ∘ pr₁ ∘ pr₂ ∘ f)
---  pr₂ (pr₂ (∣P' (D , f)))
---   = {!DVar→×BSet !} , {!!}
-  
---  --  =   (DVar→×BSet (_ , λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d))
---  --    , λ { mp (inl _) →   Varᵇ→Set (D , (pr₁ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
---  --                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inl v))}
---  --        ; mp (inr _) →   Varᵇ→Set (D , (pr₂ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
---  --                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inr v))}} where
---  --    w = λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d
+ ∣P' : ExCG (F Q.E) → F (ExCG (F Q.E))
+ pr₁ (∣P' (D , f)) = (Var→PSet (pr₁ ∘ pr₁ ∘ f)) , (Var→PSet (pr₂ ∘ pr₁ ∘ f))
+ pr₁ (pr₂ (∣P' (D , f))) = D , (Q.f ∘ pr₁ ∘ pr₂ ∘ f)
+ pr₂ (pr₂ (∣P' (D , f)))
+  = DVar→×BSet (D , (λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d))
+    , λ { mp (inl _) →   ×Varᵇ→Set (D , (pr₁ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
+                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inl v))}
+        ; mp (inr _) →   ×Varᵇ→Set (D , (pr₂ ∘ pr₁ ∘ pr₂ ∘ pr₂ ∘ f)) mp
+                       , λ { (d , v) → Q.f ((pr₂ ∘ pr₂ ∘ pr₂ ∘ f) d mp (inr v))}} where
+    w = λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d
 
---  -- -- --Maybe this is easier to understand.
---  -- -- -- With this definition, one understands that when we receive a msg, we actually also learn something about the prior superposition. The previous definition does not make this clear.
---  -- -- ∣P : (F Q.E + 𝟙 {𝓤}) × F Q.E → F ((F Q.E + 𝟙 {𝓤}) × F Q.E)
---  -- -- ∣P (inl (px , x , (bax , bmx) , fx) , (py , y , (bay , bmy) , fy))
---  -- --   =   (px ∣ᵖ py)
---  -- --     , ((inl (Q.f x)) ,   (Q.f y))
---  -- --     , ((bax || bay) , (bmx || bmy))
---  -- --       , (λ { x (inl (inl (vx , vy))) → inl (Q.f (fx x (inl vx))) , Q.f (fy x (inl vy)) 
---  -- --            ; x (inl (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inl vx))
---  -- --            ; x (inl (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inl vy))
---  -- --            ; x (inr (inl (vx , vy))) → inl (Q.f (fx x (inr vx))) , Q.f (fy x (inr vy)) 
---  -- --            ; x (inr (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inr vx))
---  -- --            ; x (inr (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inr vy))
---  -- --            })
---  -- -- ∣P (inr _ , (py , y , (bay , bmy) , fy)) = py , ((inr ⋆) , (Q.f y)) , ((bay , bmy) , (λ x p → (inr ⋆) , (Q.f (fy x p))))
+ -- --Maybe this is easier to understand.
+ -- -- With this definition, one understands that when we receive a msg, we actually also learn something about the prior superposition. The previous definition does not make this clear.
+ -- ∣P : (F Q.E + 𝟙 {𝓤}) × F Q.E → F ((F Q.E + 𝟙 {𝓤}) × F Q.E)
+ -- ∣P (inl (px , x , (bax , bmx) , fx) , (py , y , (bay , bmy) , fy))
+ --   =   (px ∣ᵖ py)
+ --     , ((inl (Q.f x)) ,   (Q.f y))
+ --     , ((bax || bay) , (bmx || bmy))
+ --       , (λ { x (inl (inl (vx , vy))) → inl (Q.f (fx x (inl vx))) , Q.f (fy x (inl vy)) 
+ --            ; x (inl (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inl vx))
+ --            ; x (inl (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inl vy))
+ --            ; x (inr (inl (vx , vy))) → inl (Q.f (fx x (inr vx))) , Q.f (fy x (inr vy)) 
+ --            ; x (inr (inr (_ , inl vx))) → inr ⋆ , Q.f (fx x (inr vx))
+ --            ; x (inr (inr (_ , inr vy))) → inr ⋆ , Q.f (fy x (inr vy))
+ --            })
+ -- ∣P (inr _ , (py , y , (bay , bmy) , fy)) = py , ((inr ⋆) , (Q.f y)) , ((bay , bmy) , (λ x p → (inr ⋆) , (Q.f (fy x p))))
 
 
---  -- ∣P'-co : CoAlgebra
---  -- E ∣P'-co = ExCG (F Q.E)
---  -- f ∣P'-co = ∣P'
+ ∣P'-co : CoAlgebra
+ E ∣P'-co = ExCG (F Q.E)
+ f ∣P'-co = ∣P'
 
---  -- _∣ᶠ_ : Q.E → Q.E → Q.E
---  -- a ∣ᶠ b = Q.uni ∣P'-co .pr₁ .pr₁ ((𝟙 {𝓤} + 𝟙 {𝓤}) , (λ { (inl _) → Q.f a ; (inr _) → Q.f b}))
+ _∣ᶠ_ : Q.E → Q.E → Q.E
+ a ∣ᶠ b = Q.uni ∣P'-co .pr₁ .pr₁ ((𝟙 {𝓤} + 𝟙 {𝓤}) , (λ { (inl _) → Q.f a ; (inr _) → Q.f b}))
 
 
 
