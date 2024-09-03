@@ -46,55 +46,48 @@ scope-l1-prop x ls A d1 d2 (inr _) = d2
 
 module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
 
- Lim : BPred → S×Msg → 𝟚 → Set 𝓤
- Lim pred mp ₀ = 𝟘
- Lim pred mp ₁ = pred mp
+ Lim : 𝓤 ̇  → 𝟚 → Set 𝓤
+ Lim P ₀ = 𝟘
+ Lim P ₁ = P
 
- Lim' : 𝓤 ̇  → 𝟚 → Set 𝓤
- Lim' P ₀ = 𝟘
- Lim' P ₁ = P
-
- limitPr : Secret → BPred → BPred
- limitPr s pred mp@(ls , msg) = scope-l1 s ls (Lim pred mp) (s ∈? ls)
- 
- limitPr' : Secret → 𝓤 ̇  → BPred
- limitPr' s P mp@(ls , msg) = scope-l1 s ls (Lim' P) (s ∈? ls)
+ limitPr : Secret → 𝓤 ̇  → BPred
+ limitPr s P mp@(ls , msg) = scope-l1 s ls (Lim P) (s ∈? ls)
 
  limit' : Secret → BSet' → BSet'
- limit' s bs .pr₁ = limitPr s ⟨ bs ⟩'
- limit' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Lim ⟨ bs ⟩' mp) 𝟘-is-prop ((bs is-prop') (ls , msg)) (s ∈? ls)
+ limit' s bs .pr₁ mp = limitPr s (⟨ bs ⟩' mp) mp
+ limit' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Lim (⟨ bs ⟩' mp)) 𝟘-is-prop ((bs is-prop') (ls , msg)) (s ∈? ls)
 
  limit : Secret → ×BSet → ×BSet
  limit s bs = limit' s (bs bset) , λ ascrs scrs x (a⊂s , a⊃s) → l1 ascrs scrs x a⊂s a⊃s (s ∈? ascrs) (s ∈? scrs) , l2 ascrs scrs x a⊂s a⊃s (s ∈? scrs) (s ∈? ascrs) where
-  l1 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ ascrs)) → (deq2 : is-decidable (s ∈  scrs)) → scope-l1 s ascrs (Lim ⟨ bs bset ⟩' (ascrs , x)) deq → scope-l1 s scrs (Lim ⟨ bs bset ⟩' (scrs , x)) deq2
+  l1 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ ascrs)) → (deq2 : is-decidable (s ∈  scrs)) → scope-l1 s ascrs (Lim (⟨ bs bset ⟩' (ascrs , x))) deq → scope-l1 s scrs (Lim (⟨ bs bset ⟩' (scrs , x))) deq2
   l1 ascrs scrs x a⊃s a⊂s (inr neq) (inl eq2) cond = 𝟘-elim (neq (∈→∈ s scrs ascrs a⊂s eq2))
   l1 ascrs scrs x a⊃s a⊂s (inr neq) (inr x₁) cond = bs .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₁ cond
 
-  l2 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ scrs)) → (deq2 : is-decidable (s ∈ ascrs)) → scope-l1 s scrs (Lim ⟨ bs bset ⟩' (scrs , x)) deq → scope-l1 s ascrs (Lim ⟨ bs bset ⟩' (ascrs , x)) deq2
+  l2 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ scrs)) → (deq2 : is-decidable (s ∈ ascrs)) → scope-l1 s scrs (Lim (⟨ bs bset ⟩' (scrs , x))) deq → scope-l1 s ascrs (Lim (⟨ bs bset ⟩' (ascrs , x))) deq2
   l2 ascrs scrs x a⊃s a⊂s (inr neq) (inl eq2) cond = 𝟘-elim (neq (∈→∈ s ascrs scrs a⊃s eq2))
   l2 ascrs scrs x a⊃s a⊂s (inr neq) (inr x₁) cond = bs .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₂ cond
 
 
- Compl : BPred → S×Msg → 𝟚 → Set 𝓤
- Compl pred mp ₀ = pred mp
- Compl pred mp ₁ = 𝟘
+ Compl : 𝓤 ̇  → 𝟚 → Set 𝓤
+ Compl pred ₀ = pred
+ Compl pred ₁ = 𝟘
 
- complPr : Secret → BPred → BPred
- complPr s pred mp@(ls , msg) = scope-l1 s ls (Compl pred mp) (s ∈? ls)
+ complPr : Secret → 𝓤 ̇  → BPred
+ complPr s P mp@(ls , msg) = scope-l1 s ls (Compl P) (s ∈? ls)
  
  compl' : Secret → BSet' → BSet'
- compl' s bs .pr₁ = complPr s ⟨ bs ⟩'
- compl' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Compl ⟨ bs ⟩' mp) ((bs is-prop') (ls , msg)) 𝟘-is-prop (s ∈? ls)
+ compl' s bs .pr₁ mp = complPr s (⟨ bs ⟩' mp) mp
+ compl' s bs .pr₂ mp@(ls , msg) = scope-l1-prop s ls (Compl (⟨ bs ⟩' mp)) ((bs is-prop') (ls , msg)) 𝟘-is-prop (s ∈? ls)
 
 
 
  compl : Secret → ×BSet → ×BSet
  compl s bs = compl' s (bs bset) , λ ascrs scrs x (a⊂s , a⊃s) → l1 ascrs scrs x a⊂s a⊃s (s ∈? ascrs) (s ∈? scrs) , l2 ascrs scrs x a⊂s a⊃s (s ∈? scrs) (s ∈? ascrs) where
-  l1 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ ascrs)) → (deq2 : is-decidable (s ∈ scrs)) → scope-l1 s ascrs (Compl ⟨ bs bset ⟩' (ascrs , x)) deq → scope-l1 s scrs (Compl ⟨ bs bset ⟩' (scrs , x)) deq2
+  l1 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ ascrs)) → (deq2 : is-decidable (s ∈ scrs)) → scope-l1 s ascrs (Compl (⟨ bs bset ⟩' (ascrs , x))) deq → scope-l1 s scrs (Compl (⟨ bs bset ⟩' (scrs , x))) deq2
   l1 ascrs scrs x a⊃s a⊂s (inl eq1) (inl eq2) cond = bs .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₁ cond
   l1 ascrs scrs x a⊃s a⊂s (inl eq) (inr neq) cond = 𝟘-elim (neq (∈→∈ s ascrs scrs a⊃s eq))
 
-  l2 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ scrs)) → (deq2 : is-decidable (s ∈ ascrs)) → scope-l1 s scrs (Compl ⟨ bs bset ⟩' (scrs , x)) deq → scope-l1 s ascrs (Compl ⟨ bs bset ⟩' (ascrs , x)) deq2
+  l2 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ scrs)) → (deq2 : is-decidable (s ∈ ascrs)) → scope-l1 s scrs (Compl (⟨ bs bset ⟩' (scrs , x))) deq → scope-l1 s ascrs (Compl (⟨ bs bset ⟩' (ascrs , x))) deq2
   l2 ascrs scrs x a⊃s a⊂s (inl eq1) (inl eq2) cond = bs .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₂ cond
   l2 ascrs scrs x a⊃s a⊂s (inl eq) (inr neq) cond = 𝟘-elim (neq (∈→∈ s scrs ascrs a⊂s eq))
 
@@ -103,32 +96,25 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
 -- TODO I believe there is a better way here, since most of this is redundant.
 
  splitPr : Secret → BPred → BPred × BPred
- splitPr s bs = limitPr s bs , complPr s bs
+ splitPr s bs = (λ mp → limitPr s (bs mp) mp) , λ mp → complPr s (bs mp) mp
 
  split : Secret → ×BSet → ×BSet × ×BSet
  split s bs = limit s bs , compl s bs
 
-
- limitMPr : Secret → List Secret → BPred → BPred
- limitMPr s [] bs = limitPr s bs
- limitMPr s (l ∷ ls) w = let w2 = limitPr s w
-                             w3 = limitMPr l ls w2
-                         in w3
-
- limitMPr' : Secret → List Secret → 𝓤 ̇  → BPred
- limitMPr' s [] bs mp = limitPr' s bs mp
- limitMPr' s (l ∷ ls) bs mp = let w2 = limitPr' s bs mp
-                                  w3 = limitMPr' l ls w2 mp
-                              in w3
+ limitMPr : Secret → List Secret → 𝓤 ̇  → BPred
+ limitMPr s [] bs mp = limitPr s bs mp
+ limitMPr s (l ∷ ls) w mp = let w2 = limitPr s w mp
+                                w3 = limitMPr l ls w2 mp
+                            in w3
 
  limitM' : Secret → List Secret → BSet' → BSet'
- limitM' s ls bs .pr₁ = limitMPr s ls ⟨ bs ⟩'
+ limitM' s ls bs .pr₁ mp = limitMPr s ls (⟨ bs ⟩' mp) mp
  limitM' s [] bs .pr₂ = limit' s bs .pr₂
  limitM' s (l ∷ ls) bs .pr₂ = limitM' l ls (limit' s bs) .pr₂
 
 
  limitM× : Secret → List Secret → ×BSet → ×BSet
- limitM× s ls bs .pr₁ .pr₁ = limitMPr s ls ⟨ bs bset ⟩'
+ limitM× s ls bs .pr₁ .pr₁ mp = limitMPr s ls (⟨ bs bset ⟩' mp) mp
  limitM× s ls bs .pr₁ .pr₂ = limitM' s ls (bs bset) .pr₂
  limitM× s [] bs .pr₂ = limit s bs .pr₂
  limitM× s (l ∷ ls) bs .pr₂ = limitM× l ls (limit s bs) .pr₂
@@ -141,7 +127,7 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
 --                        in w3
 
  complMPr : Secret → List Secret → BPred → BPred
- complMPr s [] bs = complPr s bs
+ complMPr s [] bs mp = complPr s (bs mp) mp
  complMPr s (l ∷ ls) w = let (w2 , a) = splitPr s w
                              b = complMPr l ls w2
                          in (λ mp → ((a mp) × (b mp)) + (¬ ((a mp) × (b mp)) × (a mp + b mp)))
