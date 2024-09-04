@@ -22,6 +22,7 @@ module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncatio
 open list-decidable dec
 
 open PropositionalTruncation pt
+open import UF.ImageAndSurjection pt
 
 open import xBSet fe pt Msg Secret s-is-set dec
 open import PSet ×BSet fe pt Msg
@@ -157,19 +158,22 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 -- and remove the scope when we send the msg to the outside world
 -- This function does the actual limitation
 
- lscope : List Secret → F Q.E → F Q.E
+-- lscope does not change the next step, only the current step.
+-- thus the next Q.E contains all the necessary information for the composition
+-- that we do in the next function.
+ lscope : {A : 𝓤 ⁺⁺ ⁺ ̇} → List Secret → F A → F A
  lscope [] q = q
- lscope (s ∷ ls) ((ex , inn) , x , ((BA , BM) , f))
+ lscope {A} (s ∷ ls) ((ex , inn) , x , ((BA , BM) , f))
   = let (a , b) = splitPM s ls ex
     in (a , (b ∣ᵖ inn)) , x , ((limitM× s ls BA , limitM× s ls BM) , q s ls) where
     q : ∀ s ls → (x : S×Msg) →
         ⟨ pr₁ (limitM× s ls BA) ⟩' x +
         ⟨ pr₁ (limitM× s ls BM) ⟩' x →
-        Q.E
+        A
     q s [] mp@(ws , msg) d = l1 (s ∈? ws) d where
      l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
       Lim ((BA .pr₁ .pr₁) (ws , msg)) (+→𝟚 w) +
-      Lim ((BM .pr₁ .pr₁) (ws , msg)) (+→𝟚 w) → Q.E
+      Lim ((BM .pr₁ .pr₁) (ws , msg)) (+→𝟚 w) → A
      l1 (inl x) (inl ())
      l1 (inl x) (inr ())
      l1 (inr x) d = f mp d
@@ -178,38 +182,44 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
      l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
       limitMPr l ls (Lim (BA .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) +
       limitMPr l ls (Lim (BM .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) →
-      Q.E
+      A
      l1 (inl x) d with limitMPr l ls 𝟘 mp | (limitMPr-𝟘 l ls mp)
      l1 (inl x) (inl ()) | r | refl
      l1 (inl x) (inr ()) | r | refl
      l1 (inr x) d = q l ls (ws , msg) d
 
-
-
- limit-scope : List Secret × F Q.E × F Q.E → List Secret × (F Q.E) × (F Q.E)
- limit-scope (ls , a , b) = ls , lscope ls a , lscope ls b
-
- var-limit-scope : ExCG (List Secret × F Q.E × F Q.E) → ExCG (List Secret × F Q.E × F Q.E)
- var-limit-scope (D , var) = D , λ x → limit-scope (var x)
- 
 -- This function combines the variance introduced by a function and the parallel composition
 -- of two systems. We need to define it this way, because parallel composition
 -- introduces this variance when the two systems interact with each other
 
--- One of them needs to be non-empty, because if both are empty, then we can not expand
--- on the F functor.
+-- It takes two Q.E and their scope, The two Q.E are not scope limited.
+-- It returns a scope limited F ... but the next step is not scope limited.
+
+-- TODO limit scope inside this  function!!!! 
  ExCGP : ExCG (List Secret × F Q.E × F Q.E) → F (ExCG (List Secret × F Q.E × F Q.E))
  -- The PSet
  pr₁ (ExCGP (D , var))
-  = &ᵈᵖ ex , &ᵈᵖ inn where
+  = {!!} , {!!} where
    scope = λ d → var d .pr₁
    a = λ d → var d .pr₂ .pr₁
    b = λ d → var d .pr₂ .pr₂
 
+
+   sp : List Secret → PSet → PSet → PSet × PSet
+   sp [] ex inn = ex , inn
+   sp (s ∷ ls) ex inn
+    =  let (a , b) = splitPM s ls ex
+       in a , (b ∣ᵖ inn)
+
    -- External PSet
-   ex = λ d → (pr₁ ∘ pr₁) (a d) , (pr₁ ∘ pr₁) (b d)
+   ex = λ d → (pr₁ ∘ pr₁) (a d) &ᵖ (pr₁ ∘ pr₁) (b d)
+   
    -- Internal PSet
-   inn = λ d → (pr₂ ∘ pr₁) (a d) , (pr₂ ∘ pr₁) (b d)
+   -- TODO Using the &ᵖ operator, is this correct?
+   inn = λ d → (pr₂ ∘ pr₁) (a d) &ᵖ (pr₂ ∘ pr₁) (b d)
+
+   -- TODO ex and inn are codependent on d, thus it must be useful to know this dependence.
+   -- Fix this?
  pr₁ (pr₂ (ExCGP (D , var)))
  -- The new internal reduction case, it describes the possible internal reduction of the system if possible.
 
@@ -298,10 +308,13 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 
  ExCGP-co : CoAlgebra
  E ExCGP-co = ExCG (List Secret × F Q.E × F Q.E)
- f ExCGP-co = ExCGP ∘ var-limit-scope
+ f ExCGP-co = ExCGP
 
  _&ᶠ_ : Q.E → Q.E → Q.E
  a &ᶠ b = Q.uni ExCGP-co .pr₁ .pr₁ (𝟙 , (λ x → [] , Q.f a , Q.f b))
+
+
+
 
 
 
