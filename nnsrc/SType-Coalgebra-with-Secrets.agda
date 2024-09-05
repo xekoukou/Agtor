@@ -163,6 +163,10 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 -- lscope does not change the next step, only the current step.
 -- thus the next Q.E contains all the necessary information for the composition
 -- that we do in the next function.
+
+-- TODO this is no longer necessary. I have implented scope inside the composition
+-- function.
+-- Also I have distilled the trick here in lim-rec in Scope.agda
  lscope : {A : 𝓤 ⁺⁺ ⁺ ̇} → List Secret → F A → F A
  lscope [] q = q
  lscope {A} (s ∷ ls) (p , x , ((BA , BM) , f))
@@ -268,6 +272,18 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
   bmy : D → ×BSet
   bmy d = pr₂ (pr₁ (nycf d))
 
+  sbax : D → ×BSet
+  sbax d = limitM×' (scope d) (bax d)
+  sbmx : D → ×BSet
+  sbmx d = limitM×' (scope d) (bmx d)
+
+  sbay : D → ×BSet
+  sbay d = limitM×' (scope d) (bay d)
+  sbmy : D → ×BSet
+  sbmy d = limitM×' (scope d) (bmy d)
+
+
+
 -- This function expresses the output if a new communication happens.
 -- The existence of the communication tells us something about ourselves.
 -- Like a box that may contain a cat, opening the box tells us if there is a cat or not.
@@ -277,29 +293,31 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 
 -- The new ×BSets
   ba : ×BSet
-  ba = Var→×BSet (D , (λ d → (bax d) ×|| (bay d)))
+  ba = Var→×BSet (D , (λ d → (sbax d) ×|| (sbay d)))
 
   bm : ×BSet
-  bm = Var→×BSet (D , (λ d → (bmx d) ×|| (bmy d)))
+  bm = Var→×BSet (D , (λ d → (sbmx d) ×|| (sbmy d)))
 
   e : ExC (ExCG (List Secret × F Q.E × F Q.E))
   pr₁ e = ba , bm
   pr₂ e mp@(_ , inl _) (inl v)
-    =   (Σ d ꞉ D , ⟨ (bax d) bset ⟩' mp + ⟨ (bay d) bset ⟩' mp)
-      , λ { (d , inl px) → scope d , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
-          ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
+    =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩' mp + ⟨ (sbay d) bset ⟩' mp)
+      , λ { (d , inl px) → scope d , lim-rec' (scope d) (bax d) px (λ z → Q.f (pr₂ (nxcf d) mp (inl z))) , y d
+          ; (d , inr py) → scope d , lim-rec' (scope d) (bay d) py (λ z → Q.f (pr₂ (nycf d) mp (inl z))) , (x d)}
   pr₂ e mp@(_ , inl _) (inr w)
-    =   (Σ d ꞉ D , ⟨ (bmx d) bset ⟩' mp + ⟨ (bmy d) bset ⟩' mp)
-      , λ { (d , inl px) → scope d , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
-          ; (d , inr py) → scope d , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
+    =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩' mp + ⟨ (sbmy d) bset ⟩' mp)
+      , λ { (d , inl px) → scope d , lim-rec' (scope d) (bmx d) px (λ z → Q.f (pr₂ (nxcf d) mp (inr z))) , (y d)
+          ; (d , inr py) → scope d , lim-rec' (scope d) (bmy d) py (λ z → Q.f (pr₂ (nycf d) mp (inr z))) , (x d)}
   pr₂ e mp@(_ , inr scr) (inl v)
-    =   (Σ d ꞉ D , ⟨ (bax d) bset ⟩' mp + ⟨ (bay d) bset ⟩' mp)
-      , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inl px)) , (y d)
-          ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inl py)) , (x d)}
+    =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩' mp + ⟨ (sbay d) bset ⟩' mp)
+    -- We limit the scope based on the current one, not the next one
+      , λ { (d , inl px) → remove scr (scope d) , lim-rec' (scope d) (bax d) px (λ z → Q.f (pr₂ (nxcf d) mp (inl z))) , (y d)
+          ; (d , inr py) → remove scr (scope d) , lim-rec' (scope d) (bay d) py (λ z → Q.f (pr₂ (nycf d) mp (inl z))) , (x d)}
   pr₂ e mp@(_ , inr scr) (inr w)
-    =   (Σ d ꞉ D , ⟨ (bmx d) bset ⟩' mp + ⟨ (bmy d) bset ⟩' mp)
-      , λ { (d , inl px) → remove scr (scope d) , Q.f (pr₂ (nxcf d) mp (inr px)) , (y d)
-          ; (d , inr py) → remove scr (scope d) , Q.f (pr₂ (nycf d) mp (inr py)) , (x d)}
+    =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩' mp + ⟨ (sbmy d) bset ⟩' mp)
+      , λ { (d , inl px) → remove scr (scope d) , lim-rec' (scope d) (bmx d) px (λ z → Q.f (pr₂ (nxcf d) mp (inr z))) , (y d)
+          ; (d , inr py) → remove scr (scope d) , lim-rec' (scope d) (bmy d) py (λ z → Q.f (pr₂ (nycf d) mp (inr z))) , (x d)}
+
 
 
  ExCGP-co : CoAlgebra

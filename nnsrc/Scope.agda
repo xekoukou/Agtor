@@ -129,11 +129,36 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  limitM' s (l ∷ ls) bs .pr₂ = limitM' l ls (limit' s bs) .pr₂
 
 
+
  limitM× : Secret → List Secret → ×BSet → ×BSet
  limitM× s ls bs .pr₁ .pr₁ mp = limitMPr s ls (⟨ bs bset ⟩' mp) mp
  limitM× s ls bs .pr₁ .pr₂ = limitM' s ls (bs bset) .pr₂
  limitM× s [] bs .pr₂ = limit s bs .pr₂
  limitM× s (l ∷ ls) bs .pr₂ = limitM× l ls (limit s bs) .pr₂
+
+ limitM×' : List Secret → ×BSet → ×BSet
+ limitM×' [] bs = bs
+ limitM×' (s ∷ ls) bs = limitM× s ls bs
+
+-- limitM×' is a restriction, so it fits where bs fits.
+ lim-rec : {A : 𝓥 ̇ } → ∀ s ls {bs mp} → ⟨ (limitM× s ls bs) bset ⟩' mp → (⟨ bs bset ⟩' mp → A) → A
+ lim-rec s [] {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
+  l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
+       Lim (bs .pr₁ .pr₁ (ws , msg)) (+→𝟚 w) → _
+  l1 (inr _) c = f c
+
+ lim-rec s (l ∷ ls) {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
+  l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
+       limitMPr l ls (Lim (bs .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) → _
+  l1 (inl x) c with limitMPr l ls 𝟘 mp | (limitMPr-𝟘 l ls mp)
+  l1 (inl x) () | r | refl
+  l1 (inr x) c = lim-rec l ls {bs} {mp} c f
+
+
+ lim-rec' : {A : 𝓥 ̇ } → ∀ ls bs {mp} → ⟨ (limitM×' ls bs) bset ⟩' mp → (⟨ bs bset ⟩' mp → A) → A
+ lim-rec' [] _ c f = f c
+ lim-rec' (x ∷ ls) bs {mp} = lim-rec x ls {bs}
+
 
  complMPr : Secret → List Secret → BPred → BPred
  complMPr s [] bs mp = complPr s (bs mp) mp
