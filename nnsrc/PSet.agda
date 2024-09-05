@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K --exact-split #-}
 
-open import MLTT.Spartan hiding (𝟚)
+open import MLTT.Spartan
 open import MLTT.Negation
 open import MLTT.Plus
 open import UF.FunExt
@@ -15,20 +15,9 @@ open import UF.Base
 open import Lists
 open import Maybe
 
-module PSet (BSet : 𝓤 ⁺ ̇ ) (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
-
-open import MLTT.Two renaming (₀ to 𝕞 ; ₁ to 𝕒) public
+module PSet (pt : propositional-truncations-exist) (&PSet : 𝓤 ⁺⁺ ̇) (_&-&ᵖ_ : &PSet → &PSet → &PSet) where
 
 open PropositionalTruncation pt
-
-_ᵗ : 𝟚 × BSet → 𝟚 × BSet
-(𝕞 , x) ᵗ = 𝕒 , x
-(𝕒 , x) ᵗ = 𝕞 , x
-
-record &PSet : 𝓤 ⁺⁺ ̇  where
- field
-  &⟨_⟩ : (o : 𝟚 × BSet) → 𝓤 ⁺ ̇ 
-  &-is-prop : ∀ o → is-prop (&⟨_⟩ o)
 
 
 -- This predicate describes all the possible superpositions of a system.
@@ -37,13 +26,8 @@ record PSet : 𝓤 ⁺⁺ ⁺ ̇  where
   ∣⟨_⟩ : (o : &PSet) → 𝓤 ⁺⁺ ̇ 
   ∣-is-prop : ∀ o → is-prop (∣⟨_⟩ o)
 
-open &PSet public
 open PSet public
 
-
-_&-&ᵖ_ : &PSet → &PSet → &PSet
-&⟨ A &-&ᵖ B ⟩ o = ∥ &⟨ A ⟩ o + &⟨ B ⟩ o ∥
-&-is-prop (A &-&ᵖ B) o = ∥∥-is-prop
 
 _&ᵖ_ : PSet → PSet → PSet
 ∣⟨ A &ᵖ B ⟩ o = ∥ Σ &A ꞉ &PSet , Σ &B ꞉ &PSet , ∣⟨ A ⟩ &A × ∣⟨ B ⟩ &B × (&A &-&ᵖ &B ＝ o)  ∥
@@ -53,9 +37,20 @@ _∣ᵖ_ : PSet → PSet → PSet
 ∣⟨ A ∣ᵖ B ⟩ o = ∥ ∣⟨ A ⟩ o + ∣⟨ B ⟩ o ∥
 ∣-is-prop (A ∣ᵖ B) o = ∥∥-is-prop
 
-_ᵀ : PSet → PSet
-∣⟨ A ᵀ ⟩ o = ∥ (∀ x → (p : ∣⟨ A ⟩ x) → Σ y ꞉ 𝟚 × BSet , &⟨ x ⟩ y × &⟨ o ⟩ (y ᵗ)) ∥
-∣-is-prop (A ᵀ) o = ∥∥-is-prop
+
+ -- TODO Is this the best way to describe this???
+ -- Move this to the more specialized case where GSet is BSet
+-- _ᵀ : PSet → PSet
+-- ∣⟨ A ᵀ ⟩ o
+-- = ∥ (∀ x → (p : ∣⟨ A ⟩ x) → Σ y ꞉ 𝟚 × BSet , &⟨ x ⟩ y × &⟨ o ⟩ (y ᵗ))
+--     × (∀ y → &⟨ o ⟩ y → Σ x ꞉ &PSet , (∣⟨ A ⟩ x) × &⟨ x ⟩ (y ᵗ) )
+--   ∥
+-- ∣-is-prop (A ᵀ) o = ∥∥-is-prop
+
+--- ?????
+--  _ᵀ : PSet → PSet
+--  ∣⟨ A ᵀ ⟩ o = ∥ (∀ x → (p : ∣⟨ A ⟩ x) → Σ y ꞉ 𝟚 × BSet , &⟨ x ⟩ y × &⟨ o ⟩ (y ᵗ)) ∥
+--  ∣-is-prop (A ᵀ) o = ∥∥-is-prop
 
 Var : { D : 𝓤 ̇ } → 𝓤 ⁺⁺ ⁺ ̇
 Var {D} = (D → PSet)

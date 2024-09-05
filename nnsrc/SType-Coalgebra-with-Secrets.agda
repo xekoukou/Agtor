@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K --exact-split #-}
 
-open import MLTT.Spartan hiding (𝟚)
+open import MLTT.Spartan
 open import MLTT.Negation
 open import MLTT.Plus
 open import UF.FunExt
@@ -25,7 +25,8 @@ open PropositionalTruncation pt
 open import UF.ImageAndSurjection pt
 
 open import xBSet fe pt Msg Secret s-is-set dec
-open import PSet ×BSet fe pt Msg
+open import &PSet (𝟚 × ×BSet) pt
+open import PSet pt (&PSet × &PSet) (λ (a1 , a2) (b1 , b2) → (a1 &-&ᵖ b1) , ((a2 &-&ᵖ b2)))
 open import Scope fe pt UA Msg Secret s-is-set dec
 
 -- non-empty variance
@@ -42,7 +43,7 @@ ExC→G X (a , b) = (Σ x ꞉ S×Msg , ⟨ (pr₁ ∘ pr₁) a ⟩' x + ⟨ (pr�
 
 -- This is a functor
 F : 𝓤 ⁺⁺ ⁺ ̇  → 𝓤 ⁺⁺ ⁺ ̇
-F X = (PSet × PSet) × X × ExC X
+F X = PSet × X × ExC X
 
 -- TODO We need to split the structure to internal reducible structure and externally reducible one.
 
@@ -153,6 +154,7 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
  open CoAlgebra
  open CoAlgebra-morphism
  open ∈-dec _∈?_
+ open PSet-scope _∈?_
 
 -- We need to limit scope when we send msg between the two systems
 -- and remove the scope when we send the msg to the outside world
@@ -163,9 +165,8 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 -- that we do in the next function.
  lscope : {A : 𝓤 ⁺⁺ ⁺ ̇} → List Secret → F A → F A
  lscope [] q = q
- lscope {A} (s ∷ ls) ((ex , inn) , x , ((BA , BM) , f))
-  = let (a , b) = splitPM s ls ex
-    in (a , (b ∣ᵖ inn)) , x , ((limitM× s ls BA , limitM× s ls BM) , q s ls) where
+ lscope {A} (s ∷ ls) (p , x , ((BA , BM) , f))
+  = scopePM (s ∷ ls) p , x , ((limitM× s ls BA , limitM× s ls BM) , q s ls) where
     q : ∀ s ls → (x : S×Msg) →
         ⟨ pr₁ (limitM× s ls BA) ⟩' x +
         ⟨ pr₁ (limitM× s ls BM) ⟩' x →
@@ -199,27 +200,14 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
  ExCGP : ExCG (List Secret × F Q.E × F Q.E) → F (ExCG (List Secret × F Q.E × F Q.E))
  -- The PSet
  pr₁ (ExCGP (D , var))
-  = {!!} , {!!} where
+  = Var→PSet λ d → scopePM (scope d) (p d) where
    scope = λ d → var d .pr₁
    a = λ d → var d .pr₂ .pr₁
    b = λ d → var d .pr₂ .pr₂
 
+   -- PSet
+   p = λ d → pr₁ (a d) &ᵖ pr₁ (b d)
 
-   sp : List Secret → PSet → PSet → PSet × PSet
-   sp [] ex inn = ex , inn
-   sp (s ∷ ls) ex inn
-    =  let (a , b) = splitPM s ls ex
-       in a , (b ∣ᵖ inn)
-
-   -- External PSet
-   ex = λ d → (pr₁ ∘ pr₁) (a d) &ᵖ (pr₁ ∘ pr₁) (b d)
-   
-   -- Internal PSet
-   -- TODO Using the &ᵖ operator, is this correct?
-   inn = λ d → (pr₂ ∘ pr₁) (a d) &ᵖ (pr₂ ∘ pr₁) (b d)
-
-   -- TODO ex and inn are codependent on d, thus it must be useful to know this dependence.
-   -- Fix this?
  pr₁ (pr₂ (ExCGP (D , var)))
  -- The new internal reduction case, it describes the possible internal reduction of the system if possible.
 
@@ -280,6 +268,14 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
   bmy : D → ×BSet
   bmy d = pr₂ (pr₁ (nycf d))
 
+-- This function expresses the output if a new communication happens.
+-- The existence of the communication tells us something about ourselves.
+-- Like a box that may contain a cat, opening the box tells us if there is a cat or not.
+-- Here is a msg is received , it tells us that there was an actor that could receive the msg.
+-- The superposition collapses.
+
+
+-- The new ×BSets
   ba : ×BSet
   ba = Var→×BSet (D , (λ d → (bax d) ×|| (bay d)))
 
@@ -316,11 +312,8 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 
 
 
-
-
-
  ∣P' : ExCG (F Q.E) → F (ExCG (F Q.E))
- pr₁ (∣P' (D , f)) = (Var→PSet (pr₁ ∘ pr₁ ∘ f)) , (Var→PSet (pr₂ ∘ pr₁ ∘ f))
+ pr₁ (∣P' (D , f)) = (Var→PSet (pr₁ ∘ f))
  pr₁ (pr₂ (∣P' (D , f))) = D , (Q.f ∘ pr₁ ∘ pr₂ ∘ f)
  pr₂ (pr₂ (∣P' (D , f)))
   = DVar→×BSet (D , (λ d → (pr₁ ∘ pr₂ ∘ pr₂ ∘ f) d))
