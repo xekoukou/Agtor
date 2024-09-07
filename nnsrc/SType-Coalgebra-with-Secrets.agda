@@ -15,7 +15,6 @@ open import UF.Sets
 open import UF.Base
 
 open import Lists
-open import Maybe
 
 module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
 
