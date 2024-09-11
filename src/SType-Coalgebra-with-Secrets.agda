@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --exact-split #-}
+{-# OPTIONS --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
 open import MLTT.Negation
@@ -16,17 +16,17 @@ open import UF.Base
 
 open import Lists
 
-module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
+module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
 
 open list-decidable dec
 
 open PropositionalTruncation pt
 open import UF.ImageAndSurjection pt
 
-open import xBSet fe pt Msg Secret s-is-set dec
+open import xBSet fe pt Msg Secret
 open import &PSet (𝟚 × ×BSet) pt
 open import PSet pt (&PSet × &PSet) (λ (a1 , a2) (b1 , b2) → (a1 &-&ᵖ b1) , ((a2 &-&ᵖ b2)))
-open import Scope fe pt UA Msg Secret s-is-set dec
+open import Scope fe pt Msg Secret
 
 -- non-empty variance
 ExCG : 𝓤 ⁺⁺ ⁺ ̇  → 𝓤 ⁺⁺ ⁺ ̇

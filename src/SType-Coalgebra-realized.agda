@@ -1,6 +1,6 @@
-{-# OPTIONS --safe --guardedness --without-K --exact-split #-}
+{-# OPTIONS --guardedness --without-K --exact-split #-}
 
-open import MLTT.Spartan hiding (𝟚)
+open import MLTT.Spartan
 open import MLTT.Negation
 open import MLTT.Plus
 open import UF.FunExt
@@ -11,15 +11,17 @@ open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 open import UF.Base
 
-module SType-Coalgebra-realized (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : _) (Msg : 𝓤 ̇) where
+module SType-Coalgebra-realized (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : _) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
 
 open PropositionalTruncation pt
-open import BSet fe pt Msg
-open import PSet fe pt Msg
-open import SType-Coalgebra fe pt UA Msg
+
+open import xBSet fe pt Msg Secret
+open import &PSet (𝟚 × ×BSet) pt
+open import PSet pt (&PSet × &PSet) (λ (a1 , a2) (b1 , b2) → (a1 &-&ᵖ b1) , ((a2 &-&ᵖ b2)))
+open import SType-Coalgebra-with-Secrets fe pt UA Msg Secret dec
 
 
-record SType : 𝓤 ⁺⁺ ̇  where
+record SType : 𝓤 ⁺⁺ ⁺ ̇  where
  coinductive
  field
   supPos : PSet
@@ -28,12 +30,12 @@ record SType : 𝓤 ⁺⁺ ̇  where
   
 open SType
 
-record STypeEq (a b : SType) : 𝓤 ⁺⁺ ̇  where
+record STypeEq (a b : SType) : 𝓤 ⁺⁺ ⁺ ̇  where
  coinductive
  field
   psEq : supPos a ＝ supPos b
   inEq : STypeEq (inner a) (inner b)
-  extEq : Σ ×BsEq ꞉ pr₁ (extern a) ＝ pr₁ (extern b) , (∀ x p → STypeEq (pr₂ (extern a) x p) (pr₂ (extern b) x (transport (λ z → ⟨ pr₁ z ⟩ x + ⟨ pr₂ z ⟩ x) ×BsEq p))) 
+  extEq : Σ ×BsEq ꞉ pr₁ (extern a) ＝ pr₁ (extern b) , (∀ x p → STypeEq (pr₂ (extern a) x p) (pr₂ (extern b) x (transport (λ z → ⟨ z .pr₁ .pr₁ ⟩' x + ⟨ z .pr₂ .pr₁ ⟩' x) ×BsEq p))) 
   
 
 stEq-refl : ∀{ a} → STypeEq a a
@@ -102,59 +104,3 @@ module _ where
     pr₁ (STypeEq.extEq (s (p , ix , ex))) = refl
     pr₂ (STypeEq.extEq (s (p , ix , ex))) x v with (t (pr₂ ex x v)) | ap (λ z → z ((pr₂ ex x v))) ((ap (inv ∘_) (di-comm eq) ∙ ap (_∘ t) f-inv-iso))
     ... | _ | refl = s (f a (pr₂ ex x v))
-
- -- record S : 𝓤 ⁺⁺ ̇  where
- --  coinductive
- --  field
- --   sP : PSet
- --   i : S
- --   e : ExC S
- --   more : 𝟚
-   
- -- open S
-
- -- record SS : 𝓤 ⁺⁺ ̇  where
- --  coinductive
- --  field
- --   sP : PSet
- --   i : SS
- --   e : ExC SS
- --   more : 𝟚
-   
- -- open SS
-
-
-
- -- ff : S → F S
- -- ff s = sP s , (i s) , e s
-
- -- dd : S → SType
- -- supPos (dd s) = pr₁ (ff s)
- -- inner (dd s) = dd (pr₁ (pr₂ (ff s)))
- -- extern (dd s) = (pr₁ (pr₂ (pr₂ (ff s)))) , (λ x p → dd ((pr₂ (pr₂ (pr₂ (ff s)))) x p))
-
- -- sco : CoAlgebra
- -- E sco = S
- -- f sco = ff
-
- -- dd-morph : coalg-morphism sco dd
- -- di-comm dd-morph = refl
-
-
- -- qq : (b : Σ (coalg-morphism (record { E = S ; f = ff }))) →
- --      (λ x → dd x) ＝ pr₁ b
- -- qq (t , eq) = ee where
- --   ee = dfunext fe λ x → stEq→eq (ss x) where
- --    ss : (x : S) → STypeEq (dd x) (t x)
- --    STypeEq.psEq (ss s) = ap (λ z → pr₁ (z s)) (di-comm eq)
- --    STypeEq.inEq (ss s) with inner (t s) | (ap (λ z → pr₁ (pr₂ (z s))) (di-comm eq))
- --    ... | .(t (i s)) | refl = ss (i s)
- --    -- This does not work because the termination checker does not understand that
- --    -- the trasport is qc
-   
- --    -- transport (λ z → STypeEq (dd (i s)) z)
- --    --                        (ap (λ z → pr₁ (pr₂ (z s))) (di-comm eq)) (ss (i s))
- --    pr₁ (STypeEq.extEq (ss s)) with extern (t s) | (ap (λ z → pr₂ (pr₂ (z s))) (di-comm eq))
- --    ... | .(pr₁ (e s) , (λ x bs → t (pr₂ (e s) x bs))) | refl = refl
- --    pr₂ (STypeEq.extEq (ss s)) x p with extern (t s) | (ap (λ z → pr₂ (pr₂ (z s))) (di-comm eq))
- --    ... | .(pr₁ (e s) , (λ x bs → t (pr₂ (e s) x bs))) | refl = ss (pr₂ (e s) x p)

@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --exact-split #-}
+{-# OPTIONS --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
 open import MLTT.Negation
@@ -20,12 +20,12 @@ import &PSet
 open import Lists
 open import Maybe
 
-module Scope (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
+module Scope (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) where
 
 open PropositionalTruncation pt
 open UF.ImageAndSurjection pt
 
-open import xBSet fe pt Msg Secret s-is-set dec
+open import xBSet fe pt Msg Secret
 
 
 
@@ -164,7 +164,7 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  complMPr s [] bs mp = complPr s (bs mp) mp
  complMPr s (l ∷ ls) w = let (w2 , a) = splitPr s w
                              b = complMPr l ls w2
-                         in (λ mp → ((a mp) × (b mp)) + (¬ ((a mp) × (b mp)) × (a mp + b mp)))
+                         in (λ mp → ∥ a mp + b mp ∥)
 
  complM' : Secret → List Secret → BSet' → BSet'
  complM' s ls bs .pr₁ = complMPr s ls ⟨ bs ⟩'
@@ -172,7 +172,7 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  complM' s (l ∷ ls) w .pr₂ = let w2 = limit' s w
                                  b = compl' s w
                                  c = complM' l ls w2
-                             in (b ||' c) .pr₂ 
+                             in (b ||'' c) .pr₂ 
 
 
  complM× : Secret → List Secret → ×BSet → ×BSet

@@ -12,10 +12,10 @@ open import UF.PropTrunc
 open import MLTT.Two renaming (₀ to 𝕞 ; ₁ to 𝕒)
 
 
-module StrSubTypes (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
+module StrSubTypes (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) where
 
 open PropositionalTruncation pt
-open import BSet2 Msg
+open import xBSet Msg
 open import SType fe pt Msg
 
 

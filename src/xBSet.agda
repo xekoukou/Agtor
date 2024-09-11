@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --exact-split #-}
+{-# OPTIONS --safe --without-K --exact-split #-}
 --TODO PUT safe flag again
 
 open import MLTT.Spartan hiding (𝟚)
@@ -19,7 +19,7 @@ open import Lists
 open import Maybe
 
 -- I know that UA proves Prop-Ext
-module xBSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (s-is-set : is-set Secret) (dec : (a b : Secret) → is-decidable (a ＝ b)) where
+module xBSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) where
 
 open PropositionalTruncation pt
 
@@ -48,15 +48,6 @@ _bset bs = bs .pr₁
 ×⊤B : ×BSet
 ×⊤B = ⊤B toBSet' , λ ascrs scrs _ _ → id , id
 
--- _⟶_ : BSet → BSet → BSet
--- ⟨ P ⟶ Q ⟩ mp = ⟨ P ⟩ mp → ⟨ Q ⟩ mp
--- (P ⟶ Q) .-is-prop mp = Π-is-prop fe (λ _ → (Q .-is-prop) mp)
--- -- (P ⟶ Q) .-is-decidable mp with Q .-is-decidable mp
--- -- ... | inl q = inl λ _ → q
--- -- ... | inr q with P .-is-decidable mp
--- -- ... | inl p = inr λ x → q (x p)
--- -- ... | inr p = inl (λ x → 𝟘-elim (p x))
-
 _×&&_ : ×BSet → ×BSet → ×BSet
 a ×&& b
  =   ((a bset) &&' (b bset))
@@ -64,49 +55,18 @@ a ×&& b
    , λ (z , y) → (a .pr₂ ascrs scrs x eq .pr₂ z) , (b .pr₂ ascrs scrs x eq .pr₂ y)
 
 
-
-
--- _≡ᵇ_ : BSet → BSet → 𝓤 ̇
--- A ≡ᵇ B = ⊨ ((A ⟶ B) && (B ⟶ A))
-
--- ¬ᵇ : BSet → BSet
--- ⟨ ¬ᵇ A ⟩ mp = ¬ (⟨ A ⟩ mp)
--- -is-prop (¬ᵇ A) mp = Π-is-prop fe λ _ → 𝟘-is-prop
--- -- -is-decidable (¬ᵇ A) mp with -is-decidable A mp
--- -- ... | inl x = inr (λ ¬f → ¬f x)
--- -- ... | inr x = inl x
-
--- -- I do not like this definition, because we need to prove the negation
--- --  update : But since we have decidability anyway, this is provable immediately
--- _─_ : BSet → BSet → BSet
--- (a ─ b) = a && (¬ᵇ b)
-
--- _|x|_ : BSet → BSet → BSet
--- ⟨ a |x| b ⟩ mp = ⟨ ¬ᵇ (a && b) ⟩ mp × (⟨ a ⟩ mp + ⟨ b ⟩ mp)
--- -is-prop (a |x| b) mp
---  = Σ-is-prop
---     (¬ᵇ (a && b) .-is-prop mp)
---     (λ ¬pa&b → +-is-prop (a .-is-prop mp)
---     (b .-is-prop mp)
---     λ pa pb → ¬pa&b (pa , pb))
--- -- -is-decidable (a |x| b) mp with a .-is-decidable mp | b .-is-decidable mp
--- -- ... | inl x | inl y = inr (λ (z , _) → z (x , y))
--- -- ... | inl x | inr y = inl ((λ (_ , e) → y e) , inl x)
--- -- ... | inr x | inl y = inl ((λ (e , _) → x e) , inr y)
--- -- ... | inr x | inr y = inr λ { (_ , inl z) → x z ; (_ , inr z) → y z}
-
--- -- I use this definition because of the proof of is-prop
--- _||'_ : BSet → BSet → BSet
--- a ||' b = (a && b) |x| (a |x| b)
-
-
 _×||_ : ×BSet → ×BSet → ×BSet
-(a ×|| b) .pr₁ = (a bset) ||' (b bset)
-(a ×|| b) .pr₂ ascrs scrs msg eq = help {ascrs} {scrs} {msg} where
- postulate
-  help : {ascrs scrs : List Secret}
-         {msg : Msg + Secret} →
-         ⟨ pr₁ (a ×|| b) ⟩' (ascrs , msg) ⇔ ⟨ pr₁ (a ×|| b) ⟩' (scrs , msg)
+(a ×|| b) .pr₁ = (a bset) ||'' (b bset)
+(a@((x , _) , _) ×|| b@((y , _) , _)) .pr₂ ascrs scrs msg eq@(eq1 , eq2) = l1 where
+  l1 : ⟨ pr₁ (a ×|| b) ⟩' (ascrs , msg) ⇔ ⟨ pr₁ (a ×|| b) ⟩' (scrs , msg)
+  l1 .pr₁
+    = ∥∥-rec
+        (((a bset) ||'' (b bset)) .pr₂ (scrs , msg))
+        λ { (inl v) → ∣ inl (a .pr₂ scrs ascrs msg (eq2 , eq1) .pr₂ v) ∣ ; (inr v) → ∣ inr (b .pr₂ ascrs scrs msg eq .pr₁ v) ∣}
+  l1 .pr₂
+    = ∥∥-rec
+        (((a bset) ||'' (b bset)) .pr₂ (ascrs , msg))
+        λ { (inl v) → ∣ inl (a .pr₂ scrs ascrs msg (eq2 , eq1) .pr₁ v) ∣ ; (inr v) → ∣ inr (b .pr₂ ascrs scrs msg eq .pr₂ v) ∣}
 
 
 ×Varᵇ : 𝓤 ⁺ ̇
@@ -131,14 +91,3 @@ DVar→×BSet (D , f) = Var→×BSet (D , pr₁ ∘ f) , Var→×BSet (D , pr₂
 
 ×DVarᵇ→Set : ×DVarᵇ → S×Msg → 𝓤 ̇
 ×DVarᵇ→Set (D , f) mp = ×Varᵇ→Set (D , pr₁ ∘ f) mp × ×Varᵇ→Set (D , pr₂ ∘ f) mp
-
--- -- We do not use this because we have decidability of prop
--- _||_ : BSet → BSet → BSet
--- ⟨ a || b ⟩ mp = ∥ ⟨ a ⟩ mp + ⟨ b ⟩ mp ∥
--- (a || b) .-is-prop mp = ∥∥-is-prop
--- (a || b) .-is-decidable mp with a .-is-decidable mp | b .-is-decidable mp
--- ... | inl x | q = inl ∣ inl x ∣
--- ... | inr x | inl y = inl ∣ inr y ∣
--- ... | inr x | inr y = inr (∥∥-rec 𝟘-is-prop (λ { (inl z) → x z
---                                                ; (inr z) → y z}))
-
