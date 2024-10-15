@@ -230,16 +230,16 @@ module PSet-scope {𝓥} {𝓦} (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) 
  open PSet pt (&PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) × &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦))
  
  
- scopeP : Secret → PSet 𝓣 → PSet {!!} -- (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
+ scopeP : Secret → PSet 𝓣 → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
  -- Again here we use the _&_operator on inn.
  -- I think we need to simplify this
- ∣⟨ scopeP s ps ⟩ v = v ∈image {!!} -- ((λ (ex , inn) → limit&P s ex , (inn &-&ᵖ compl&P s ex)) ∘ restr ∣⟨ ps ⟩)
+ ∣⟨ scopeP s ps ⟩ v = v ∈image ((λ (ex , inn) → limit&P s ex , (inn &-&ᵖ compl&P s ex)) ∘ restr ∣⟨ ps ⟩)
  scopeP s ps .∣-is-prop v = ∃-is-prop
 
- -- scopePM : List Secret → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
- -- -- Again here we use the _&_operator on inn.
- -- -- I think we need to simplify this
- -- ∣⟨ scopePM [] ps ⟩ = ∣⟨ ps ⟩
- -- ∣⟨ scopePM (s ∷ ls) ps ⟩ v = v ∈image ((λ (ex , inn) → limit&PM s ls ex , (inn &-&ᵖ compl&PM s ls ex)) ∘ restr ∣⟨ ps ⟩)
- -- scopePM [] ps .∣-is-prop = ps .∣-is-prop
- -- scopePM (s ∷ ls) ps .∣-is-prop v = ∃-is-prop
+ scopePM : List Secret → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
+ -- Again here we use the _&_operator on inn.
+ -- I think we need to simplify this
+ ∣⟨ scopePM [] ps ⟩ = ∣⟨ ps ⟩
+ ∣⟨ scopePM (s ∷ ls) ps ⟩ v = v ∈image ((λ (ex , inn) → limit&PM s ls ex , (inn &-&ᵖ compl&PM s ls ex)) ∘ restr ∣⟨ ps ⟩)
+ scopePM [] ps .∣-is-prop = ps .∣-is-prop
+ scopePM (s ∷ ls) ps .∣-is-prop v = ∃-is-prop
