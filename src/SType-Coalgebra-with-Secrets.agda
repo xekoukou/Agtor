@@ -62,7 +62,7 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
 
  -- The new Variance
  -- It takes 3 cases
-  = (Σ d ꞉ D , (𝟚 + Σ (λ msg → ⟨ (bax d ×&& bmy d) bset ⟩' msg + ⟨ (bay d ×&& bmx d) bset ⟩' msg)))
+  = (Σ d ꞉ D , (𝟚 + Σ (λ msg → ⟨ (bax d ×&& bmy d) bset ⟩ msg + ⟨ (bay d ×&& bmx d) bset ⟩ msg)))
  -- 1. Internal reduction of system X
     , λ { (d , inl ₀) → scope d , x d , Q.f (iy d)
  -- 2. internal reduction of system Y
@@ -146,20 +146,20 @@ module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ l
   e : ExC (ExCG (List Secret × F Q.E × F Q.E))
   pr₁ e = ba , bm
   pr₂ e mp@(_ , inl _) (inl v)
-    =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩' mp + ⟨ (sbay d) bset ⟩' mp)
+    =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩ mp + ⟨ (sbay d) bset ⟩ mp)
       , λ { (d , inl px) → scope d , lim-rec' (scope d) (bax d) px (λ z → Q.f (pr₂ (nxcf d) mp (inl z))) , y d
           ; (d , inr py) → scope d , lim-rec' (scope d) (bay d) py (λ z → Q.f (pr₂ (nycf d) mp (inl z))) , (x d)}
   pr₂ e mp@(_ , inl _) (inr w)
-    =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩' mp + ⟨ (sbmy d) bset ⟩' mp)
+    =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩ mp + ⟨ (sbmy d) bset ⟩ mp)
       , λ { (d , inl px) → scope d , lim-rec' (scope d) (bmx d) px (λ z → Q.f (pr₂ (nxcf d) mp (inr z))) , (y d)
           ; (d , inr py) → scope d , lim-rec' (scope d) (bmy d) py (λ z → Q.f (pr₂ (nycf d) mp (inr z))) , (x d)}
   pr₂ e mp@(_ , inr scr) (inl v)
-    =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩' mp + ⟨ (sbay d) bset ⟩' mp)
+    =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩ mp + ⟨ (sbay d) bset ⟩ mp)
     -- We limit the scope based on the current one, not the next one
       , λ { (d , inl px) → remove scr (scope d) , lim-rec' (scope d) (bax d) px (λ z → Q.f (pr₂ (nxcf d) mp (inl z))) , (y d)
           ; (d , inr py) → remove scr (scope d) , lim-rec' (scope d) (bay d) py (λ z → Q.f (pr₂ (nycf d) mp (inl z))) , (x d)}
   pr₂ e mp@(_ , inr scr) (inr w)
-    =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩' mp + ⟨ (sbmy d) bset ⟩' mp)
+    =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩ mp + ⟨ (sbmy d) bset ⟩ mp)
       , λ { (d , inl px) → remove scr (scope d) , lim-rec' (scope d) (bmx d) px (λ z → Q.f (pr₂ (nxcf d) mp (inr z))) , (y d)
           ; (d , inr py) → remove scr (scope d) , lim-rec' (scope d) (bmy d) py (λ z → Q.f (pr₂ (nycf d) mp (inr z))) , (x d)}
 

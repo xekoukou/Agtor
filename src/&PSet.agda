@@ -15,7 +15,7 @@ open import UF.Base
 open import Lists
 open import Maybe
 
-module &PSet (GSet : 𝓤 ⁺ ̇ ) (pt : propositional-truncations-exist) where
+module &PSet (GSet : 𝓥 ̇ ) (pt : propositional-truncations-exist) where
 
 open PropositionalTruncation pt
 
@@ -24,13 +24,13 @@ open PropositionalTruncation pt
 -- (𝕞 , x) ᵗ = 𝕒 , x
 -- (𝕒 , x) ᵗ = 𝕞 , x
 
-record &PSet : 𝓤 ⁺⁺ ̇  where
+record &PSet 𝓦 : 𝓥 ⊔ 𝓦 ⁺ ̇  where
  field
-  &⟨_⟩ : (o : GSet) → 𝓤 ⁺ ̇ 
+  &⟨_⟩ : (o : GSet) → 𝓦 ̇ 
   &-is-prop : ∀ o → is-prop (&⟨_⟩ o)
 
 open &PSet public
 
-_&-&ᵖ_ : &PSet → &PSet → &PSet
+_&-&ᵖ_ : &PSet 𝓦 → &PSet 𝓦 → &PSet 𝓦
 &⟨ A &-&ᵖ B ⟩ o = ∥ &⟨ A ⟩ o + &⟨ B ⟩ o ∥
 &-is-prop (A &-&ᵖ B) o = ∥∥-is-prop
