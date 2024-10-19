@@ -16,7 +16,7 @@ open import UF.Base
 
 open import Lists
 
-module SType-Coalgebra-with-Secrets (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (dec : (a b : Secret) → is-decidable (a ＝ b)) {𝓥} {𝓦} where
+module Operators (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (dec : (a b : Secret) → is-decidable (a ＝ b)) {𝓥} {𝓦} where
 
 open list-decidable dec
 
@@ -28,15 +28,22 @@ open import &PSet (𝟚 × ×BSet 𝓥) pt
 open import PSet pt (&PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) × &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦))
 open import Scope fe pt Msg Secret
 
-open import CoAlgebra fe pt UA Msg Secret
+open import CoAlgebra fe pt UA Msg Secret {𝓥} {{!!}} {{!!}}
 
--- module embed (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
---  open co-F-co-iso fc
+ExCG : ∀ 𝓣 → 𝓦' ̇   → 𝓦' ⊔ (𝓣 ⁺) ̇
+ExCG 𝓣 X = Σ D ꞉ 𝓣 ̇  , (D → X)
 
---  open CoAlgebra
---  open CoAlgebra-morphism
---  open ∈-dec _∈?_
---  open PSet-scope _∈?_
+ExC→G : ∀ X → ExC {𝓦'} X → ExCG _ X
+ExC→G X (a , b) = (Σ x ꞉ S×Msg , ⟨ (pr₁ ∘ pr₁) a ⟩ x + ⟨ (pr₁ ∘ pr₂) a ⟩ x) , λ (x , p) → b x p
+
+
+module temp (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
+ open co-F-co-iso fc
+
+ open CoAlgebra
+ open CoAlgebra-morphism
+ -- open ∈-dec _∈?_
+ open PSet-scope _∈?_ {𝓥}
 
 -- -- This function combines the variance introduced by a function and the parallel composition
 -- -- of two systems. We need to define it this way, because parallel composition

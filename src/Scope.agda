@@ -51,7 +51,7 @@ scope-l1-prop x ls A d1 d2 (inl _) = d1
 scope-l1-prop x ls A d1 d2 (inr _) = d2
 
 
-module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
+module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
 
  Lim : 𝓥 ̇  → 𝟚 → Set 𝓥
  Lim P ₀ = 𝟘
@@ -215,14 +215,13 @@ module ∈-dec (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
   split&PM s ls ps = limit&PM s ls ps , compl&PM s ls ps
 
 
--- TODO Here we need to fix this!!!!
 -- The product here has semantic meaning, the first is the external reducibility type,
 -- the second is the internal reducibility type.
 
-module PSet-scope {𝓥} {𝓦} (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
+module PSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) {𝓥} {𝓦} where
 
  open &PSet (𝟚 × ×BSet 𝓥) pt
- open ∈-dec _∈?_
+ open BSet-scope _∈?_
  open &PSet-scope {𝓥}
 
 -- left is external
