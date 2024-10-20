@@ -29,15 +29,15 @@ open import &PSet (𝟚 × ×BSet 𝓥) pt
 open import PSet pt (&PSet 𝓦 × &PSet 𝓦) 
 open import Scope fe pt Msg Secret
 
-ExC : 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦' ̇  → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦' ̇
+ExC : 𝓦' ̇  → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦' ̇
 ExC X = ( Σ B ꞉ ×BSet 𝓥 × ×BSet 𝓥 , (∀ x → ⟨ B .pr₁ .pr₁ ⟩ x + ⟨ B .pr₂ .pr₁ ⟩ x → X))
 
 
 -- We define the coalgebra of a functor F
 
 -- This is a functor
-F : 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇  → (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺) ̇
-F X = PSet 𝓣 × X × ExC {𝓦 ⁺ ⊔ 𝓣 ⁺} X
+F : 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇  → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
+F X = PSet 𝓣 × X × ExC X
 
 Fm : ∀{X Y} → (f : X → Y) → F X → F Y
 Fm f (p , x , (bset , g)) = p , f x , (bset , (λ x bs → f (g x bs)))

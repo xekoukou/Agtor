@@ -138,13 +138,13 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  limitM×' (s ∷ ls) bs = limitM× s ls bs
 
 -- limitM×' is a restriction, so it fits where bs fits.
- lim-rec : {A : 𝓥 ̇ } → ∀ s ls {bs mp} → ⟨ (limitM× {𝓥} s ls bs) bset ⟩ mp → (⟨ bs bset ⟩ mp → A) → A
- lim-rec {𝓥} s [] {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
+ lim-rec : ∀{𝓦} → {A : 𝓦 ̇ } → ∀ s ls {bs mp} → ⟨ (limitM× {𝓥} s ls bs) bset ⟩ mp → (⟨ bs bset ⟩ mp → A) → A
+ lim-rec s [] {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
   l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
        Lim (bs .pr₁ .pr₁ (ws , msg)) (+→𝟚 w) → _
   l1 (inr _) c = f c
 
- lim-rec {𝓥} s (l ∷ ls) {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
+ lim-rec {𝓥 = 𝓥} s (l ∷ ls) {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
   l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
        limitMPr l ls (Lim (bs .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) → _
   l1 (inl x) c with limitMPr {𝓥} l ls 𝟘 mp | (limitMPr-𝟘 {𝓥} l ls mp)
@@ -152,7 +152,7 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
   l1 (inr x) c = lim-rec l ls {bs} {mp} c f
 
 
- lim-rec' : {A : 𝓥 ̇ } → ∀ ls bs {mp} → ⟨ (limitM×' {𝓥} ls bs) bset ⟩ mp → (⟨ bs bset ⟩ mp → A) → A
+ lim-rec' : ∀{𝓦} → {A : 𝓦 ̇ } → ∀ ls bs {mp} → ⟨ (limitM×' {𝓥} ls bs) bset ⟩ mp → (⟨ bs bset ⟩ mp → A) → A
  lim-rec' [] _ c f = f c
  lim-rec' (x ∷ ls) bs {mp} = lim-rec x ls {bs}
 
