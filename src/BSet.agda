@@ -32,14 +32,20 @@ bset-is-prop bs = bs .pr₂
 ⊨ : BSet 𝓥 → 𝓤 ⊔ 𝓥 ̇
 ⊨ P = ∀ a → ⟨ P ⟩ a 
 
+_&&ᵇ_ : BPred 𝓥 → BPred 𝓥 → BPred 𝓥
+(a &&ᵇ b) mp = a mp × b mp
+
 _&&_ : BSet 𝓥 → BSet 𝓥 → BSet 𝓥
-a && b  = (λ mp → ⟨ a ⟩ mp × ⟨ b ⟩ mp) , λ mp → Σ-is-prop ((bset-is-prop a) mp) (λ _ → ((bset-is-prop b) mp))
+a && b  = (λ mp → (⟨ a ⟩ &&ᵇ ⟨ b ⟩) mp) , λ mp → Σ-is-prop ((bset-is-prop a) mp) (λ _ → ((bset-is-prop b) mp))
 
 ¬ᵇ : BSet 𝓥 → BSet 𝓥
 ¬ᵇ bs = (λ mp → ¬ (⟨ bs ⟩ mp)) , (λ mp → Π-is-prop fe λ _ → 𝟘-is-prop)
 
+_||ᵇ_ : BPred 𝓥 → BPred 𝓥 → BPred 𝓥
+(a ||ᵇ b) mp = a mp + b mp
+
 _||_ : BSet 𝓥 → BSet 𝓥 → BSet 𝓥
-(a || b) .pr₁ mp = ∥ ⟨ a ⟩ mp + ⟨ b ⟩ mp ∥
+(a || b) .pr₁ mp = ∥ (⟨ a ⟩ ||ᵇ ⟨ b ⟩) mp ∥
 (a || b) .pr₂ mp = ∥∥-is-prop
 
 Varᵇ : ∀ 𝓦 𝓥 → 𝓤 ⊔ 𝓦 ⁺ ⊔ 𝓥 ⁺ ̇
