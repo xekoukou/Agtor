@@ -28,6 +28,7 @@ variable
 Pred : (A : 𝓤 ̇ ) → ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
 Pred A 𝓥 = ((v : A) → 𝓥 ̇ )
 
+-- same as Sigma ??
 Σv : Pred A 𝓥 → _ ̇
 Σv p = Σ v ꞉ _ , p v
 
@@ -54,7 +55,7 @@ module _ (A : 𝓤 ̇) where
  PSet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
  PSet 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) 𝓣
 
- msg-reducible-g : ×BSet 𝓥 → Pred (𝟚 × ×BSet 𝓥') 𝓦 → _ ̇
+ msg-reducible-g : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
  msg-reducible-g b &p
   = ∀ x → b x → Σ l ꞉ aΣv &p , (l val) x
 
@@ -91,13 +92,13 @@ module _ (A : 𝓤 ̇) where
  PSet-ctx-reducible :  PSet 𝓥 𝓦 𝓣 → ESet 𝓥' 𝓦' 𝓣' → _ ̇
  PSet-ctx-reducible pa ctx = ∀ &pa &ic → pa (&pa , &ic) → PSet-ctx-reducible-fiber (&pa , &ic) ctx
 
- _toCtx : PSet 𝓥 𝓦 𝓣 → Pred (&PSet 𝓥 𝓦) _
+
+ _toCtx : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 𝓦 _
  (pa toCtx) o = Σ λ &ps → pa (o , &ps)
 
 
- _toInt : PSet 𝓥 𝓦 𝓣 → Pred (&PSet 𝓥 𝓦) _
+ _toInt : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 𝓦 _
  (pa toInt) o = Σ λ &ps → pa (&ps , o)
-
 
  PSet-PSet-reducible-fiber : (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) → (&PSet 𝓥' 𝓦' × &PSet 𝓥' 𝓦')
                              → _
@@ -135,15 +136,79 @@ module _ (A : 𝓤 ̇) where
  _ᵀ' : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
  (p ᵀ') o = Σ q ꞉ Fun' p , F⇒&P' q ＝ o
 
- theorem : (a : PSet 𝓥 𝓦 𝓣) → (b : PSet 𝓥' 𝓦' 𝓣') → PSet-ctx-reducible a (b ᵀ') → a ⊑ b
- theorem a b abt-red ctx bc-red &ap &ai pi∈a with abt-red &ap &ai pi∈a
- ... | inr r = inr r
- -- ap fiber
- ... | inl abt-fib = {!!} where
-  l1 : ∀ &pc → ctx &pc → Fun' b
-  l1 &pc &pc∈ctx ((&pb , &ic), (&pb∈b , ¬selfb)) with bc-red &pb &ic &pb∈b
-  -- &pb fiber
-  ... | inr r = 𝟘-elim (¬selfb r)
-  ... | inl bc-fib with bc-fib &pc &pc∈ctx
-  ... | inl x = {!!}
-  ... | inr x = {!!}
+ module _ (LEM : ∀{𝓕} → (A : 𝓕 ̇ ) → A + ¬ A) where
+  ∄⇒∀ : ∀{𝓤 𝓥} → {A : 𝓤 ̇ } → {B : A → 𝓥 ̇ } →
+        ¬ (Σ λ a → B a) →
+        ∀ a → ¬ (B a)
+  ∄⇒∀ ¬∃ a b = ¬∃ (a , b)
+
+  ¬¬A⇒A : ∀{𝓤} → {A : 𝓤 ̇ } → ¬ (¬ A) → A
+  ¬¬A⇒A {_} {A} ¬¬p =
+   case LEM A of λ
+     { (inl p) → p
+     ; (inr ¬p) → 𝟘-elim (¬¬p ¬p)
+     }
+
+  ∀⇒∄ : ∀{𝓤 𝓥} → {A : 𝓤 ̇ } → {B : A → 𝓥 ̇ } →
+                ¬ (∀ a → B a)
+                → (Σ λ a → ¬ (B a))
+  ∀⇒∄ {B = B} ∀¬ =
+   case LEM (Σ λ a → ¬ (B a))
+   of λ { (inl x) → x
+        ; (inr x) → 𝟘-elim (∀¬ λ a → ¬¬A⇒A (∄⇒∀ x a) )}
+
+
+  lemma : ∀{𝓥'' 𝓦'' 𝓣''} → (a : PSet 𝓥 𝓦 𝓣) → (b : PSet 𝓥' 𝓦' 𝓣') → (ctx : ESet 𝓥'' 𝓦'' 𝓣'')
+          → (&pa : _) → (&ia : _) → (pi∈a : a (&pa , &ia))
+          → (abt-fiber : ESet-reducible-fiber &pa (b ᵀ'))
+          → (&pc : _) → (&pc∈ctx : ctx &pc) → (bc-red : PSet-ctx-reducible b ctx)
+          → &PSet-reducible &pa &pc
+  lemma {𝓥 = 𝓥} {𝓦 = 𝓦} {𝓥' = 𝓥'} {𝓦' = 𝓦'} {𝓥'' = 𝓥''} {𝓦'' = 𝓦''} a b ctx &pa &ia pi∈a abt-fiber &pc &pc∈ctx bc-red
+   = case (LEM (&PSet-reducible &pa &pc))
+     of λ { (inl x) → x
+          ; (inr x) → 𝟘-elim (l3 x)} where
+      l1 : ¬ &PSet-reducible &pa &pc → (&pb &ib : &PSet _ _) → (&b∈b : b (&pb , &ib))
+           → ∀ x → bc-red &pb &ib &b∈b ＝ inl x → Σ bs ꞉ _ , ((&pb (₀ , bs) × msg-reducible-g bs &pc) + &pb (₁ , bs) × ¬ (msg-reducible-g bs &pa))
+      l1 ¬acr &pb &ib &b∈b bc-fiber c
+       = case (bc-fiber &pc &pc∈ctx) of
+         λ { (inl x) → (x .pr₁ .pr₁) , (inl ((x .pr₁ .pr₂) , (x .pr₂)))
+           ; (inr c→b) →
+             case (LEM ((l : aΣv &pb) → msg-reducible-g (l val) &pa))
+             of λ { (inl b→a) → 𝟘-elim (¬acr (inr ((c→b .pr₁) , (λ x bsc → b→a (c→b .pr₂ x bsc .pr₁) x (c→b .pr₂ x bsc .pr₂)))))
+                  ; (inr ¬b→a) → let q = ∀⇒∄ ¬b→a in q .pr₁ .pr₁ , inr (q .pr₁ .pr₂ , q .pr₂)} }
+      lh : 𝟚 × ×BSet 𝓥' → _
+      lh (₀ , bs) = ¬ (msg-reducible-g bs &pa) × 𝟙 {𝓤 ⊔ 𝓥' ⊔ (𝓥'' ⁺) ⊔ 𝓦''}
+      lh (₁ , bs) = (msg-reducible-g bs &pc) × 𝟙 {𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦 ⊔ 𝓥'}
+      l2 : ¬ &PSet-reducible &pa &pc → (q : Σ t ꞉ _ , b t × (¬ &PSet-reducible (t .pr₂) (t .pr₂))) →  Σ res ꞉ (Σ bs ꞉ _ , q .pr₁ .pr₁ (bs ᶜ))
+        , lh (res .pr₁)
+      l2 ¬acr ((&pb , &ib) , (&b∈b , ¬sred))
+       = case (w .pr₂) of
+         λ { (inl x) → ((₁ , w .pr₁) , x .pr₁) , x .pr₂ , _ ; (inr x) → ((₀ , w .pr₁) , x .pr₁) , x .pr₂ , _ } where
+       q : ∀ {y} → bc-red &pb &ib &b∈b ＝ y → Σ λ x → y ＝ inl x
+       q {inl x} eq = x , refl
+       q {inr x} eq = 𝟘-elim (¬sred x)
+       w = l1 ¬acr &pb &ib &b∈b (q refl .pr₁) (q refl .pr₂)
+      l3 : ¬ &PSet-reducible &pa &pc → 𝟘
+      l3 ¬acr = case (abt-fiber (F⇒&P' (λ x → l2 ¬acr x .pr₁)) ((λ x → l2 ¬acr x .pr₁) , refl)) of
+       λ { (inl a→bt) → ¬acr (inl (a→bt .pr₁ , λ m bsa → let &pbg = a→bt .pr₂ m bsa
+                                                             &bsᶜ = &pbg .pr₁ .pr₁
+                                                             &∈pb = &pbg .pr₁ .pr₂
+                                                             &pb+  = &pbg .pr₁ .pr₂ .pr₁
+                                                             &eq  = &pbg .pr₁ .pr₂ .pr₂
+                                                             c = l2 ¬acr &pb+ .pr₂
+                                                             cc = l11 m &eq c (&pbg .pr₂)
+                                                         in cc))
+         ; (inr ((bsᶜ , (&pb , w)) , c)) → l12 w (l2 ¬acr &pb .pr₂) c} where
+         l11 : ∀{t w} → ∀ m → w ＝ (₁ , t) → lh w
+               → t m → _
+         l11 m refl c r = c .pr₁ m r
+         l12 : ∀{t w} → w ＝ (₀ , t) → lh w → msg-reducible-g t &pa → 𝟘
+         l12 refl neq eq = neq .pr₁ eq
+
+
+  theorem : (a : PSet 𝓥 𝓦 𝓣) → (b : PSet 𝓥' 𝓦' 𝓣') → PSet-ctx-reducible a (b ᵀ') → a ⊑ b
+  theorem a b abt-red ctx bc-red &pa &ia pi∈a with abt-red &pa &ia pi∈a
+  ... | inr r = inr r
+  ... | inl abt-fib = inl l2 where 
+   l2 : ∀ &pc → ctx &pc → &PSet-reducible &pa &pc
+   l2 &pc &pc∈ctx = lemma a b ctx &pa &ia pi∈a abt-fib &pc &pc∈ctx bc-red

@@ -53,7 +53,6 @@ module temp (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls
 -- It takes two Q.E and their scope, The two Q.E are not scope limited.
 -- It returns a scope limited F ... but the next step is not scope limited.
 
--- TODO limit scope inside this  function!!!! 
  ExCGP : ExCG (𝓤 ⊔ 𝓥) (List Secret × F Q.E × F Q.E) → F (ExCG (𝓤 ⊔ 𝓥) (List Secret × F Q.E × F Q.E))
  -- The PSet
  pr₁ (ExCGP (D , var))
