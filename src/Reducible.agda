@@ -55,9 +55,6 @@ module _ (A : 𝓤 ̇) where
  &PSet : ∀ 𝓥 𝓦 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ̇
  &PSet 𝓥 𝓦 = Pred (𝟚 × ×BSet 𝓥) 𝓦
 
- ESet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
- ESet 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦) 𝓣
-
  PSet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
  PSet 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) 𝓣
 
@@ -98,40 +95,6 @@ module _ (A : 𝓤 ̇) where
 
  &PSet-reducible : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓥' ⁺ ⊔ 𝓦' ̇
  &PSet-reducible a b = &PSet-reducible→ a b + &PSet-reducible→ b a
-
- ESet-reducible-fiber : &PSet 𝓥 𝓦 → ESet 𝓥' 𝓦' 𝓣' → _
- ESet-reducible-fiber &pa pb = (&pb : Σ pb) → &PSet-reducible &pa (&pb val)
-
- -- Here we ingore the internal reduction alltogether.
- -- ESet reduction means that we can prove that in all cases, it can
- -- reduce enxternally
-
- ESet-reducible : ESet 𝓥 𝓦 𝓣 → ESet 𝓥' 𝓦' 𝓣' → _
- ESet-reducible pa pb = (&pa : Σ pa) → ESet-reducible-fiber (&pa val) pb
-
- -- -- Here we ingore the external reduction alltogether.
- -- -- ESet reduction means that we can prove that in all cases, it can
- -- -- reduce internally
- 
- -- -- Since we are talking about the same system,
- -- -- a system can only exist in one superposition.
- Self-reducible : ESet 𝓥 𝓦 𝓣 → _
- Self-reducible pa = (&pa : Σ pa) → &PSet-reducible (&pa val) (&pa val)
-
--- I do not use this because i would have to use the LEM in one of the theorems.
- PSet-ctx-reducible-fiber : (&PSet 𝓥 𝓦) × (&PSet 𝓥 𝓦) → ESet 𝓥' 𝓦' 𝓣' → _
- PSet-ctx-reducible-fiber (&pa , &ic) ctx = ESet-reducible-fiber &pa ctx + &PSet-reducible→ &ic &ic 
-
- PSet-ctx-reducible :  PSet 𝓥 𝓦 𝓣 → ESet 𝓥' 𝓦' 𝓣' → _ ̇
- PSet-ctx-reducible pa ctx = (&a : Σ pa) → ¬&PSet-reducible→ (&a .pr₁ .pr₂) (&a .pr₁ .pr₂)
-                             → ESet-reducible-fiber (&a .pr₁ .pr₁) ctx
-
- _toCtx : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 𝓦 _
- (pa toCtx) o = Σ λ &ps → pa (o , &ps)
-
-
- _toInt : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 𝓦 _
- (pa toInt) o = Σ λ &ps → pa (&ps , o)
 
  PSet-PSet-reducible-fiber : (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) → (&PSet 𝓥' 𝓦' × &PSet 𝓥' 𝓦')
                              → _
@@ -193,38 +156,15 @@ module _ (A : 𝓤 ̇) where
         → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
  F⇒&P {p = p} f o = Σ q ꞉ _ , f q .pr₁ ＝ o
 
- _ᵀ : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
- (p ᵀ) o = Σ q ꞉ Fun (a→←a p) , F⇒&P q ＝ o
-
- _ᵀ2 : PSet 𝓥 𝓦 𝓣 → PSet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
- (p ᵀ2) o = Σ q ꞉ Fun (a→←a p) , (F⇒&P q , λ _ → 𝟘) ＝ o
+ _ᵀ : PSet 𝓥 𝓦 𝓣 → PSet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
+ (p ᵀ) o = Σ q ꞉ Fun (a→←a p) , (F⇒&P q , λ _ → 𝟘) ＝ o
 
  private
   D : {p : PSet 𝓥 𝓦 𝓣} → _ → Fun p → _
   D q f = Σ λ x → f q ＝ x
 
- a-aᵗ-red : (a : PSet 𝓥 𝓦 𝓣) → PSet-ctx-reducible a (a ᵀ)
- a-aᵗ-red {𝓥 = 𝓥} a &a ¬sred (&aᵗ , f , refl) = l1 bs bsᶜ∈&pa→← refl  where
-  &pa = &a .pr₁ .pr₁
-  &pa→← = a→←a-& &pa
-  &ia = &a .pr₁ .pr₂
-  &ia→← = λ v → (&ia v × 𝟙 {𝓤 ⊔ 𝓥 ⁺})
-  a→←a∈ : Σ (a→←a a)
-  a→←a∈ = (&pa→← , &ia→←) , &a , refl , refl
-  r = f (a→←a∈ , ¬&PSet-reducible→cum {&a = &ia} {&b = &ia} ¬sred)
-  bs : 𝟚 × ×BSet 𝓥
-  bs = r .pr₁
-  bsᶜ∈&pa→← : &pa→← (bs ᶜ)
-  bsᶜ∈&pa→← = r .pr₂
-  l1 : ∀ bs → (c : &pa→← (bs ᶜ)) → (bs , c) ＝ r → &PSet-reducible &pa &aᵗ
-   -- msg-reducible bs &pa
-  l1 (₀ , bs) bsᶜ∈&pa→← eq = inr ((bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) ,  bsᶜ∈&pa→← .pr₁)
-  l1 (₁ , bs) bsᶜ∈&pa→← eq = inl ((bs , (bsᶜ∈&pa→← .pr₁)) , λ x v → (bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) , v)
-
-
-
- a-aᵗ-red2 : (a : PSet 𝓥 𝓦 𝓣) → PSet-PSet-reducible a (a ᵀ2)
- a-aᵗ-red2 {𝓥 = 𝓥} a &a ¬sred (&aᵗ , f , refl) _ = l1 bs bsᶜ∈&pa→← refl  where
+ a-aᵗ-red : (a : PSet 𝓥 𝓦 𝓣) → PSet-PSet-reducible a (a ᵀ)
+ a-aᵗ-red {𝓥 = 𝓥} a &a ¬sred (&aᵗ , f , refl) _ = l1 bs bsᶜ∈&pa→← refl  where
   &pa = &a .pr₁ .pr₁
   &pa→← = a→←a-& &pa
   &ia = &a .pr₁ .pr₂
@@ -237,6 +177,5 @@ module _ (A : 𝓤 ̇) where
   bsᶜ∈&pa→← : &pa→← (bs ᶜ)
   bsᶜ∈&pa→← = r .pr₂
   l1 : ∀ bs → (c : &pa→← (bs ᶜ)) → (bs , c) ＝ r → &PSet-reducible &pa (&aᵗ .pr₁)
-   -- msg-reducible bs &pa
   l1 (₀ , bs) bsᶜ∈&pa→← eq = inr ((bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) ,  bsᶜ∈&pa→← .pr₁)
   l1 (₁ , bs) bsᶜ∈&pa→← eq = inl ((bs , (bsᶜ∈&pa→← .pr₁)) , λ x v → (bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) , v)
