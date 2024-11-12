@@ -13,123 +13,213 @@ open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 open import UF.Sets
 open import UF.Base
+open import UF.Base
 
 open import Lists
 
-module Reducible (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) (dec : (a b : Secret) → is-decidable (a ＝ b))  where
-
-open list-decidable dec
+module Reducible (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence) where
 
 open PropositionalTruncation pt
 open import UF.ImageAndSurjection pt
 
-open import xBSet fe pt Msg Secret
 
+-- Q : ∀{𝓣} {A : 𝓤 ̇} {R : ∀{𝓥} → {A : 𝓥 ̇ } → A → 𝓦 ̇} → (x : A) → R x → R {A = A × 𝟙 {𝓣}} (x , _)
+-- Q x Rx = {!!}
 
+variable
+ A : 𝓤 ̇
 
-module _ {𝓥} {𝓦} {𝓣} where
- 
- b𝓤 = 𝓤 ⊔ 𝓥
- &𝓤 = 𝓤 ⁺ ⊔ 𝓥 ⁺ ⊔ 𝓦
- p𝓤 = 𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣
- 
- open import &PSet (𝟚 × ×BSet b𝓤) pt
- import PSet as P
- open P pt (&PSet &𝓤 × &PSet &𝓤)
- module E &𝓤 = P pt (&PSet &𝓤)
- open E renaming (PSet to ESet)
+Pred : (A : 𝓤 ̇ ) → ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
+Pred A 𝓥 = ((v : A) → 𝓥 ̇ )
 
+infix 2 _⇒_
+_⇒_ : {A : 𝓤 ̇ } → Pred A 𝓥 → Pred A 𝓦 → 𝓤 ⊔ 𝓥 ⊔ 𝓦 ̇
+a ⇒ b = ∀ v → a v → b v
 
+-- same as Sigma ??
+Σv : Pred A 𝓥 → _ ̇
+Σv p = Σ v ꞉ _ , p v
 
--- open import CoAlgebra fe pt UA Msg Secret {b𝓤} {&𝓤} {p𝓤}
- 
- 
- Σbs : &PSet 𝓦' → b𝓤 ⁺ ⊔ 𝓦' ̇
- Σbs &p = Σ bs ꞉ ×BSet b𝓤 , &⟨ &p ⟩ (₁ , bs)
- 
- -- Here we assume a finite coverring
- msg-reducible : ×BSet b𝓤 → &PSet 𝓦' → b𝓤 ⁺ ⊔ 𝓦' ̇
- msg-reducible mbs &p
-  =   Σ ls ꞉ List (Σbs &p)
-    , (∀ x → ⟨ mbs bset ⟩ x → Σ l ꞉ Σbs &p , Σ o ꞉ l ∈ ls , ⟨ l .pr₁ bset ⟩ x)
+infix 3 _val
 
--- The general case
- msg-reducible-g : ×BSet b𝓤 → &PSet 𝓦' → b𝓤 ⁺ ⊔ 𝓦' ̇
- msg-reducible-g mbs &p
-  = (∀ x → ⟨ mbs bset ⟩ x → Σ l ꞉ Σbs &p , ⟨ l .pr₁ bset ⟩ x)
- 
- &PSet-reducible→ : &PSet 𝓦' → &PSet 𝓣' → b𝓤 ⁺ ⊔ 𝓦' ⊔ 𝓣' ̇
- &PSet-reducible→ a b = Σ bs ꞉ ×BSet b𝓤 , Σ i ꞉ &⟨ a ⟩ (₀ , bs) , msg-reducible bs b
- 
- &PSet-reducible : &PSet 𝓦' → &PSet 𝓣' → b𝓤 ⁺ ⊔ 𝓦' ⊔ 𝓣' ̇
+_val : {X : Pred A 𝓥} → Σv X → A
+σv val = σv .pr₁
+
+mΣv : Pred (𝟚 × A) 𝓥 → _ ̇
+mΣv p = Σ v ꞉ _ , p (₀ , v)
+
+aΣv : Pred (𝟚 × A) 𝓥 → _ ̇
+aΣv p = Σ v ꞉ _ , p (₁ , v)
+
+module _ (A : 𝓤 ̇) where
+
+ ×BSet : ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
+ ×BSet 𝓥 = Pred A 𝓥
+
+ &PSet : ∀ 𝓥 𝓦 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ̇
+ &PSet 𝓥 𝓦 = Pred (𝟚 × ×BSet 𝓥) 𝓦
+
+ ESet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
+ ESet 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦) 𝓣
+
+ PSet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
+ PSet 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) 𝓣
+
+ msg-reducible-g : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
+ msg-reducible-g b &p
+  = ∀ x → b x → Σ l ꞉ aΣv &p , (l val) x
+
+ ¬msg-reducible-g : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
+ ¬msg-reducible-g b &p
+  = Σ v ꞉ Σ b , ((l : aΣv &p) → ¬ (l val) (v val))
+
+-- cumulativity of universes ????
+ ¬msg-red-g-cum : {b : ×BSet 𝓥} → {&p : &PSet 𝓥' 𝓦} → ¬msg-reducible-g b &p → ¬msg-reducible-g b (λ v → &p v × 𝟙 {𝓦'})
+ ¬msg-red-g-cum {b = b} {&p} (v , c) = v , (λ l x → c (l .pr₁ , l .pr₂ .pr₁) x)
+
+-- cumulativity of universes ????
+ ¬msg-red-g-cum2 : {b : ×BSet 𝓥} → {&p : &PSet 𝓥' 𝓦} → ¬msg-reducible-g b (λ v → &p v × 𝟙 {𝓦'}) → ¬msg-reducible-g b &p
+ ¬msg-red-g-cum2 {b = b} {&p} (v , c) = v , λ l x → c (l .pr₁ , l .pr₂ , _ ) x
+
+ &PSet-reducible→ : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓥' ⁺ ⊔ 𝓦' ̇
+ &PSet-reducible→ a b = Σ l ꞉ mΣv a , msg-reducible-g (l val) b
+
+ ¬&PSet-reducible→ : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓥' ⁺ ⊔ 𝓦' ̇
+ ¬&PSet-reducible→ a b = (l : mΣv a) → ¬msg-reducible-g (l val) b
+
+-- cumulativity of universes ????
+ ¬&PSet-reducible→cum : {&a : &PSet 𝓥 𝓦} → {&b : &PSet 𝓥' 𝓦'} → ¬&PSet-reducible→ &a &b → ¬&PSet-reducible→ ((λ v → &a v × 𝟙 {𝓣})) (λ v → &b v × 𝟙 {𝓣'})
+ ¬&PSet-reducible→cum {&a = &a} {&b} c l = ¬msg-red-g-cum {&p = &b} (c (l .pr₁ , l .pr₂ .pr₁))
+
+ ¬&PS-red⇒¬ : (&pa : &PSet 𝓥 𝓦) → (&pb : &PSet 𝓥' 𝓦')
+              → ¬&PSet-reducible→ &pa &pb → ¬ &PSet-reducible→ &pa &pb
+ ¬&PS-red⇒¬ pa pb ¬c (v , c) = let e  = ¬c v
+                                   m = e .pr₁
+                                   cc = c (m .pr₁) (m .pr₂)
+                                   a = cc .pr₁
+                                   v = cc .pr₂
+                                in e .pr₂ a v
+
+ &PSet-reducible : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓥' ⁺ ⊔ 𝓦' ̇
  &PSet-reducible a b = &PSet-reducible→ a b + &PSet-reducible→ b a
- 
- ESet-reducible-fiber : &PSet 𝓤' → ESet 𝓦' 𝓣' → b𝓤 ⁺ ⊔ 𝓤' ⊔ 𝓦' ⁺ ⊔ 𝓣' ̇
- ESet-reducible-fiber &pa pb = ∀ &pb → ∣⟨ pb ⟩ &pb → &PSet-reducible &pa &pb
+
+ ESet-reducible-fiber : &PSet 𝓥 𝓦 → ESet 𝓥' 𝓦' 𝓣' → _
+ ESet-reducible-fiber &pa pb = (&pb : Σ pb) → &PSet-reducible &pa (&pb val)
 
  -- Here we ingore the internal reduction alltogether.
  -- ESet reduction means that we can prove that in all cases, it can
  -- reduce enxternally
- ESet-reducible : ESet 𝓦' 𝓣' → ESet 𝓤' 𝓥' → b𝓤 ⁺ ⊔ 𝓦' ⁺ ⊔ 𝓣' ⊔ 𝓤' ⁺ ⊔ 𝓥' ̇
- ESet-reducible pa pb = ∀ &pa → ∣⟨ pa ⟩ &pa → ESet-reducible-fiber &pa pb
 
- -- Here we ingore the external reduction alltogether.
- -- ESet reduction means that we can prove that in all cases, it can
- -- reduce internally
+ ESet-reducible : ESet 𝓥 𝓦 𝓣 → ESet 𝓥' 𝓦' 𝓣' → _
+ ESet-reducible pa pb = (&pa : Σ pa) → ESet-reducible-fiber (&pa val) pb
+
+ -- -- Here we ingore the external reduction alltogether.
+ -- -- ESet reduction means that we can prove that in all cases, it can
+ -- -- reduce internally
  
- -- Since we are talking about the same system,
- -- a system can only exist in one superposition.
- Self-reducible : ESet 𝓦' 𝓣' → b𝓤 ⁺ ⊔ (𝓦' ⁺) ⊔ 𝓣' ̇
- Self-reducible pa = ∀ &pa → ∣⟨ pa ⟩ &pa → &PSet-reducible &pa &pa
+ -- -- Since we are talking about the same system,
+ -- -- a system can only exist in one superposition.
+ Self-reducible : ESet 𝓥 𝓦 𝓣 → _
+ Self-reducible pa = (&pa : Σ pa) → &PSet-reducible (&pa val) (&pa val)
+
+-- I do not use this because i would have to use the LEM in one of the theorems.
+ PSet-ctx-reducible-fiber : (&PSet 𝓥 𝓦) × (&PSet 𝓥 𝓦) → ESet 𝓥' 𝓦' 𝓣' → _
+ PSet-ctx-reducible-fiber (&pa , &ic) ctx = ESet-reducible-fiber &pa ctx + &PSet-reducible→ &ic &ic 
+
+ PSet-ctx-reducible :  PSet 𝓥 𝓦 𝓣 → ESet 𝓥' 𝓦' 𝓣' → _ ̇
+ PSet-ctx-reducible pa ctx = (&a : Σ pa) → ¬&PSet-reducible→ (&a .pr₁ .pr₂) (&a .pr₁ .pr₂)
+                             → ESet-reducible-fiber (&a .pr₁ .pr₁) ctx
+
+ _toCtx : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 𝓦 _
+ (pa toCtx) o = Σ λ &ps → pa (o , &ps)
 
 
- PSet-ctx-reducible-fiber : &PSet &𝓤 × &PSet &𝓤 → ESet 𝓦' 𝓣' → &𝓤 ⊔ (𝓦' ⁺) ⊔ 𝓣' ̇
- PSet-ctx-reducible-fiber (&pa , &ic) ctx = ESet-reducible-fiber &pa ctx + &PSet-reducible &ic &ic 
+ _toInt : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 𝓦 _
+ (pa toInt) o = Σ λ &ps → pa (&ps , o)
 
- PSet-ctx-reducible : PSet p𝓤 → ESet 𝓦' 𝓣' → p𝓤 ⊔ (𝓦' ⁺) ⊔ 𝓣' ̇
- PSet-ctx-reducible pa ctx = ∀ &pa &ic → ∣⟨ pa ⟩ (&pa , &ic) → PSet-ctx-reducible-fiber (&pa , &ic) ctx
+ PSet-PSet-reducible-fiber : (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) → (&PSet 𝓥' 𝓦' × &PSet 𝓥' 𝓦')
+                             → _
+ PSet-PSet-reducible-fiber &a@(&pa , &ica) &b@(&pb , &icb)
+  = &PSet-reducible &pa &pb + &PSet-reducible &ica &ica + &PSet-reducible &icb &icb
 
- _toCtx : PSet p𝓤 → ESet &𝓤 p𝓤
- ∣⟨ pa toCtx ⟩ o = ∃ λ &ps → ∣⟨ pa ⟩ (o , &ps)
- (pa toCtx) .∣-is-prop = λ o → ∥∥-is-prop
+ PSet-PSet-reducible : PSet 𝓥 𝓦 𝓣 → PSet 𝓥' 𝓦' 𝓣' → _
+ PSet-PSet-reducible pa pb = (&a : Σ pa) → (&b : Σ pb) → PSet-PSet-reducible-fiber (&a val) (&b val)
 
- _toInt : PSet p𝓤 → ESet &𝓤 p𝓤
- ∣⟨ pa toInt ⟩ o = ∃ λ &ps → ∣⟨ pa ⟩ (&ps , o)
- (pa toInt) .∣-is-prop = λ o → ∥∥-is-prop
+ _⊑_ : PSet 𝓥 𝓦 𝓣 → PSet 𝓥' 𝓦' 𝓣' → 𝓤ω 
+ pa ⊑ pb = ∀{𝓥' 𝓦' 𝓣'} → (ctx : ESet 𝓥' 𝓦' 𝓣') → PSet-ctx-reducible pb ctx → PSet-ctx-reducible pa ctx
+
+ -- less means stricter rules
+ -- more means more relaxed rules
+
+ infix 2 _≼&_
+ _≼&_ : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → _
+ &a ≼& &b = ((bsb : mΣv &b) → Σ bsa ꞉ mΣv &a , (bsa val ⇒ bsb val)) × ((bsb : aΣv &b) → msg-reducible-g (bsb val) &a)
+
+ _≼_ : PSet 𝓥 𝓦 𝓣 → PSet 𝓥' 𝓦' 𝓣' → _
+ a ≼ b = (&a : Σ a) → Σ &b ꞉ (Σ λ t → b t × ¬&PSet-reducible→ (t .pr₂) (t .pr₂)) , &a .pr₁ .pr₁ ≼& &b .pr₁ .pr₁
+
+ ≼→⊑ : (a : PSet 𝓥 𝓦 𝓣) → (b : PSet 𝓥' 𝓦' 𝓣') → a ≼ b → a ⊑ b
+ ≼→⊑ a b rel ctx bc-red &a ¬sred
+  = let (&bc , (c1 , c2)) = rel &a
+        &pb = &bc .pr₁ .pr₁
+        v = bc-red (&bc .pr₁ , &bc .pr₂ .pr₁) (rel &a .pr₁ .pr₂ .pr₂)
+    in λ &pc → let d = v &pc
+               in case d of
+                  λ { (inl (bsb , m-c)) → inl let (bsa , ca) = c1 bsb in
+                                              bsa , λ m m∈ → m-c m (ca m m∈)
+                    ; (inr (bsc , m-c)) → inr (bsc , λ m m∈ → let bsb = m-c m m∈
+                                                                  w = c2 (bsb .pr₁) m (bsb .pr₂)
+                                                              in w)}
+
+ a→←a-& : &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦)
+ a→←a-& {𝓥 = 𝓥} &pa (₀ , v) = &pa ( ₀ , v) × 𝟙 {𝓤 ⊔ 𝓥 ⁺}
+ a→←a-& &pa (₁ , v)
+  = msg-reducible-g v &pa
+  -- The maximal element
+    × ((bs : aΣv &pa) → (x : Σ (bs .pr₁)) → v (x .pr₁))
 
 
- PSet-PSet-reducible-fiber : &PSet &𝓤 × &PSet &𝓤 → &PSet &𝓤 × &PSet &𝓤 → &𝓤 ̇
- PSet-PSet-reducible-fiber &a@(&pa , &ica) &b@(&pb , &icb) = &PSet-reducible &pa &pb + &PSet-reducible &ica &ica + &PSet-reducible &icb &icb
-
- PSet-PSet-reducible : PSet p𝓤 → PSet p𝓤 → p𝓤 ̇
- PSet-PSet-reducible pa pb = ∀ &pa &ica → ∣⟨ pa ⟩ (&pa , &ica) → ∀ &pb &icb → ∣⟨ pb ⟩ (&pb , &icb) → PSet-PSet-reducible-fiber (&pa , &ica) (&pb , &icb)
+ a→←a : PSet 𝓥 𝓦 𝓣 → PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
+ a→←a {𝓥 = 𝓥} pa (v , vi) = Σ &pa ꞉ Σ pa , (v ＝ a→←a-& (&pa .pr₁ .pr₁)) × (vi ＝ λ e → &pa .pr₁ .pr₂ e × 𝟙 {𝓤 ⊔ 𝓥 ⁺} )
 
 
- _⊑_ : PSet p𝓤 → PSet p𝓤 → 𝓤ω 
- pa ⊑ pb = ∀{𝓦' 𝓣'} → (ctx : ESet 𝓦' 𝓣') → PSet-ctx-reducible pb ctx → PSet-ctx-reducible pa ctx 
+ _ᶜ : 𝟚 × ×BSet 𝓥 → 𝟚 × ×BSet 𝓥
+ (₀ , a) ᶜ = ₁ , a
+ (₁ , a) ᶜ = ₀ , a
 
- Fun : ESet &𝓤 p𝓤 → p𝓤 ̇
- Fun p = (q : Σ t ꞉ &PSet &𝓤 , ∣⟨ p ⟩ t) → Σ bs ꞉ 𝟚 × ×BSet b𝓤 , &⟨ q .pr₁ ⟩ bs
+ Fun : PSet 𝓥 𝓦 𝓣 → _ ̇
+ Fun {𝓥 = 𝓥} {𝓦 = 𝓦} a
+  = (q : Σ &a ꞉ Σ a , let &ia = &a .pr₁ .pr₂
+                      in (¬&PSet-reducible→ &ia &ia)) → let &pa = q .pr₁ .pr₁ .pr₁
+                                                        in Σ bs ꞉ _ , &pa (bs ᶜ)
 
- F⇒&P : ∀{p} → Fun p → &PSet p𝓤
- &⟨ F⇒&P f ⟩ = _∈image λ x → f x .pr₁
- (F⇒&P f) .&-is-prop = λ o → ∥∥-is-prop
- 
- _ᵀ : ESet &𝓤 p𝓤 → ESet p𝓤 (p𝓤 ⁺)
- ∣⟨ p ᵀ ⟩ = _∈image F⇒&P {p = p}
- (p ᵀ) .∣-is-prop = λ o → ∥∥-is-prop
+ F⇒&P : {p : PSet 𝓥 𝓦 𝓣} → Fun p
+        → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
+ F⇒&P {p = p} f o = Σ q ꞉ _ , f q .pr₁ ＝ o
 
+ _ᵀ : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
+ (p ᵀ) o = Σ q ꞉ Fun (a→←a p) , F⇒&P q ＝ o
 
- Fun' : PSet p𝓤 → p𝓤 ̇
- Fun' p = (q : Σ t ꞉ &PSet &𝓤 × &PSet &𝓤 , ∣⟨ p ⟩ t × (¬ &PSet-reducible (t .pr₂) (t .pr₂))) → Σ bs ꞉ 𝟚 × ×BSet b𝓤 , &⟨ q .pr₁ .pr₁ ⟩ bs
+ private
+  D : {p : PSet 𝓥 𝓦 𝓣} → _ → Fun p → _
+  D q f = Σ λ x → f q ＝ x
 
- F⇒&P' : ∀{p} → Fun' p → &PSet p𝓤
- &⟨ F⇒&P' f ⟩ = _∈image λ x → f x .pr₁
- (F⇒&P' f) .&-is-prop = λ o → ∥∥-is-prop
- 
- _ᵀ' : PSet p𝓤 → ESet p𝓤 (p𝓤 ⁺)
- ∣⟨ p ᵀ' ⟩ = _∈image F⇒&P' {p = p}
- (p ᵀ') .∣-is-prop = λ o → ∥∥-is-prop
+ a-aᵗ-red : (a : PSet 𝓥 𝓦 𝓣) → PSet-ctx-reducible a (a ᵀ)
+ a-aᵗ-red {𝓥 = 𝓥} a &a ¬sred (&aᵗ , f , refl) = l1 bs bsᶜ∈&pa→← refl  where
+  &pa = &a .pr₁ .pr₁
+  &pa→← = a→←a-& &pa
+  &ia = &a .pr₁ .pr₂
+  &ia→← = λ v → (&ia v × 𝟙 {𝓤 ⊔ 𝓥 ⁺})
+  a→←a∈ : Σ (a→←a a)
+  a→←a∈ = (&pa→← , &ia→←) , &a , refl , refl
+  r = f (a→←a∈ , ¬&PSet-reducible→cum {&a = &ia} {&b = &ia} ¬sred)
+  bs : 𝟚 × ×BSet 𝓥
+  bs = r .pr₁
+  bsᶜ∈&pa→← : &pa→← (bs ᶜ)
+  bsᶜ∈&pa→← = r .pr₂
+  l1 : ∀ bs → (c : &pa→← (bs ᶜ)) → (bs , c) ＝ r → &PSet-reducible &pa &aᵗ
+   -- msg-reducible bs &pa
+  l1 (₀ , bs) bsᶜ∈&pa→← eq = inr ((bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) ,  bsᶜ∈&pa→← .pr₁)
+  l1 (₁ , bs) bsᶜ∈&pa→← eq = inl ((bs , (bsᶜ∈&pa→← .pr₁)) , λ x v → (bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) , v)
 
- theorem : (a b : PSet p𝓤) → PSet-ctx-reducible a (b ᵀ') → a ⊑ b
- theorem a b abt-red ctx ac-red &bp &bi pi∈b = {!!}
+ theorem : ∀ 
