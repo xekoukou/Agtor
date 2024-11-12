@@ -22,10 +22,6 @@ module Reducible (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Uni
 open PropositionalTruncation pt
 open import UF.ImageAndSurjection pt
 
-
--- Q : ∀{𝓣} {A : 𝓤 ̇} {R : ∀{𝓥} → {A : 𝓥 ̇ } → A → 𝓦 ̇} → (x : A) → R x → R {A = A × 𝟙 {𝓣}} (x , _)
--- Q x Rx = {!!}
-
 variable
  A : 𝓤 ̇
 
@@ -65,27 +61,27 @@ module _ (A : 𝓤 ̇) where
  PSet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
  PSet 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦 × &PSet 𝓥 𝓦) 𝓣
 
- msg-reducible-g : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
- msg-reducible-g b &p
+ msg-reducible : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
+ msg-reducible b &p
   = ∀ x → b x → Σ l ꞉ aΣv &p , (l val) x
 
- ¬msg-reducible-g : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
- ¬msg-reducible-g b &p
+ ¬msg-reducible : ×BSet 𝓥 → &PSet 𝓥' 𝓦 → _ ̇
+ ¬msg-reducible b &p
   = Σ v ꞉ Σ b , ((l : aΣv &p) → ¬ (l val) (v val))
 
 -- cumulativity of universes ????
- ¬msg-red-g-cum : {b : ×BSet 𝓥} → {&p : &PSet 𝓥' 𝓦} → ¬msg-reducible-g b &p → ¬msg-reducible-g b (λ v → &p v × 𝟙 {𝓦'})
+ ¬msg-red-g-cum : {b : ×BSet 𝓥} → {&p : &PSet 𝓥' 𝓦} → ¬msg-reducible b &p → ¬msg-reducible b (λ v → &p v × 𝟙 {𝓦'})
  ¬msg-red-g-cum {b = b} {&p} (v , c) = v , (λ l x → c (l .pr₁ , l .pr₂ .pr₁) x)
 
 -- cumulativity of universes ????
- ¬msg-red-g-cum2 : {b : ×BSet 𝓥} → {&p : &PSet 𝓥' 𝓦} → ¬msg-reducible-g b (λ v → &p v × 𝟙 {𝓦'}) → ¬msg-reducible-g b &p
+ ¬msg-red-g-cum2 : {b : ×BSet 𝓥} → {&p : &PSet 𝓥' 𝓦} → ¬msg-reducible b (λ v → &p v × 𝟙 {𝓦'}) → ¬msg-reducible b &p
  ¬msg-red-g-cum2 {b = b} {&p} (v , c) = v , λ l x → c (l .pr₁ , l .pr₂ , _ ) x
 
  &PSet-reducible→ : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓥' ⁺ ⊔ 𝓦' ̇
- &PSet-reducible→ a b = Σ l ꞉ mΣv a , msg-reducible-g (l val) b
+ &PSet-reducible→ a b = Σ l ꞉ mΣv a , msg-reducible (l val) b
 
  ¬&PSet-reducible→ : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓥' ⁺ ⊔ 𝓦' ̇
- ¬&PSet-reducible→ a b = (l : mΣv a) → ¬msg-reducible-g (l val) b
+ ¬&PSet-reducible→ a b = (l : mΣv a) → ¬msg-reducible (l val) b
 
 -- cumulativity of universes ????
  ¬&PSet-reducible→cum : {&a : &PSet 𝓥 𝓦} → {&b : &PSet 𝓥' 𝓦'} → ¬&PSet-reducible→ &a &b → ¬&PSet-reducible→ ((λ v → &a v × 𝟙 {𝓣})) (λ v → &b v × 𝟙 {𝓣'})
@@ -143,38 +139,38 @@ module _ (A : 𝓤 ̇) where
   = &PSet-reducible &pa &pb + &PSet-reducible &ica &ica + &PSet-reducible &icb &icb
 
  PSet-PSet-reducible : PSet 𝓥 𝓦 𝓣 → PSet 𝓥' 𝓦' 𝓣' → _
- PSet-PSet-reducible pa pb = (&a : Σ pa) → (&b : Σ pb) → PSet-PSet-reducible-fiber (&a val) (&b val)
+ PSet-PSet-reducible pa pb = (&a : Σ pa) → ¬&PSet-reducible→ (&a .pr₁ .pr₂) (&a .pr₁ .pr₂) → (&b : Σ pb) → ¬&PSet-reducible→ (&b .pr₁ .pr₂) (&b .pr₁ .pr₂) → &PSet-reducible (&a .pr₁ .pr₁) (&b .pr₁ .pr₁)
 
  _⊑_ : PSet 𝓥 𝓦 𝓣 → PSet 𝓥' 𝓦' 𝓣' → 𝓤ω 
- pa ⊑ pb = ∀{𝓥' 𝓦' 𝓣'} → (ctx : ESet 𝓥' 𝓦' 𝓣') → PSet-ctx-reducible pb ctx → PSet-ctx-reducible pa ctx
+ pa ⊑ pb = ∀{𝓥' 𝓦' 𝓣'} → (ctx : PSet 𝓥' 𝓦' 𝓣') → PSet-PSet-reducible pb ctx → PSet-PSet-reducible pa ctx
 
  -- less means stricter rules
  -- more means more relaxed rules
 
  infix 2 _≼&_
  _≼&_ : &PSet 𝓥 𝓦 → &PSet 𝓥' 𝓦' → _
- &a ≼& &b = ((bsb : mΣv &b) → Σ bsa ꞉ mΣv &a , (bsa val ⇒ bsb val)) × ((bsb : aΣv &b) → msg-reducible-g (bsb val) &a)
+ &a ≼& &b = ((bsb : mΣv &b) → Σ bsa ꞉ mΣv &a , (bsa val ⇒ bsb val)) × ((bsb : aΣv &b) → msg-reducible (bsb val) &a)
 
  _≼_ : PSet 𝓥 𝓦 𝓣 → PSet 𝓥' 𝓦' 𝓣' → _
- a ≼ b = (&a : Σ a) → Σ &b ꞉ (Σ λ t → b t × ¬&PSet-reducible→ (t .pr₂) (t .pr₂)) , &a .pr₁ .pr₁ ≼& &b .pr₁ .pr₁
+ a ≼ b = (&ac : (Σ &a ꞉ Σ a , ¬&PSet-reducible→ (&a .pr₁ .pr₂) (&a .pr₁ .pr₂))) → Σ &bc ꞉ (Σ &b ꞉ Σ b , ¬&PSet-reducible→ (&b .pr₁ .pr₂) (&b .pr₁ .pr₂)) , &ac .pr₁ .pr₁ .pr₁ ≼& &bc .pr₁ .pr₁ .pr₁
 
  ≼→⊑ : (a : PSet 𝓥 𝓦 𝓣) → (b : PSet 𝓥' 𝓦' 𝓣') → a ≼ b → a ⊑ b
- ≼→⊑ a b rel ctx bc-red &a ¬sred
-  = let (&bc , (c1 , c2)) = rel &a
+ ≼→⊑ a b rel ctx bc-red &a ¬sreda &c ¬redc
+  = let (&bc , (c1 , c2)) = rel (&a , ¬sreda)
         &pb = &bc .pr₁ .pr₁
-        v = bc-red (&bc .pr₁ , &bc .pr₂ .pr₁) (rel &a .pr₁ .pr₂ .pr₂)
-    in λ &pc → let d = v &pc
-               in case d of
-                  λ { (inl (bsb , m-c)) → inl let (bsa , ca) = c1 bsb in
-                                              bsa , λ m m∈ → m-c m (ca m m∈)
-                    ; (inr (bsc , m-c)) → inr (bsc , λ m m∈ → let bsb = m-c m m∈
-                                                                  w = c2 (bsb .pr₁) m (bsb .pr₂)
-                                                              in w)}
+        v = bc-red (&bc .pr₁) (&bc .pr₂) &c ¬redc
+    in case v of
+       λ { (inl (bsb , m-c)) → inl let (bsa , ca) = c1 bsb in
+                                       bsa , λ m m∈ → m-c m (ca m m∈)
+         ; (inr (bsc , m-c)) → inr (bsc , λ m m∈ → let bsb = m-c m m∈
+                                                       w = c2 (bsb .pr₁) m (bsb .pr₂)
+                                                   in w)}
+
 
  a→←a-& : &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦)
  a→←a-& {𝓥 = 𝓥} &pa (₀ , v) = &pa ( ₀ , v) × 𝟙 {𝓤 ⊔ 𝓥 ⁺}
  a→←a-& &pa (₁ , v)
-  = msg-reducible-g v &pa
+  = msg-reducible v &pa
   -- The maximal element
     × ((bs : aΣv &pa) → (x : Σ (bs .pr₁)) → v (x .pr₁))
 
@@ -200,6 +196,9 @@ module _ (A : 𝓤 ̇) where
  _ᵀ : PSet 𝓥 𝓦 𝓣 → ESet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
  (p ᵀ) o = Σ q ꞉ Fun (a→←a p) , F⇒&P q ＝ o
 
+ _ᵀ2 : PSet 𝓥 𝓦 𝓣 → PSet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
+ (p ᵀ2) o = Σ q ꞉ Fun (a→←a p) , (F⇒&P q , λ _ → 𝟘) ＝ o
+
  private
   D : {p : PSet 𝓥 𝓦 𝓣} → _ → Fun p → _
   D q f = Σ λ x → f q ＝ x
@@ -222,4 +221,22 @@ module _ (A : 𝓤 ̇) where
   l1 (₀ , bs) bsᶜ∈&pa→← eq = inr ((bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) ,  bsᶜ∈&pa→← .pr₁)
   l1 (₁ , bs) bsᶜ∈&pa→← eq = inl ((bs , (bsᶜ∈&pa→← .pr₁)) , λ x v → (bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) , v)
 
- theorem : ∀ 
+
+
+ a-aᵗ-red2 : (a : PSet 𝓥 𝓦 𝓣) → PSet-PSet-reducible a (a ᵀ2)
+ a-aᵗ-red2 {𝓥 = 𝓥} a &a ¬sred (&aᵗ , f , refl) _ = l1 bs bsᶜ∈&pa→← refl  where
+  &pa = &a .pr₁ .pr₁
+  &pa→← = a→←a-& &pa
+  &ia = &a .pr₁ .pr₂
+  &ia→← = λ v → (&ia v × 𝟙 {𝓤 ⊔ 𝓥 ⁺})
+  a→←a∈ : Σ (a→←a a)
+  a→←a∈ = (&pa→← , &ia→←) , &a , refl , refl
+  r = f (a→←a∈ , ¬&PSet-reducible→cum {&a = &ia} {&b = &ia} ¬sred)
+  bs : 𝟚 × ×BSet 𝓥
+  bs = r .pr₁
+  bsᶜ∈&pa→← : &pa→← (bs ᶜ)
+  bsᶜ∈&pa→← = r .pr₂
+  l1 : ∀ bs → (c : &pa→← (bs ᶜ)) → (bs , c) ＝ r → &PSet-reducible &pa (&aᵗ .pr₁)
+   -- msg-reducible bs &pa
+  l1 (₀ , bs) bsᶜ∈&pa→← eq = inr ((bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) ,  bsᶜ∈&pa→← .pr₁)
+  l1 (₁ , bs) bsᶜ∈&pa→← eq = inl ((bs , (bsᶜ∈&pa→← .pr₁)) , λ x v → (bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) , v)
