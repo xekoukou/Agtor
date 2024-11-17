@@ -84,6 +84,9 @@ module _ (A : 𝓤 ̇) where
  ¬&PSet-reducible→cum : {&a : &PSet 𝓥 𝓦} → {&b : &PSet 𝓥' 𝓦'} → ¬&PSet-reducible→ &a &b → ¬&PSet-reducible→ ((λ v → &a v × 𝟙 {𝓣})) (λ v → &b v × 𝟙 {𝓣'})
  ¬&PSet-reducible→cum {&a = &a} {&b} c l = ¬msg-red-g-cum {&p = &b} (c (l .pr₁ , l .pr₂ .pr₁))
 
+ ¬&PSet-reducible→cum2 : {&a : &PSet 𝓥 𝓦} → {&b : &PSet 𝓥' 𝓦'} → ¬&PSet-reducible→ ((λ v → &a v × 𝟙 {𝓣})) (λ v → &b v × 𝟙 {𝓣'}) → ¬&PSet-reducible→ &a &b
+ ¬&PSet-reducible→cum2 {&a = &a} {&b} x l = ¬msg-red-g-cum2 {&p = &b} (x (l .pr₁ , l .pr₂ , _))
+
  ¬&PS-red⇒¬ : (&pa : &PSet 𝓥 𝓦) → (&pb : &PSet 𝓥' 𝓦')
               → ¬&PSet-reducible→ &pa &pb → ¬ &PSet-reducible→ &pa &pb
  ¬&PS-red⇒¬ pa pb ¬c (v , c) = let e  = ¬c v
@@ -130,6 +133,11 @@ module _ (A : 𝓤 ̇) where
                                                    in w)}
 
 
+--  a→←a-& : &PSet 𝓥 𝓦 → &PSet (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺)
+--  a→←a-& {𝓥 = 𝓥} {𝓦} &pa (₀ , v) = Σ q ꞉ _ , (v ＝ λ x → q x × 𝟙 {𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦}) × &pa ( ₀ , q)
+--  a→←a-& &pa (₁ , v) = v ＝ λ x → Σ l ꞉ aΣv &pa , (l val) x
+-- 
+
  a→←a-& : &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦)
  a→←a-& {𝓥 = 𝓥} &pa (₀ , v) = &pa ( ₀ , v) × 𝟙 {𝓤 ⊔ 𝓥 ⁺}
  a→←a-& &pa (₁ , v)
@@ -151,10 +159,25 @@ module _ (A : 𝓤 ̇) where
   = (q : Σ &a ꞉ Σ a , let &ia = &a .pr₁ .pr₂
                       in (¬&PSet-reducible→ &ia &ia)) → let &pa = q .pr₁ .pr₁ .pr₁
                                                         in Σ bs ꞉ _ , &pa (bs ᶜ)
+ FunG : (G : 𝟚 × ×BSet 𝓥 → 𝓣' ̇) → PSet 𝓥 𝓦 𝓣 → _ ̇
+ FunG {𝓥 = 𝓥} {𝓦 = 𝓦} G a
+  = (q : Σ &a ꞉ Σ a , let &ia = &a .pr₁ .pr₂
+                      in (¬&PSet-reducible→ &ia &ia)) → let &pa = q .pr₁ .pr₁ .pr₁
+                                                        in Σ bs ꞉ _ , &pa (bs ᶜ) × G bs
+
 
  F⇒&P : {p : PSet 𝓥 𝓦 𝓣} → Fun p
         → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
  F⇒&P {p = p} f o = Σ q ꞉ _ , f q .pr₁ ＝ o
+
+ FunG⇒Fun : {G : 𝟚 × ×BSet 𝓥 → 𝓣' ̇} → {p : PSet 𝓥 𝓦 𝓣} → FunG G p → Fun p
+ FunG⇒Fun f q = f q .pr₁ , f q .pr₂ .pr₁
+
+ FunG⇒Fun×Pr : {G : 𝟚 × ×BSet 𝓥 → 𝓣' ̇} → {p : PSet 𝓥 𝓦 𝓣} → FunG G p
+               → Σ f ꞉ Fun p , ((o : Σ (F⇒&P f)) → G (o .pr₁))
+ FunG⇒Fun×Pr {G = G} fg = (λ q → fg q .pr₁ , fg q .pr₂ .pr₁) , l1 where
+  l1 : (o : Σ (F⇒&P (λ q → fg q .pr₁ , fg q .pr₂ .pr₁))) → G (o .pr₁)
+  l1 (o , d , refl) = fg d .pr₂ .pr₂
 
  _ᵀ : PSet 𝓥 𝓦 𝓣 → PSet 𝓥 (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣 ⁺)
  (p ᵀ) o = Σ q ꞉ Fun (a→←a p) , (F⇒&P q , λ _ → 𝟘) ＝ o
@@ -179,3 +202,17 @@ module _ (A : 𝓤 ̇) where
   l1 : ∀ bs → (c : &pa→← (bs ᶜ)) → (bs , c) ＝ r → &PSet-reducible &pa (&aᵗ .pr₁)
   l1 (₀ , bs) bsᶜ∈&pa→← eq = inr ((bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) ,  bsᶜ∈&pa→← .pr₁)
   l1 (₁ , bs) bsᶜ∈&pa→← eq = inl ((bs , (bsᶜ∈&pa→← .pr₁)) , λ x v → (bs , _ , ap (λ z → z .pr₁) (eq ⁻¹)) , v)
+
+
+ ww : (b : PSet 𝓥 𝓦 𝓣) → (a : PSet 𝓥 𝓦 𝓣) → PSet-PSet-reducible b a → b ≼ (a ᵀ)
+ ww b a b-a-red (&b , ¬redb) = {!b-a-red &b ¬redb!} where
+  c = b-a-red &b ¬redb
+  &pb = &b .pr₁ .pr₁
+  cond : 𝟚 × ×BSet _ → _
+  cond (₀ , bs) = Σ bsa ꞉ mΣv &pb , (bsa val ⇒ bs)
+  cond (₁ , bs) = msg-reducible bs &pb
+  fun : FunG cond (a→←a a)
+  fun ((d , (&a , refl , refl)) , e) = let e = c &a (¬&PSet-reducible→cum2 {&a = &a .pr₁ .pr₂} {&a .pr₁ .pr₂} e) in l1 e where
+    l1 : &PSet-reducible (&b .pr₁ .pr₁) (&a .pr₁ .pr₁) → {!!}
+    l1 (inl x) = {!!}
+    l1 (inr x) = {!!}
