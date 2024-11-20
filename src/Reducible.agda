@@ -13,7 +13,7 @@ open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
 open import UF.Sets
 open import UF.Base
-open import UF.Base
+open import UF.UniverseEmbedding
 
 open import Lists
 
@@ -134,24 +134,17 @@ module _ (A : 𝓤 ̇) where
 
 
  a→←a-& : &PSet 𝓥 𝓦 → &PSet (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺)
- a→←a-& {𝓥 = 𝓥} {𝓦} &pa (₀ , v) = Σ q ꞉ mΣv &pa , v ＝ λ x → q .pr₁ x × 𝟙 {𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦}
+ a→←a-& {𝓥 = 𝓥} {𝓦} &pa (₀ , v) = Σ q ꞉ mΣv &pa , v ＝ λ x → Lift (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) (q .pr₁ x)
  a→←a-& &pa (₁ , v) = v ＝ λ x → Σ l ꞉ aΣv &pa , (l val) x
 
-
-
- -- a→←a-& : &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦)
- -- a→←a-& {𝓥 = 𝓥} &pa (₀ , v) = &pa ( ₀ , v) × 𝟙 {𝓤 ⊔ 𝓥 ⁺}
- -- a→←a-& &pa (₁ , v)
- --  =   msg-reducible v &pa
- --  -- The maximal element
- --    × ((bs : aΣv &pa) → (x : Σ (bs .pr₁)) → v (x .pr₁))
-
-
+-- we indtroduce 𝟘 in vi immediately here, to simplify things!! ?!
  a→←a : PSet 𝓥 𝓦 𝓣 → PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺) (𝓤 ⁺⁺ ⊔ 𝓥 ⁺⁺ ⁺ ⊔ 𝓦 ⁺⁺ ⊔ 𝓣)
- a→←a {𝓥 = 𝓥} {𝓦} pa (v , vi)
-  = Σ &pa ꞉ Σ pa ,
-        ((v ＝ a→←a-& (&pa .pr₁ .pr₁))
-      × (vi ＝ λ x → Σ l ꞉ Σ (&pa .pr₁ .pr₂) , x ＝ (l .pr₁ .pr₁ , λ w → (l .pr₁ .pr₂ w) × 𝟙{𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦})))
+ a→←a {𝓥 = 𝓥} {𝓦} a (v , vi)
+  = Σ &a ꞉ Σ a ,
+     let &pa = &a .pr₁ .pr₁
+         &ia = &a .pr₁ .pr₂
+     in (¬&PSet-reducible→ &ia &ia) × ((v ＝ a→←a-& &pa)
+        × (vi ＝ λ _ → 𝟘))
 
 
  _ᶜ : 𝟚 × ×BSet 𝓥 → 𝟚 × ×BSet 𝓥
@@ -160,14 +153,13 @@ module _ (A : 𝓤 ̇) where
 
  Fun : PSet 𝓥 𝓦 𝓣 → _ ̇
  Fun {𝓥 = 𝓥} {𝓦 = 𝓦} a
-  = (q : Σ &a ꞉ Σ a , let &ia = &a .pr₁ .pr₂
-                      in (¬&PSet-reducible→ &ia &ia)) → let &pa = q .pr₁ .pr₁ .pr₁
-                                                        in Σ bs ꞉ _ , &pa (bs ᶜ)
+  = (&a : Σ a) → let &pa = &a .pr₁ .pr₁
+                 in Σ bs ꞉ _ , &pa (bs ᶜ)
+
  FunG : (G : 𝟚 × ×BSet 𝓥 → 𝓣' ̇) → PSet 𝓥 𝓦 𝓣 → _ ̇
  FunG {𝓥 = 𝓥} {𝓦 = 𝓦} G a
-  = (q : Σ &a ꞉ Σ a , let &ia = &a .pr₁ .pr₂
-                      in (¬&PSet-reducible→ &ia &ia)) → let &pa = q .pr₁ .pr₁ .pr₁
-                                                        in Σ bs ꞉ _ , &pa (bs ᶜ) × G bs
+  = (&a : Σ a) → let &pa = &a .pr₁ .pr₁
+                 in Σ bs ꞉ _ , &pa (bs ᶜ) × G bs
 
 
  F⇒&P : {p : PSet 𝓥 𝓦 𝓣} → Fun p
@@ -196,39 +188,36 @@ module _ (A : 𝓤 ̇) where
   &pa = &a .pr₁ .pr₁
   &pa→← = a→←a-& &pa
   &ia = &a .pr₁ .pr₂
-  &ia→← = λ x → Σ l ꞉ Σ &ia , x ＝ (l .pr₁ .pr₁ , λ w → (l .pr₁ .pr₂ w) × 𝟙{𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦})
   a→←a∈ : Σ (a→←a a)
-  a→←a∈ = (&pa→← , &ia→←) , &a , refl , refl
-
-  ¬e : ¬&PSet-reducible→ (a→←a∈ .pr₁ .pr₂) (a→←a∈ .pr₁ .pr₂)
-  ¬e (bs , ((₀ , a) , b) , refl) =
-    (l1 .pr₁ .pr₁ , (l1 .pr₁ .pr₂) , _) ,
-      λ {(e , t , refl) v → l1 .pr₂ (t .pr₁ .pr₂ , t .pr₂) (v .pr₁)} where
-    l1 = ¬sred (a , b)
-
-  r = f (a→←a∈ , ¬e)
+  a→←a∈ = (&pa→← , (λ _ → 𝟘)) , &a , ¬sred , refl , refl
+  r = f a→←a∈
   bs : 𝟚 × ×BSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
   bs = r .pr₁
   bsᶜ∈&pa→← : &pa→← (bs ᶜ)
   bsᶜ∈&pa→← = r .pr₂
   l1 : ∀ bs → (c : &pa→← (bs ᶜ)) → (bs , c) ＝ r → &PSet-reducible &pa (&aᵗ .pr₁)
-  l1 (₀ , bs) refl eq = inr ((bs , (a→←a∈ , ¬e) , ap pr₁ (eq ⁻¹)) , λ x z → z)
-  l1 (₁ , bs) (q , refl) eq = inl (((q .pr₁) , (q .pr₂)) , λ x v → (bs , (a→←a∈ , ¬e) , ap pr₁ (eq ⁻¹)) , (v , _))
+  l1 (₀ , bs) refl eq = inr ((bs , a→←a∈ , ap pr₁ (eq ⁻¹)) , λ x z → z)
+  l1 (₁ , bs) (q , refl) eq = inl (((q .pr₁) , (q .pr₂)) , λ x v → (bs , a→←a∈ , ap pr₁ (eq ⁻¹)) , (v , _))
 
- ww : (b : PSet 𝓥 𝓦 𝓣) → (a : PSet 𝓥 𝓦 𝓣) → PSet-PSet-reducible b a → b ≼ (a ᵀ)
- ww b a b-a-red (&b , ¬redb) = {!b-a-red &b ¬redb!} where
+ cb-red⇒c≼bᵀ : (b : PSet 𝓥 𝓦 𝓣) → (a : PSet 𝓥 𝓦 𝓣) → PSet-PSet-reducible b a → b ≼ (a ᵀ)
+ cb-red⇒c≼bᵀ {𝓥 = 𝓥} {𝓦} b a b-a-red (&b , ¬redb)
+  =   (((F⇒&P f , (λ v → 𝟘)) , f , refl) , λ ())
+    , l2 where
   c = b-a-red &b ¬redb
   &pb = &b .pr₁ .pr₁
   cond : 𝟚 × ×BSet _ → _
   cond (₀ , bs) = Σ bsa ꞉ mΣv &pb , (bsa val ⇒ bs)
   cond (₁ , bs) = msg-reducible bs &pb
-  fun : FunG cond (a→←a a)
-  fun ((d , (&a , refl , refl)) , e) = let q = c &a {!!} in l1 q where
-    l1 : &PSet-reducible (&b .pr₁ .pr₁) (&a .pr₁ .pr₁) → {!!}
-    l1 (inl x) = {!!}
-    l1 (inr x) = {!!}
+  fung : FunG cond (a→←a a)
+  fung (d , (&a , ¬reda , refl , refl)) = let q = c &a ¬reda in l1 q where
+    l1 : &PSet-reducible (&b .pr₁ .pr₁) (&a .pr₁ .pr₁) → _
+    l1 (inl x) = (₀ , (λ v → Sigma (aΣv (&a .pr₁ .pr₁)) (λ l → (l val) v))) ,
+                  refl , x
+    l1 (inr (e , v)) = (₁ ,  λ x → Lift (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) (e .pr₁ x)) , (e , refl) , λ x z → v x (z .pr₁)
+  fun = FunG⇒Fun×Pr fung
+  f = fun .pr₁
+  co = fun .pr₂
+  l2 : &b .pr₁ .pr₁ ≼& F⇒&P f
+  l2 .pr₁ (bs , bs∈F⇒&P) = let q = co ((₀ , bs) , bs∈F⇒&P) in q
+  l2 .pr₂ (bs , bs∈F⇒&P) = let q = co ((₁ , bs) , bs∈F⇒&P) in q
 
--- let e = c &a (¬&PSet-reducible→cum2 {&a = &a .pr₁ .pr₂} {&a .pr₁ .pr₂} e) in l1 e where
---     l1 : &PSet-reducible (&b .pr₁ .pr₁) (&a .pr₁ .pr₁) → {!!}
---     l1 (inl x) = {!!}
---     l1 (inr x) = {!!}
