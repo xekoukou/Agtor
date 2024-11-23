@@ -9,6 +9,7 @@ open import UF.Subsingletons
 open import Naturals.Order
 open import UF.Subsingletons-FunExt
 open import UF.PropTrunc
+open import UF.Base
 
 module BSet (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) where
 
@@ -27,6 +28,12 @@ BSet 𝓥 = Σ P ꞉ BPred 𝓥 , (∀ mp → is-prop (P mp))
 
 bset-is-prop : (bs : BSet 𝓥) → (∀ mp → is-prop (⟨ bs ⟩ mp))
 bset-is-prop bs = bs .pr₂
+
+-- Consider propositional Extensionality, thus any propositions that
+-- assume its other are equal. Thus externally when we accept the same messages
+-- the predicates are equal.
+_≃ᵇ_ : ∀{𝓥} → BSet 𝓥 → BSet 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
+a ≃ᵇ b = a ＝ b
 
 -- The property holds for all messages.
 ⊨ : BSet 𝓥 → 𝓤 ⊔ 𝓥 ̇

@@ -19,11 +19,6 @@ module &PSet (GSet : 𝓥 ̇ ) (pt : propositional-truncations-exist) where
 
 open PropositionalTruncation pt
 
--- Move this to the more specialized case where GSet is 𝟚 × BSet
--- _ᵗ : 𝟚 × BSet → 𝟚 × BSet
--- (𝕞 , x) ᵗ = 𝕒 , x
--- (𝕒 , x) ᵗ = 𝕞 , x
-
 record &PSet 𝓦 : 𝓥 ⊔ 𝓦 ⁺ ̇  where
  field
   &⟨_⟩ : (o : GSet) → 𝓦 ̇ 
@@ -34,3 +29,7 @@ open &PSet public
 _&-&ᵖ_ : &PSet 𝓦 → &PSet 𝓦 → &PSet 𝓦
 &⟨ A &-&ᵖ B ⟩ o = ∥ &⟨ A ⟩ o + &⟨ B ⟩ o ∥
 &-is-prop (A &-&ᵖ B) o = ∥∥-is-prop
+
+-- Due to ×BSet being a proposition per msg, the equality we need is the standard one.
+-- This is by design.
+-- Same for &PSet

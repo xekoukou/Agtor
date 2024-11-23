@@ -37,7 +37,7 @@ ExC→G : ∀ X → ExC {𝓦'} X → ExCG _ X
 ExC→G X (a , b) = (Σ x ꞉ S×Msg , ⟨ (pr₁ ∘ pr₁) a ⟩ x + ⟨ (pr₁ ∘ pr₂) a ⟩ x) , λ (x , p) → b x p
 
 
-module temp (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
+module Op (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  open co-F-co-iso fc
 
  open CoAlgebra

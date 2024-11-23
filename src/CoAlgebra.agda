@@ -14,8 +14,6 @@ open import UF.PropTrunc
 open import UF.Sets
 open import UF.Base
 
-open import Lists
-
 module CoAlgebra (fe : Fun-Ext) (pt : propositional-truncations-exist) (UA : Univalence)
                   (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) {𝓥} {𝓦} {𝓣} where
 
