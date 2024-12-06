@@ -70,9 +70,9 @@ module Op (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls))
  -- The new Variance
  -- It takes 3 cases
   = (Σ d ꞉ D , (𝟚 + Σ (λ msg → ⟨ (bax d ×&& bmy d) bset ⟩ msg + ⟨ (bay d ×&& bmx d) bset ⟩ msg)))
- -- 1. Internal reduction of system X
+ -- 1. Internal reduction of system Y
     , λ { (d , inl ₀) → scope d , x d , Q.f (iy d)
- -- 2. internal reduction of system Y
+ -- 2. internal reduction of system X
         ; (d , inl ₁) → scope d , y d , Q.f (ix d)
  -- 3. communication between X and Y
         ; (d , inr (mp@(ls , inr scr) , (inl (xa , ym)))) → (scr ∷ scope d) , Q.f (pr₂ (nxcf d) mp (inl xa)) , (Q.f (pr₂ (nycf d) mp (inr ym)))
@@ -155,7 +155,7 @@ module Op (fc : Final-CoAlgebra) (_∈?_ : ∀ s ls → is-decidable (s ∈ ls))
   pr₂ e mp@(_ , inl _) (inl v)
     =   (Σ d ꞉ D , ⟨ (sbax d) bset ⟩ mp + ⟨ (sbay d) bset ⟩ mp)
       , λ { (d , inl px) → scope d , lim-rec' (scope d) (bax d) px (λ z → Q.f (pr₂ (nxcf d) mp (inl z))) , y d
-          ; (d , inr py) → scope d , lim-rec' (scope d) (bay d) py (λ z → Q.f (pr₂ (nycf d) mp (inl z))) , (x d)}
+          ; (d , inr py) → scope d , lim-rec' (scope d) (bay d) py (λ z → Q.f (pr₂ (nycf d) mp (inl z))) , x d}
   pr₂ e mp@(_ , inl _) (inr w)
     =   (Σ d ꞉ D , ⟨ (sbmx d) bset ⟩ mp + ⟨ (sbmy d) bset ⟩ mp)
       , λ { (d , inl px) → scope d , lim-rec' (scope d) (bmx d) px (λ z → Q.f (pr₂ (nxcf d) mp (inr z))) , (y d)
