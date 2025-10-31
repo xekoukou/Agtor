@@ -1,16 +1,17 @@
+Predicates
+==========
 
-```
+
+```agda
 {-# OPTIONS --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
 ```
 
-Predicates
-==========
 
 This is a general module on Predicates.
 
-```
+```agda
 module PredP (A : 𝓤 ̇) where
 
 Pred : ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
