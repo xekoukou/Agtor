@@ -13,7 +13,6 @@ open import UF.Sets
 open import UF.Base
 
 open import Lists
-open import Maybe
 
 module PSet (pt : propositional-truncations-exist) (&PSet : 𝓥 ̇) where
 

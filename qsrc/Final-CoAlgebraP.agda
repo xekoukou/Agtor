@@ -12,8 +12,8 @@ Final-CoAlgebra : Functor 𝓤 → 𝓤 ⁺ ̇
 Final-CoAlgebra func = Σ fc ꞉ CoAlgebra func , (∀ co → let open CoAlgebra₂ func co fc in is-singleton f-co-morphism)
 
 module Final-CoAlgebra func (fc' : Final-CoAlgebra {𝓤 = 𝓤} func) where
- private
-  fc = fc' .pr₁
+
+ fc = fc' .pr₁
 
  open CoAlgebra func fc public
 

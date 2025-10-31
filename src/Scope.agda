@@ -18,7 +18,6 @@ import PSet
 import &PSet
 
 open import Lists
-open import Maybe
 
 module Scope (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) where
 

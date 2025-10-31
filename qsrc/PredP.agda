@@ -18,7 +18,8 @@ module Pred₂ (a b : Pred 𝓥) where
 -- Should the condition be on the same universe.
 -- we mostly want propositions ???
 PCon : ∀ q → _
-PCon q = Pred q → 𝓤 ⊔ q ̇ 
+PCon q = Pred q → 𝓤 ⊔ q ̇
+
 ΣPred : ∀ 𝓥 → PCon 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
 ΣPred 𝓥 C = Σ C
 
