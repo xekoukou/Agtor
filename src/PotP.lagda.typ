@@ -21,9 +21,9 @@ the potential change of state if it communicates with the exterior world.
 open import PredP
 open Pred
 
-module PotP (Msg : 𝓤 ̇ ) 𝓥 (Cm : Pred (Pred Msg 𝓥) (𝓤 ⊔ 𝓥)) 𝓦 (Cp : Pred (Σ Cm) 𝓦) where
+module PotP (A : 𝓤 ̇ ) 𝓥 (Cm : Pred (Pred A 𝓥) (𝓤 ⊔ 𝓥)) 𝓦 (Cp : Pred (𝟚 × Σ Cm) 𝓦) where
 
- open import FCP {𝓦 = 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺} Msg 𝓥 Cm
+ open import FCP {𝓦 = 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺} A 𝓥 Cm
 
  open ΣPred
 
