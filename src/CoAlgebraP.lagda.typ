@@ -40,10 +40,10 @@ module CoAlgebra₂ func (a b : CoAlgebra {𝓤} func) where
 
  open CoAlgebra func
 
- f-co-morphism : 𝓤 ̇
- f-co-morphism = Σ f ꞉ (⟨ a ⟩ → ⟨ b ⟩) , Fm f ∘ (a ↓) ∼ (b ↓) ∘ f
+ co-morphism : 𝓤 ̇
+ co-morphism = Σ f ꞉ (⟨ a ⟩ → ⟨ b ⟩) , Fm f ∘ (a ↓) ∼ (b ↓) ∘ f
 
- module Morphism (m : f-co-morphism) where
+ module Morphism (m : co-morphism) where
   _⟶ : ⟨ a ⟩ → ⟨ b ⟩
   _⟶ = m .pr₁
 
