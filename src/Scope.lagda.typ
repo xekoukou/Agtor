@@ -1,3 +1,12 @@
+#import "@preview/color-my-agda:0.2.0": init-color-my-agda
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
+
+#show: init-color-my-agda
+
+
+= Scope
+
+
 
 ```agda
 {-# OPTIONS --safe --without-K --exact-split #-}
@@ -29,6 +38,8 @@ open Pred
 open ΣPred
 open import Definitions Msg Secret
 
+restr : ∀{𝓤 𝓥} → {A : 𝓤 ̇ } → (P : A → 𝓥 ̇ ) → Σ P → A
+restr P x =  x .pr₁
 
 _$₂_ : ∀{𝓤 𝓥} → {A : 𝓤 ̇ } → {B : 𝓥 ̇ } → (A → B) → A × A → B × B
 f $₂ (a , b) = f a , f b
@@ -40,13 +51,6 @@ f $₂ (a , b) = f a , f b
 scope-l1 : (x : Secret) → (ls : List Secret) → (A : 𝟚 → 𝓦 ̇ )
           → is-decidable (x ∈ ls) → 𝓦 ̇
 scope-l1 x ls A r = A (+→𝟚 r)
-
-scope-l1-prop : (x : Secret) → (ls : List Secret) → (A : 𝟚 → 𝓦 ̇ )
-          → is-prop (A ₀)
-          → is-prop (A ₁)
-          → (z : is-decidable (x ∈ ls)) → is-prop (scope-l1 x ls A z)
-scope-l1-prop x ls A d1 d2 (inl _) = d1
-scope-l1-prop x ls A d1 d2 (inr _) = d2
 
 
 module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
@@ -60,15 +64,14 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
 
  limit : Secret → BSet 𝓥 → BSet 𝓥
  limit s bs .pr₁ mp = limitPr s (< bs > mp) mp
- limit s bs .pr₂ .pr₁ mp@(ls , msg) = scope-l1-prop s ls (Lim (< bs > mp)) 𝟘-is-prop ((bset-is-prop bs) (ls , msg)) (s ∈? ls)
- limit s bs .pr₂ .pr₂ = λ ascrs scrs x (a⊂s , a⊃s) → l1 ascrs scrs x a⊂s a⊃s (s ∈? ascrs) (s ∈? scrs) , l2 ascrs scrs x a⊂s a⊃s (s ∈? scrs) (s ∈? ascrs) where
+ limit s bs .pr₂ = λ ascrs scrs x (a⊂s , a⊃s) → l1 ascrs scrs x a⊂s a⊃s (s ∈? ascrs) (s ∈? scrs) , l2 ascrs scrs x a⊂s a⊃s (s ∈? scrs) (s ∈? ascrs) where
    l1 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ ascrs)) → (deq2 : is-decidable (s ∈  scrs)) → scope-l1 s ascrs (Lim (< bs > (ascrs , x))) deq → scope-l1 s scrs (Lim (< bs > (scrs , x))) deq2
    l1 ascrs scrs x a⊃s a⊂s (inr neq) (inl eq2) cond = 𝟘-elim (neq (∈→∈ s scrs ascrs a⊂s eq2))
-   l1 ascrs scrs x a⊃s a⊂s (inr neq) (inr x₁) cond = bs .pr₂ .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₁ cond
+   l1 ascrs scrs x a⊃s a⊂s (inr neq) (inr x₁) cond = bs .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₁ cond
 
    l2 : ∀ ascrs scrs x a⊃s a⊂s → (deq : is-decidable (s ∈ scrs)) → (deq2 : is-decidable (s ∈ ascrs)) → scope-l1 s scrs (Lim (< bs > (scrs , x))) deq → scope-l1 s ascrs (Lim (< bs > (ascrs , x))) deq2
    l2 ascrs scrs x a⊃s a⊂s (inr neq) (inl eq2) cond = 𝟘-elim (neq (∈→∈ s ascrs scrs a⊃s eq2))
-   l2 ascrs scrs x a⊃s a⊂s (inr neq) (inr x₁) cond = bs .pr₂ .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₂ cond
+   l2 ascrs scrs x a⊃s a⊂s (inr neq) (inr x₁) cond = bs .pr₂ ascrs scrs x (a⊃s , a⊂s) .pr₂ cond
 
  limitMPr : Secret → List Secret → 𝓥 ̇  → Pred S×Msg 𝓥
  limitMPr s [] bs mp = limitPr s bs mp
@@ -94,7 +97,7 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  limitM' [] bs = bs
  limitM' (s ∷ ls) bs = limitM s ls bs
 
--- limitM×' is a restriction, so it fits where bs fits.
+-- limitM is a restriction, so it fits where bs fits.
  lim-rec : ∀{𝓦} → {A : 𝓦 ̇ } → ∀ s ls {bs mp} → < (limitM {𝓥} s ls bs) > mp → (< bs > mp → A) → A
  lim-rec s [] {bs} {mp@(ws , msg)} c f = l1 (s ∈? ws) c where
   l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
@@ -114,64 +117,13 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  lim-rec' (x ∷ ls) bs {mp} = lim-rec x ls {bs}
 
 
---  module &PSet-scope {𝓥} where
+ module &PSet-scope {𝓥} where
 
---   open &PSet (𝟚 × ×BSet 𝓥) pt
+  limit&P : Secret → &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
+  limit&P s ps .pr₁ v = v ∈image λ x → (λ (a , bs) → a , limit s bs) (restr < ps > x)
+  limit&P s ps .pr₂ = cons-is-non-empty
 
---   limit&P : Secret → &PSet 𝓦 → &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
---   &⟨ limit&P s ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , limit s bs) (restr &⟨ ps ⟩ x)
---   limit&P s ps .&-is-prop _ = ∃-is-prop
- 
---   compl&P : Secret → &PSet 𝓦 → &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
---   &⟨ compl&P s ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , compl s bs) (restr &⟨ ps ⟩ x)
---   compl&P s ps .&-is-prop v = ∃-is-prop
- 
---   split&P : Secret → &PSet 𝓦 → &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) × &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
---   split&P s ps =  limit&P s ps , compl&P s ps
- 
---   limit&PM : Secret → List Secret → &PSet 𝓦 → &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
---   &⟨ limit&PM s ls ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , limitM× s ls bs) (restr &⟨ ps ⟩ x)
---   limit&PM s ls ps .&-is-prop _ = ∃-is-prop
- 
---   compl&PM : Secret → List Secret → &PSet 𝓦 → &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
---   &⟨ compl&PM s ls ps ⟩ v = v ∈image λ x → (λ (a , bs) → a , complM× s ls bs) (restr &⟨ ps ⟩ x)
---   compl&PM s ls ps .&-is-prop v = ∃-is-prop
- 
---   split&PM : Secret → List Secret → &PSet 𝓦 → &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) × &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
---   split&PM s ls ps = limit&PM s ls ps , compl&PM s ls ps
-
-
--- -- The product here has semantic meaning, the first is the external reducibility type,
--- -- the second is the internal reducibility type.
-
--- module PSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) {𝓥} {𝓦} where
-
---  open &PSet (𝟚 × ×BSet 𝓥) pt
---  open BSet-scope _∈?_
---  open &PSet-scope {𝓥}
-
--- -- left is external
--- -- right is internal
---  open PSet pt (&PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) × &PSet (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦))
- 
- 
---  scopeP : Secret → PSet 𝓣 → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
---  -- Again here we use the _&_operator on inn.
---  -- I think we need to simplify this
---  ∣⟨ scopeP s ps ⟩ v = v ∈image ((λ (ex , inn) → limit&P s ex , (inn &-&ᵖ compl&P s ex)) ∘ restr ∣⟨ ps ⟩)
---  scopeP s ps .∣-is-prop v = ∃-is-prop
-
---  scopePM : List Secret → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣) → PSet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣)
---  -- Again here we use the _&_operator on inn.
---  -- I think we need to simplify this
---  ∣⟨ scopePM [] ps ⟩ = ∣⟨ ps ⟩
---  ∣⟨ scopePM (s ∷ ls) ps ⟩ v = v ∈image ((λ (ex , inn) → limit&PM s ls ex , (inn &-&ᵖ compl&PM s ls ex)) ∘ restr ∣⟨ ps ⟩)
---  scopePM [] ps .∣-is-prop = ps .∣-is-prop
---  scopePM (s ∷ ls) ps .∣-is-prop v = ∃-is-prop
-
-
-
-
-
-
--- ```
+  limit&PM : Secret → List Secret → &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
+  limit&PM s ls ps .pr₁ v = v ∈image λ x → (λ (a , bs) → a , limitM s ls bs) (restr < ps > x)
+  limit&PM s ls ps .pr₂ = cons-is-non-empty
+```

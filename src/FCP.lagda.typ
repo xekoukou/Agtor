@@ -29,11 +29,14 @@ that happens after the msg has arrived or has been sent.
 open import PredP
 open Pred
 
-module FCP (A : 𝓤 ̇ ) 𝓥 (C : Pred (Pred A 𝓥) (𝓤 ⊔ 𝓥)) (B : 𝓦 ̇) where
+module FCP (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) 𝓥 (B : 𝓦 ̇) where
+
+open import Definitions Msg Secret
 
 open ΣPred
 
-FC = (Σ Mp ꞉ Σ C , (∀ x → < Mp > x → B)) × (Σ Ap ꞉ Σ C , (∀ x → < Ap > x → B))
+FC : 𝓤 ⊔ 𝓦 ⊔ (𝓥 ⁺) ⊔ (𝓤 ⊔ 𝓦 ⊔ (𝓥 ⁺)) ̇
+FC = (Σ Mp ꞉ BSet 𝓥 , (∀ x → < Mp > x → B)) × (Σ Ap ꞉ BSet 𝓥 , (∀ x → < Ap > x → B))
 
 module FC (fc : FC) where
  Mp : _

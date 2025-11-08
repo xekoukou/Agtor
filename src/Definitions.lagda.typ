@@ -1,3 +1,11 @@
+#import "@preview/color-my-agda:0.2.0": init-color-my-agda
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
+
+#show: init-color-my-agda
+
+
+= Definitions
+
 
 ```agda
 {-# OPTIONS --safe --without-K --exact-split #-}
@@ -20,20 +28,37 @@ S×Msg = List Secret × (Msg + Secret)
 _⇔_ : (A B : 𝓦 ̇) → 𝓦 ̇
 A ⇔ B = (A → B) × (B → A)
 
+```
+
+At the moment, I consider BSet to not be a proposition. In the future, we might need
+to have two different definitions, one of it being a proposition.
+
+```agda
+
 Cm : ∀ 𝓥 → Pred (Pred S×Msg 𝓥) (𝓤 ⊔ 𝓥)
-Cm 𝓥 P = (∀ mp → is-prop (P mp)) × (∀ ascrs scrs x → scrs ⊃ ascrs × ascrs ⊃ scrs → P (ascrs , x) ⇔ (P (scrs , x)))
+Cm 𝓥 P = (∀ ascrs scrs x → scrs ⊃ ascrs × ascrs ⊃ scrs → P (ascrs , x) ⇔ (P (scrs , x)))
 
 BSet : ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
 BSet 𝓥 = Σ (Cm 𝓥)
 
-bset-is-prop : (bs : BSet 𝓥) → (∀ mp → is-prop (< bs > mp))
-bset-is-prop bs = bs .pr₂ .pr₁
+-- bset-is-prop : (bs : BSet 𝓥) → (∀ mp → is-prop (< bs > mp))
+-- bset-is-prop bs = bs .pr₂ .pr₁
 
 _symm : (bs : BSet 𝓥)
  → (ascrs scrs : List Secret) (x : Msg + Secret) →
    (scrs ⊃ ascrs) × (ascrs ⊃ scrs) →
    < bs > (ascrs , x) ⇔ < bs > (scrs , x)
-_symm bs = bs .pr₂ .pr₂
+_symm bs = bs .pr₂
 
+```
+Similarly, &PSet might have to be a Proposition in the future, but it increases complexity
+without any reason at the moment.
+
+```agda
+Cp : ∀ 𝓥 𝓦 → Pred (Pred (𝟚 × (BSet 𝓥)) 𝓦) (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
+Cp 𝓥 𝓦 P = 𝟙
+
+&PSet : ∀ 𝓥 𝓦 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ̇
+&PSet 𝓥 𝓦 = Σ (Cp 𝓥 𝓦)
 
 ```
