@@ -7,7 +7,190 @@
 = Scope
 
 
+Every system needs to have local variables /channels that only its members can interact with. At the same time, the channel can be passed to an external system, thus the scope of the
+channel changes, it encompasses this external system as well. In $pi$-calculus, this is
+expressed by the structural rule:
 
+$(nu x)(P | Q) equiv (nu x) P | Q$  when $x$ is not a free variable in $Q$.
+
+Let us now have an example where we show how we handle scope in our system. Consider these systems:
+
+$A colon.eq (nu x) (tilde(y)⟨x⟩.0|x(k).tilde(k)⟨q⟩.0|d(q).A) $
+
+$B colon.eq y(e).tilde(e)⟨z⟩.tilde(d)⟨k⟩.0|z(q).B $
+
+
+We have discussed that our systems are described by sets of potentialities. Here though,
+we have the simplest systems. Let us describe system A:
+
+#diagram(
+    node((0,2.1), $...$, name: <C>),
+    node((0,2.8), $tilde(y)|d$, name: <B>),
+    node((0,3.5), $tilde(y)|d$, name: <A>),
+    edge(<A>, <B>, "-|>"),
+    edge(<B>, <C>, "-|>"),
+    node((rel: (1.4, -0.2), to: <A>), name: <Fa>),
+    edge(<A>, <Fa>, "-|>" ,),
+    node((rel: (-0.5, -0.2), to: <Fa>), $tilde(y)|d$ , name: <Fa1> ),
+    node((rel: (0, -0.7), to: <Fa1>), $tilde(y)|d$ , name: <Fa2> ),
+    node((rel: (0, -1.4), to: <Fa1>), $...$ , name: <Fa3> ),
+    edge(<Fa1>, <Fa2>, "-|>" ,),
+    edge(<Fa2>, <Fa3>, "-|>" ,),
+
+    node((rel: (0.5, -0.2), to: <Fa>), $x|d$ , name: <Fb1> ),
+    node((rel: (0, -0.7), to: <Fb1>), $x|d$ , name: <Fb2> ),
+    node((rel: (0, -1.4), to: <Fb1>), $...$ , name: <Fb3> ),
+    edge(<Fb1>, <Fb2>, "-|>" ,),
+    edge(<Fb2>, <Fb3>, "-|>" ,),
+    node(enclose: (<A>, <B>, <C> , <Fa> , <Fa1> , <Fb1> , <Fb3>),
+         stroke: teal, fill: teal.lighten(90%),
+         snap: -1, // prioritise other nodes when auto-snapping
+         name: <g1>) ,
+    node((rel: (1.4, -0.2), to: <Fb1>), name: <Fc>),
+    edge(<Fb1>, <Fc>, "-|>" ,),
+    
+    node((rel: (0.5, -0.2), to: <Fc>), $tilde(k)|d$ , name: <Fc1> ),
+    node((rel: (0, -0.7), to: <Fc1>), $tilde(k)|d$ , name: <Fc2> ),
+    node((rel: (0, -1.4), to: <Fc1>), $...$ , name: <Fc3> ),
+    edge(<Fc1>, <Fc2>, "-|>" ,),
+    edge(<Fc2>, <Fc3>, "-|>" ,),
+
+    node((rel: (-0.5, -0.2), to: <Fc>), $x|y|d$ , name: <Fd1> ),
+    node((rel: (0, -0.7), to: <Fd1>), $x|y|d$ , name: <Fd2> ),
+    node((rel: (0, -1.4), to: <Fd1>), $...$ , name: <Fd3> ),
+    edge(<Fd1>, <Fd2>, "-|>" ,),
+    edge(<Fd2>, <Fd3>, "-|>" ,),
+
+    node((rel: (1.4, -0.2), to: <Fc1>), name: <Fe>),
+    edge(<Fc1>, <Fe>, "-|>" ,),
+    
+    node((rel: (0.5, -0.2), to: <Fe>), $d$ , name: <Fe1> ),
+    node((rel: (0, -0.7), to: <Fe1>), $d$ , name: <Fe2> ),
+    node((rel: (0, -1.4), to: <Fe1>), $...$ , name: <Fe3> ),
+    edge(<Fe1>, <Fe2>, "-|>" ,),
+    edge(<Fe2>, <Fe3>, "-|>" ,),
+
+    node((rel: (-0.5, -0.2), to: <Fe>), $tilde(k)|tilde(y)|x|d$ , name: <Fq1> ),
+    node((rel: (0, -0.7), to: <Fq1>), $tilde(k)|tilde(y)|x|d$ , name: <Fq2> ),
+    node((rel: (0, -1.4), to: <Fq1>), $...$ , name: <Fq3> ),
+    edge(<Fq1>, <Fq2>, "-|>" ,),
+    edge(<Fq2>, <Fq3>, "-|>" ,),
+
+)
+
+Each horizontal line represents the function of change after system A receives/sends
+a msg from a specific channel. For the first case, there are two possibilities,
+either it sent a message on channel $tilde(y)$ or it received a message on channel $d$. For this reason, there are two potentialities.
+
+$k$ is a variable, it is the secret to be received by channel $x$.
+
+Keep in mind that the type does not truck the number of *actors* that are present. It only
+cares whether there is at least one actor that accepts/sends a specific channel. It is idempotent. It is for this reason that the second column is not $tilde(y)|tilde(y)|d$
+
+Also, the diagram is incomplete, since we do not describe the functions of change of the
+other potentialities.
+
+Now, if you look closer, at the first type, it is $tilde(y)|d$ when channel $x$ is ready to
+receive new messages. Of course, this is not possible since $x$ is a local variable. In column 3 though, $x$ is part of the type, the reason for that is that channel $x$ has been transmitted to the outside world.
+
+System B:
+
+#diagram(
+    node((0,2.1), $...$, name: <C>),
+    node((0,2.8), $y|z$, name: <B>),
+    node((0,3.5), $y|z$, name: <A>),
+    edge(<A>, <B>, "-|>"),
+    edge(<B>, <C>, "-|>"),
+    node((rel: (1.4, -0.2), to: <A>), name: <Fa>),
+    edge(<A>, <Fa>, "-|>" ,),
+    node((rel: (-0.5, -0.2), to: <Fa>), $y|z$ , name: <Fa1> ),
+    node((rel: (0, -0.7), to: <Fa1>), $y|z$ , name: <Fa2> ),
+    node((rel: (0, -1.4), to: <Fa1>), $...$ , name: <Fa3> ),
+    edge(<Fa1>, <Fa2>, "-|>" ,),
+    edge(<Fa2>, <Fa3>, "-|>" ,),
+
+    node((rel: (0.5, -0.2), to: <Fa>), $tilde(e)|z$ , name: <Fb1> ),
+    node((rel: (0, -0.7), to: <Fb1>), $tilde(e)|z$ , name: <Fb2> ),
+    node((rel: (0, -1.4), to: <Fb1>), $...$ , name: <Fb3> ),
+    edge(<Fb1>, <Fb2>, "-|>" ,),
+    edge(<Fb2>, <Fb3>, "-|>" ,),
+
+    node((rel: (1.4, -0.2), to: <Fb1>), name: <Fc>),
+    edge(<Fb1>, <Fc>, "-|>" ,),
+    
+    node((rel: (0.5, -0.2), to: <Fc>), $tilde(d)|z$ , name: <Fc1> ),
+    node((rel: (0, -0.7), to: <Fc1>), $tilde(d)|z$ , name: <Fc2> ),
+    node((rel: (0, -1.4), to: <Fc1>), $...$ , name: <Fc3> ),
+    edge(<Fc1>, <Fc2>, "-|>" ,),
+    edge(<Fc2>, <Fc3>, "-|>" ,),
+
+    node((rel: (-0.5, -0.2), to: <Fc>), $tilde(e)|y|z$ , name: <Fd1> ),
+    node((rel: (0, -0.7), to: <Fd1>), $tilde(e)|y|z$ , name: <Fd2> ),
+    node((rel: (0, -1.4), to: <Fd1>), $...$ , name: <Fd3> ),
+    edge(<Fd1>, <Fd2>, "-|>" ,),
+    edge(<Fd2>, <Fd3>, "-|>" ,),
+
+    node((rel: (1.4, -0.2), to: <Fc1>), name: <Fe>),
+    edge(<Fc1>, <Fe>, "-|>" ,),
+    
+    node((rel: (0.5, -0.2), to: <Fe>), $z$ , name: <Fe1> ),
+    node((rel: (0, -0.7), to: <Fe1>), $z$ , name: <Fe2> ),
+    node((rel: (0, -1.4), to: <Fe1>), $...$ , name: <Fe3> ),
+    edge(<Fe1>, <Fe2>, "-|>" ,),
+    edge(<Fe2>, <Fe3>, "-|>" ,),
+
+    node((rel: (-0.5, -0.2), to: <Fe>), $tilde(d)|y|z$ , name: <Fq1> ),
+    node((rel: (0, -0.7), to: <Fq1>), $tilde(d)|y|z$ , name: <Fq2> ),
+    node((rel: (0, -1.4), to: <Fq1>), $...$ , name: <Fq3> ),
+    edge(<Fq1>, <Fq2>, "-|>" ,),
+    edge(<Fq2>, <Fq3>, "-|>" ,),
+
+)
+
+Both systems A and B are static, meaning that they cannot progress any further without
+external help. For this reason each column has a constant type. In general though, systems
+progress on their own.
+
+In the next diagram, I will only describe the initial potentialities of the system A&B, when
+it is not pertrubed by an external system.
+
+#diagram(
+    node((0,0.7), $...$, name: <E>),
+    node((0,1.4), $tilde(d)|d$, name: <D>),
+    node((0,2.1), $tilde(d)|tilde(z)|d|z$, name: <C>),
+    node((0,2.8), stroke: teal, fill: teal.lighten(90%),
+                  $d|z$, name: <B>),
+    node((0,3.5), $tilde(y)|d|y|z$, name: <A>),
+    edge(<A>, <B>, "-|>"),
+    edge(<B>, <C>, "-|>"),
+    edge(<C>, <D>, "-|>"),
+    edge(<D>, <E>, "-|>"),
+
+    node((0.7,0.7), $...$, name: <E2>),
+    node((0.7,1.4), $tilde(z)|z$, name: <D2>),
+    node((0.7,2.1), $tilde(d)|tilde(z)|d|z$, name: <C2>),
+    node((0.7,2.8),
+        stroke: teal, fill: teal.lighten(90%),
+        $d|z$, name: <B2>),
+    node((0.7,3.5), $tilde(y)|d|y|z$, name: <A2>),
+    edge(<A2>, <B2>, "-|>"),
+    edge(<B2>, <C2>, "-|>"),
+    edge(<C2>, <D2>, "-|>"),
+    edge(<D2>, <E2>, "-|>"),
+
+)
+
+
+The interesting thing happens at the second "state" of the potentialities. Here, it should
+have been $x|d|tilde(x)|z$. The reason it is not is because channel $x$ has been
+sent inside the system, thus we know that noone else has channel $x$, thus it is impossible
+that the external world communicate with A&B through channel $x$.
+
+This is how I handle scope at the moment, by limiting the type of the system to remove channels that cannot be accessed by the exterior world.
+
+In this 'library', we do not have channels, by predicates that require the knowledge of a list of secrets. Thus, any predicates that can only be fulfilled from inside the system are removed. This is the functionality of the *limit&* function.
+
+/*
 ```agda
 {-# OPTIONS --safe --without-K --exact-split #-}
 
@@ -37,7 +220,11 @@ open import PredP
 open Pred
 open ΣPred
 open import Definitions Msg Secret
+```
+*/
 
+
+```agda
 restr : ∀{𝓤 𝓥} → {A : 𝓤 ̇ } → (P : A → 𝓥 ̇ ) → Σ P → A
 restr P x =  x .pr₁
 
