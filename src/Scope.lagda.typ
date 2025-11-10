@@ -84,7 +84,7 @@ either it sent a message on channel $tilde(y)$ or it received a message on chann
 
 $k$ is a variable, it is the secret to be received by channel $x$.
 
-Keep in mind that the type does not truck the number of *actors* that are present. It only
+Keep in mind that the type does not track the number of *actors* that are present. It only
 cares whether there is at least one actor that accepts/sends a specific channel. It is idempotent. It is for this reason that the second column is not $tilde(y)|tilde(y)|d$
 
 Also, the diagram is incomplete, since we do not describe the functions of change of the
