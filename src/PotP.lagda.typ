@@ -38,15 +38,36 @@ BSet is a predicate on the messages that are received or accepted by a system.
 ```agda
 
 open import FunctorP
+open import CoAlgebraP
 open import Final-CoAlgebraP
 
 Fpot : Functor (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺)
 Fpot =
-    (λ X → X × (&PSet 𝓥 𝓦) × FC X)
+    (λ X → X × &PSet 𝓥 𝓦 × FC X)
   , (λ f (   x , &ps , ((mp ,         fm        ) , (ap ,          fa       ))) →
            f x , &ps ,  (mp , λ x c → f (fm x c)) , (ap , λ x c → f (fa x c)))
   , (λ f g x → refl)
   , λ x → refl
 
 Pot = Final-CoAlgebra Fpot
+
+
+open Functor Fpot
+open CoAlgebra Fpot
+
+module Pot {fc' : Pot} (a : Fn < fc' .pr₁ >) where
+
+ open Final-CoAlgebra Fpot fc'
+
+ next : < fc >
+ next = a .pr₁
+
+ &pset : &PSet 𝓥 𝓦
+ &pset = a .pr₂ .pr₁
+
+ foc : FC _
+ foc = a .pr₂ .pr₂
+
+
+
 ```

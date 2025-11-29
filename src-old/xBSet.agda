@@ -56,7 +56,7 @@ a ×&& b
 
 _×||_ : ×BSet 𝓥 → ×BSet 𝓥 → ×BSet 𝓥
 (a ×|| b) .pr₁ = (a bset) || (b bset)
-(a@((x , _) , _) ×|| b@((y , _) , _)) .pr₂ ascrs scrs msg eq@(eq1 , eq2) = l1 where
+(a@((_ , _) , _) ×|| b@((_ , _) , _)) .pr₂ ascrs scrs msg eq@(eq1 , eq2) = l1 where
   l1 : ⟨ pr₁ (a ×|| b) ⟩ (ascrs , msg) ⇔ ⟨ pr₁ (a ×|| b) ⟩ (scrs , msg)
   l1 .pr₁
     = ∥∥-rec

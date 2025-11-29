@@ -16,6 +16,7 @@ open import UF.Subsingletons
 
 open import PredP
 open Pred
+open Pred₂
 open ΣPred
 open import Lists
 
@@ -50,6 +51,13 @@ _symm : (bs : BSet 𝓥)
    < bs > (ascrs , x) ⇔ < bs > (scrs , x)
 _symm bs = bs .pr₂
 
+module BSet₂ {𝓥} = ΣPred₂ {C = Cm 𝓥} (λ a b ascrs scrs msg eq@(eq1 , eq2) → (λ { (inl v) → inl (a .pr₂ scrs ascrs msg (eq2 , eq1) .pr₂ v) ; (inr v) → inr (b .pr₂ ascrs scrs msg eq .pr₁ v)}) , λ { (inl v) → inl (a .pr₂ scrs ascrs msg (eq2 , eq1) .pr₁ v) ; (inr v) → inr (b .pr₂ ascrs scrs msg eq .pr₂ v)}) (λ a b → λ ascrs scrs x eq → (λ (z , y) → (a .pr₂ scrs ascrs x ((eq .pr₂) , (eq .pr₁)) .pr₂ z) , (b .pr₂ scrs ascrs x ((eq .pr₂) , (eq .pr₁)) .pr₂ y))
+   , λ (z , y) → (a .pr₂ ascrs scrs x eq .pr₂ z) , (b .pr₂ ascrs scrs x eq .pr₂ y))
+
+open BSet₂ public renaming (_||_ to _∨_ ; _&&_ to _∧_)
+
+
+
 ```
 Similarly, &PSet might have to be a Proposition in the future, but it increases complexity
 without any reason at the moment.
@@ -61,4 +69,9 @@ Cp 𝓥 𝓦 P = 𝟙
 &PSet : ∀ 𝓥 𝓦 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ̇
 &PSet 𝓥 𝓦 = Σ (Cp 𝓥 𝓦)
 
+module &ΣPred₂ {𝓥} {𝓦} = ΣPred₂ {C = Cp 𝓥 𝓦} (λ s e → cons-is-non-empty) (λ s e → cons-is-non-empty)
+
+open &ΣPred₂ public
+
 ```
+

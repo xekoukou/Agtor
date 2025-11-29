@@ -22,13 +22,18 @@ open import CoAlgebraP
 
 ```agda
 Final-CoAlgebra : Functor 𝓤 → 𝓤 ⁺ ̇
-Final-CoAlgebra func = Σ fc ꞉ CoAlgebra func , (∀ co → let open CoAlgebra₂ func co fc in is-singleton co-morphism)
-
+Final-CoAlgebra func =
+ Σ fc ꞉ CoAlgebra func ,
+  (∀ co → let open CoAlgebra₂ func co fc
+              open Morphism in
+                Σ f ꞉ co-morphism , ((c : co-morphism) → f ↓ ＝ c ↓ ))
 module Final-CoAlgebra func (fc' : Final-CoAlgebra {𝓤 = 𝓤} func) where
 
  fc = fc' .pr₁
 
- uni : (∀ co → let open CoAlgebra₂ func co fc in is-singleton co-morphism)
+ uni : (∀ co → let open CoAlgebra₂ func co fc
+                   open Morphism in Σ f ꞉ co-morphism , ((c : co-morphism)
+  → f ↓ ＝ c ↓ ))
  uni = fc' .pr₂
 ```
 

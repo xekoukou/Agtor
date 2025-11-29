@@ -147,7 +147,7 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
   l1 : (w : (s ∈ ws) + (s ∈ ws → 𝟘)) →
        limitMPr l ls (Lim (bs .pr₁ .pr₁ (ws , msg)) (+→𝟚 w)) (ws , msg) → _
   l1 (inl x) c with limitMPr {𝓥} l ls 𝟘 mp | (limitMPr-𝟘 {𝓥} l ls mp)
-  l1 (inl x) () | r | refl
+  l1 (inl x) c | r | d = 𝟘-elim (transport (λ x → x) d c)
   l1 (inr x) c = lim-rec l ls {bs} {mp} c f
 
 

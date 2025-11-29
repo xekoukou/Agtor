@@ -33,7 +33,7 @@ module _ (fe : Fun-Ext) (UA : Univalence) func (fc' : Final-CoAlgebra {𝓤 = �
  open CoAlgebra₂ func 
 
  f-co : CoAlgebra func
- f-co = Fn ⟨ fc ⟩ , Fm (fc ↓)
+ f-co = Fn ⟨ fc ⟩ , Fm (fc ⟶)
 
 
  inv : co-morphism f-co fc
@@ -42,12 +42,12 @@ module _ (fe : Fun-Ext) (UA : Univalence) func (fc' : Final-CoAlgebra {𝓤 = �
  open Morphism f-co fc
 
  morph : co-morphism fc fc
- morph = (inv ⟶) ∘ (fc ↓) , λ x → (Fm-comp (inv ⟶) (fc ↓) ((fc ↓) x)) ⁻¹ ∙ (inv comm) ((fc ↓) x)
+ morph = (inv ↓) ∘ (fc ⟶) , λ x → (Fm-comp (inv ↓) (fc ⟶) ((fc ⟶) x)) ⁻¹ ∙ (inv comm) ((fc ⟶) x)
  
  morph-id : co-morphism fc fc
- morph-id = (λ x → x) , (λ x → Fm-id ((fc ↓) x) ) 
+ morph-id = (λ x → x) , (λ x → Fm-id ((fc ⟶) x) ) 
 
- inv∘Qf=id : (inv ⟶) ∘ (fc ↓) ＝ id
+ inv∘Qf=id : (inv ↓) ∘ (fc ⟶) ＝ id
  inv∘Qf=id = l2 ⁻¹ ∙ l3  where
   l1 = uni fc
   c = l1 .pr₁
@@ -57,9 +57,9 @@ module _ (fe : Fun-Ext) (UA : Univalence) func (fc' : Final-CoAlgebra {𝓤 = �
   l3 : c .pr₁ ＝ morph-id .pr₁
   l3 = ap pr₁ (l1 .pr₂ morph-id)
 
- Qf∘inv=id : (fc ↓) ∘ (inv ⟶) ＝ (λ x → x)
- Qf∘inv=id = (dfunext fe λ x → (inv comm) x ⁻¹ ∙ (Fm-comp (inv ⟶) (fc ↓) x ∙ ((ap (λ z → Fm z x) inv∘Qf=id) ∙ Fm-id x) ))
+ Qf∘inv=id : (fc ⟶) ∘ (inv ↓) ＝ (λ x → x)
+ Qf∘inv=id = (dfunext fe λ x → (inv comm) x ⁻¹ ∙ (Fm-comp (inv ↓) (fc ⟶) x ∙ ((ap (λ z → Fm z x) inv∘Qf=id) ∙ Fm-id x) ))
 
  QE=FQE : ⟨ fc ⟩ ＝ Fn ⟨ fc ⟩
- QE=FQE = eqtoid (UA _) ⟨ fc ⟩ (Fn ⟨ fc ⟩) (qinveq (fc ↓) ((inv ⟶) , (λ x → ap (λ f → f x) inv∘Qf=id) , (λ x → ap (λ f → f x) Qf∘inv=id)))
+ QE=FQE = eqtoid (UA _) ⟨ fc ⟩ (Fn ⟨ fc ⟩) (qinveq (fc ⟶) ((inv ↓) , (λ x → ap (λ f → f x) inv∘Qf=id) , (λ x → ap (λ f → f x) Qf∘inv=id)))
 ```

@@ -21,8 +21,7 @@ open import FunctorP
 
 CoAlgebra : (func : Functor 𝓤) → 𝓤 ⁺ ̇
 CoAlgebra func = Σ A ꞉ _ , (A → F.Fn A) where
- private
-  module F = Functor func 
+ module F = Functor func 
 
 
 module CoAlgebra func (co : CoAlgebra {𝓤} func) where
@@ -32,8 +31,8 @@ module CoAlgebra func (co : CoAlgebra {𝓤} func) where
  ⟨_⟩ : 𝓤 ̇ 
  ⟨_⟩ = co .pr₁
 
- _↓ : ⟨_⟩ → Fn ⟨_⟩
- _↓ = co .pr₂
+ _⟶ : ⟨_⟩ → Fn ⟨_⟩
+ _⟶ = co .pr₂
 
 module CoAlgebra₂ func (a b : CoAlgebra {𝓤} func) where
  open Functor func
@@ -41,13 +40,13 @@ module CoAlgebra₂ func (a b : CoAlgebra {𝓤} func) where
  open CoAlgebra func
 
  co-morphism : 𝓤 ̇
- co-morphism = Σ f ꞉ (⟨ a ⟩ → ⟨ b ⟩) , Fm f ∘ (a ↓) ∼ (b ↓) ∘ f
+ co-morphism = Σ f ꞉ (⟨ a ⟩ → ⟨ b ⟩) , Fm f ∘ (a ⟶) ＝ (b ⟶) ∘ f
 
  module Morphism (m : co-morphism) where
-  _⟶ : ⟨ a ⟩ → ⟨ b ⟩
-  _⟶ = m .pr₁
+  _↓ : ⟨ a ⟩ → ⟨ b ⟩
+  _↓ = m .pr₁
 
-  _comm : Fm _ ∘ (a ↓) ∼ (b ↓) ∘ _
+  _comm : Fm _ ∘ (a ⟶) ＝ (b ⟶) ∘ _
   _comm = m .pr₂
  
 ```
