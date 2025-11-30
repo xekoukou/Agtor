@@ -23,6 +23,8 @@ import Cubical.Foundations.Prelude as Cube
 
 ```agda
 
+module Common-Rel where
+
 eqToPath : {A : 𝓤 ̇ } → {x y : A} → x ＝ y → Cube.Path A x y
 eqToPath refl = Cube.refl
 

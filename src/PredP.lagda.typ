@@ -28,12 +28,16 @@ module Pred (A : 𝓤 ̇) where
 
 open Pred
 
-module Pred₂ {A : 𝓤 ̇} (a b : Pred A 𝓥) where
- _&&ₚ_ : Pred A 𝓥
+module Pred₂ {A : 𝓤 ̇} (a : Pred A 𝓥) (b : Pred A 𝓦) where
+ _&&ₚ_ : Pred A (𝓥 ⊔ 𝓦)
  _&&ₚ_ x = a x × b x
 
- _||ₚ_ : Pred A 𝓥
+ _||ₚ_ : Pred A (𝓥 ⊔ 𝓦)
  _||ₚ_ x = a x + b x
+
+ infix 2 _⇒_
+ _⇒ₚ_ : 𝓤 ⊔ 𝓥 ⊔ 𝓦 ̇
+ _⇒ₚ_ = ∀ v → a v → b v
 
 
 

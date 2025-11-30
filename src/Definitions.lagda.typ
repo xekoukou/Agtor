@@ -36,7 +36,10 @@ to have two different definitions, one of it being a proposition.
 
 ```agda
 
-Cm : ∀ 𝓥 → Pred (Pred S×Msg 𝓥) (𝓤 ⊔ 𝓥)
+<BSet> : ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
+<BSet> 𝓥 = Pred S×Msg 𝓥
+
+Cm : ∀ 𝓥 → Pred (<BSet> 𝓥) (𝓤 ⊔ 𝓥)
 Cm 𝓥 P = (∀ ascrs scrs x → scrs ⊃ ascrs × ascrs ⊃ scrs → P (ascrs , x) ⇔ (P (scrs , x)))
 
 BSet : ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
@@ -63,15 +66,35 @@ Similarly, &PSet might have to be a Proposition in the future, but it increases 
 without any reason at the moment.
 
 ```agda
-Cp : ∀ 𝓥 𝓦 → Pred (Pred (𝟚 × (BSet 𝓥)) 𝓦) (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
-Cp 𝓥 𝓦 P = 𝟙
+
+<&PSet> : ∀ 𝓥 𝓦 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ̇
+<&PSet> 𝓥 𝓦 = Pred (𝟚 × (BSet 𝓥)) 𝓦 
+
+C&p : ∀ 𝓥 𝓦 → Pred (<&PSet> 𝓥 𝓦) (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
+C&p 𝓥 𝓦 P = 𝟙
 
 &PSet : ∀ 𝓥 𝓦 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ̇
-&PSet 𝓥 𝓦 = Σ (Cp 𝓥 𝓦)
+&PSet 𝓥 𝓦 = Σ (C&p 𝓥 𝓦)
 
-module &ΣPred₂ {𝓥} {𝓦} = ΣPred₂ {C = Cp 𝓥 𝓦} (λ s e → cons-is-non-empty) (λ s e → cons-is-non-empty)
+module &ΣPred₂ {𝓥} {𝓦} = ΣPred₂ {C = C&p 𝓥 𝓦} (λ s e → cons-is-non-empty) (λ s e → cons-is-non-empty)
 
 open &ΣPred₂ public
+
+
+<PSet> : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇
+<PSet> 𝓥 𝓦 𝓣 = Pred (&PSet 𝓥 𝓦) 𝓣 
+
+Cp : ∀ 𝓥 𝓦 𝓣 → Pred (<PSet> 𝓥 𝓦 𝓣) (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⊔ 𝓣)
+Cp 𝓥 𝓦 𝓣 P = 𝟙
+
+PSet : ∀ 𝓥 𝓦 𝓣 → 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ (𝓣 ⁺) ̇
+PSet 𝓥 𝓦 𝓣 = Σ (Cp 𝓥 𝓦 𝓣)
+
+module |ΣPred₂ {𝓥} {𝓦} {𝓣} = ΣPred₂ {C = Cp 𝓥 𝓦 𝓣} (λ s e → cons-is-non-empty) (λ s e → cons-is-non-empty) 
+
+open |ΣPred₂ public renaming (_||_ to _∣_ ; _&&_ to _&_)
+
+
 
 ```
 

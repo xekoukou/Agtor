@@ -32,13 +32,9 @@ infix 2 _⇒_
 _⇒_ : {A : 𝓤 ̇ } → Pred A 𝓥 → Pred A 𝓦 → 𝓤 ⊔ 𝓥 ⊔ 𝓦 ̇
 a ⇒ b = ∀ v → a v → b v
 
--- same as Sigma ??
-Σv : Pred A 𝓥 → _ ̇
-Σv p = Σ v ꞉ _ , p v
-
 infix 3 _val
 
-_val : {X : Pred A 𝓥} → Σv X → A
+_val : {X : Pred A 𝓥} → Σ X → A
 σv val = σv .pr₁
 
 mΣv : Pred (𝟚 × A) 𝓥 → _ ̇
