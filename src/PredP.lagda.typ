@@ -7,13 +7,13 @@
 = Predicate
 
 
-#hide[
+/*
 ```agda
 {-# OPTIONS --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
 ```
-]
+*/
 
 This is a general module on Predicates.
 
@@ -35,11 +35,23 @@ module Pred₂ {A : 𝓤 ̇} (a : Pred A 𝓥) (b : Pred A 𝓦) where
  _||ₚ_ : Pred A (𝓥 ⊔ 𝓦)
  _||ₚ_ x = a x + b x
 
- infix 2 _⇒_
+ infix 2 _⇒ₚ_
  _⇒ₚ_ : 𝓤 ⊔ 𝓥 ⊔ 𝓦 ̇
  _⇒ₚ_ = ∀ v → a v → b v
 
+ infix 2 _⇐ₚ_
+ _⇐ₚ_ : 𝓤 ⊔ 𝓥 ⊔ 𝓦 ̇
+ _⇐ₚ_ = ∀ v → b v → a v
 
+ infix 2 _⇔ₚ_
+ _⇔ₚ_ : 𝓤 ⊔ 𝓥 ⊔ 𝓦 ̇
+ _⇔ₚ_ = _⇒ₚ_ × _⇐ₚ_
+
+module Pred₂' {A : 𝓤 ̇} (a : Pred A 𝓥) (b : Pred A 𝓥) where
+ open Pred₂
+ 
+ ＝→⇐⇒ₚ : a ＝ b → a ⇔ₚ b
+ ＝→⇐⇒ₚ refl = (λ v z → z) , (λ v z → z)
 
 module ΣPred {A : 𝓤 ̇} {C : Pred A 𝓥} (σ : Σ C) where
 
