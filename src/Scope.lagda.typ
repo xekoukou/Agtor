@@ -307,10 +307,10 @@ module BSet-scope (_∈?_ : ∀ s ls → is-decidable (s ∈ ls)) where
  module &PSet-scope {𝓥} where
 
   limit&P : Secret → &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
-  limit&P s ps .pr₁ v = v ∈image λ x → (λ (a , bs) → a , limit s bs) (restr < ps > x)
+  limit&P s ps .pr₁ v = v ∈image λ x → (λ (bs , a) → limit s bs , a) (restr < ps > x)
   limit&P s ps .pr₂ = cons-is-non-empty
 
   limit&PM : Secret → List Secret → &PSet 𝓥 𝓦 → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦)
-  limit&PM s ls ps .pr₁ v = v ∈image λ x → (λ (a , bs) → a , limitM s ls bs) (restr < ps > x)
+  limit&PM s ls ps .pr₁ v = v ∈image λ x → (λ (bs , a) → limitM s ls bs , a) (restr < ps > x)
   limit&PM s ls ps .pr₂ = cons-is-non-empty
 ```

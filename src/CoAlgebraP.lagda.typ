@@ -46,7 +46,7 @@ module CoAlgebra₂ func (a b : CoAlgebra {𝓤} func) where
   _↓ : ⟨ a ⟩ → ⟨ b ⟩
   _↓ = m .pr₁
 
-  _comm : Fm _ ∘ (a ⟶) ＝ (b ⟶) ∘ _
+  _comm : Fm _↓ ∘ (a ⟶) ＝ (b ⟶) ∘ _↓
   _comm = m .pr₂
  
 ```

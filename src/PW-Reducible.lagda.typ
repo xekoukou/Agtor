@@ -8,6 +8,8 @@
 = Pointwise reducibility
 /*
 ```agda
+{-# OPTIONS --safe --without-K --exact-split #-}
+
 open import MLTT.Spartan
 open import UF.FunExt
 
@@ -176,7 +178,7 @@ cb-red⇒c≼bᵀ {𝓥 = 𝓥} a b cond condf red-a-b &b = &aᵀ , d , d2 where
  &aᵀ = condf (λ &a→← → f &a→← .pr₁) .pr₁ , (λ &a→← → f &a→← .pr₁) , condf (λ &a→← → f &a→← .pr₁) .pr₂ 
  d : (bsa : mΣ < < &aᵀ > >) →
       Σ bsb ꞉ mΣ < < &b > > , < < bsb > > ⇒ₚ < < bsa > >
- d (bs , bs₀∈p) = h where
+ d q@(bs , bs₀∈p) = h where
  -- I used "F⇒&P f ⇔ₚ < o >" to get that
   <f> = (λ &a→← → f &a→← .pr₁)
   bs₀∈F⇒&Pf : F⇒&P <f> (bs , ₀)
@@ -194,7 +196,7 @@ cb-red⇒c≼bᵀ {𝓥 = 𝓥} a b cond condf red-a-b &b = &aᵀ , d , d2 where
   k∈V = <f> <f>V .pr₂
   <fV⇒>=bs₁ : k ＝₂ (bs , ₁) 
   <fV⇒>=bs₁ = bs₀∈F⇒&Pf .pr₂
-  l : ∀ k → k ＝ < <f> <f>V > → (k∈V : < V > k) → k ＝₂ (bs , ₁) → G <f>V (k , k∈V) → _
+  l : ∀ k → k ＝ < <f> <f>V > → (k∈V : < V > k) → k ＝₂ (bs , ₁) → G <f>V (k , k∈V) → Sigma (mΣ < < &b > >) (λ bsb → < < bsb > > ⇒ₚ < < q > >)
   l (k , ₁) eq k∈V (refl , eq2) (bmΣ , g) = bmΣ , we where
    we : < < bmΣ > > ⇒ₚ < bs >
    we msg ww = eq2 .pr₂ msg (l2 .pr₂ msg l1) where
@@ -208,7 +210,7 @@ cb-red⇒c≼bᵀ {𝓥 = 𝓥} a b cond condf red-a-b &b = &aᵀ , d , d2 where
    
   h = l k refl k∈V <fV⇒>=bs₁ (f <f>V .pr₂)
  d2 : (bsa : aΣ < < &aᵀ > >) → msg-reducible < < bsa > > < < &b > >
- d2 (bs , bs₁∈p) = h where
+ d2 q@(bs , bs₁∈p) = h where
   <f> = (λ &a→← → f &a→← .pr₁)
   bs₀∈F⇒&Pf : F⇒&P <f> (bs , ₁)
   bs₀∈F⇒&Pf = condf (λ &a→← → f &a→← .pr₁) .pr₂ .pr₂ (bs , ₁) bs₁∈p
@@ -225,7 +227,7 @@ cb-red⇒c≼bᵀ {𝓥 = 𝓥} a b cond condf red-a-b &b = &aᵀ , d , d2 where
   k∈V = <f> <f>V .pr₂
   <fV⇒>=bs₁ : k ＝₂ (bs , ₀) 
   <fV⇒>=bs₁ = bs₀∈F⇒&Pf .pr₂
-  l : ∀ k → k ＝ < <f> <f>V > → (k∈V : < V > k) → k ＝₂ (bs , ₀) → G <f>V (k , k∈V) → _
+  l : ∀ k → k ＝ < <f> <f>V > → (k∈V : < V > k) → k ＝₂ (bs , ₀) → G <f>V (k , k∈V) → msg-reducible < < q > > < < &b > >
   l (k , ₀) eq k∈V (refl , eq2) g = we where
    we : (msg : S×Msg) → < bs > msg → λaΣ < < &b > > msg
    we = λ msg z → g msg (eq2 .pr₁ msg z)
