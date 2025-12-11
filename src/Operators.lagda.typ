@@ -52,7 +52,7 @@ module _ (pot : Pot) where
  PotSet : ∀ 𝓣 → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺ ⊔ 𝓣 ⁺ ̇
  PotSet 𝓣 = Fn ⟨ fc ⟩ → 𝓣 ̇
 
- PotSet₂ : ∀ 𝓣 → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ (𝓠 ⁺) ⊔ 𝓣 ⁺ ̇
+ PotSet₂ : ∀ 𝓣 → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺ ⊔ 𝓣 ⁺ ̇
  PotSet₂ 𝓣 = Fn ⟨ fc ⟩ → Fn ⟨ fc ⟩ → 𝓣 ̇
 
 

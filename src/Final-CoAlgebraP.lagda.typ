@@ -8,7 +8,7 @@
 #hide[
 ```agda
 
-{-# OPTIONS --safe --without-K --exact-split #-}
+{-# OPTIONS --polarity --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
 open import UF.Subsingletons
