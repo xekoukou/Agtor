@@ -7,7 +7,7 @@
 
 #hide[
 ```agda
-{-# OPTIONS --safe --without-K --exact-split #-}
+{-# OPTIONS --polarity --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
 open import UF.Subsingletons
@@ -20,20 +20,20 @@ open import UF.Equiv
 
 ```agda
 
-module Final-CoAlgebra-Properties  where
-
 open import Final-CoAlgebraP
 open import CoAlgebraP
 open import FunctorP
 
-module _ (fe : Fun-Ext) (UA : Univalence) func (fc' : Final-CoAlgebra {𝓤 = 𝓤} func) where
+
+module Final-CoAlgebra-Properties (fe : Fun-Ext) func (fc' : Final-CoAlgebra {𝓤 = 𝓤} func) where
+
  open Functor func
  open Final-CoAlgebra func fc'
  open CoAlgebra func
  open CoAlgebra₂ func 
 
  f-co : CoAlgebra func
- f-co = Fn ⟨ fc ⟩ , Fm (fc ⟶)
+ f-co = Fn ⟨ fc ⟩ ,  Fm (fc ⟶) 
 
 
  inv : co-morphism f-co fc
@@ -63,6 +63,8 @@ module _ (fe : Fun-Ext) (UA : Univalence) func (fc' : Final-CoAlgebra {𝓤 = �
  Qf∘inv=id : (fc ⟶) ∘ (inv ↓) ＝ (λ x → x)
  Qf∘inv=id = dfunext fe λ x →  ap (λ z → z x) (inv comm) ⁻¹  ∙ (Fm-comp (inv ↓) (fc ⟶) x ∙ ((ap (λ z → Fm z x) inv∘Qf=id) ∙ ap (λ z → z x) Fm-id))
 
- QE=FQE : ⟨ fc ⟩ ＝ Fn ⟨ fc ⟩
- QE=FQE = eqtoid (UA _) ⟨ fc ⟩ (Fn ⟨ fc ⟩) (qinveq (fc ⟶) ((inv ↓) , (λ x → ap (λ f → f x) inv∘Qf=id) , (λ x → ap (λ f → f x) Qf∘inv=id)))
+ module _  (UA : Univalence) where
+
+  QE=FQE : ⟨ fc ⟩ ＝ Fn ⟨ fc ⟩
+  QE=FQE = eqtoid (UA _) ⟨ fc ⟩ (Fn ⟨ fc ⟩) (qinveq (fc ⟶) ((inv ↓) , (λ x → ap (λ f → f x) inv∘Qf=id) , (λ x → ap (λ f → f x) Qf∘inv=id)))
 ```

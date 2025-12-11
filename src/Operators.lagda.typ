@@ -8,6 +8,9 @@
 = Operators
 /*
 ```agda
+{-# OPTIONS --polarity --safe --without-K --exact-split #-}
+
+
 open import MLTT.Spartan renaming (_+_ to _or_)
 open import Naturals.Addition
 open import UF.FunExt
@@ -21,7 +24,6 @@ open import Naturals.Properties
 */
 
 ```agda
-
 open import FunctorP
 open import CoAlgebraP
 open import Final-CoAlgebraP

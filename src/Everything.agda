@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --exact-split --cubical --guardedness #-}
+{-# OPTIONS --polarity --without-K --exact-split --cubical --guardedness #-}
 
 import CoAlgebraP
 import Common
@@ -15,3 +15,7 @@ import PotP-Rel
 import PredP
 import PW-Reducible
 import Scope
+import Indexed-FunctorP
+import Indexed-CoAlgebraP
+import Indexed-Final-CoAlgebraP
+import Indexed-Final-CoAlgebra-Properties
