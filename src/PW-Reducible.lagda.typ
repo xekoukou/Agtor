@@ -233,3 +233,5 @@ cb-red⇒c≼bᵀ {𝓥 = 𝓥} a b cond condf red-a-b &b = &aᵀ , d , d2 where
    we = λ msg z → g msg (eq2 .pr₁ msg z)
 
   h = l k refl k∈V <fV⇒>=bs₁ (f <f>V .pr₂)
+
+```

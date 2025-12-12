@@ -112,3 +112,6 @@ module _ where
    g (pt@(nx , ps , foc) , inl (zero , msg , inr (bs , d))) = ((fc ⟶) ((fa foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , ((((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆))
    -- We move up to the next state
    g (pt@(nx , ps , foc) , inl (succ n , msg , d)) = (((fc ⟶) nx) , inl (n , msg , d)) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
+
+
+```
