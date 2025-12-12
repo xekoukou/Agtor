@@ -98,15 +98,8 @@ module _ (fc-pot : Pot) where
  open import FCP Msg Secret 𝓥 ⟨ fc ⟩
  open FC
  open Pot {fc-pot}
+ open Pot₁ fe {fc-pot}
 
- replace_at_ : Fn ⟨ fc ⟩ → ℕ → Fn ⟨ fc ⟩ → Fn ⟨ fc ⟩
- replace_at_ a@(na , pa , fca) zero b = b
- replace_at_ a@(na , pa , fca) (succ n) b = (inv ↓ ) ((replace ((fc ⟶) na) at n) b) , pa , fca
-
-
- _at_ : Fn ⟨ fc ⟩ → ℕ → Fn ⟨ fc ⟩
- (a , pa , fca) at zero = a , pa , fca
- (a , pa , fca) at succ n = ((fc ⟶) a) at n
 
  data Fin-ex-comm (d : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
   ←m : (n : ℕ) →

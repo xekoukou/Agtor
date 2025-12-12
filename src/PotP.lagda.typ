@@ -68,6 +68,22 @@ module Pot {fc' : Pot} (a : Fn < fc' .pr₁ >) where
  foc : FC _
  foc = a .pr₂ .pr₂
 
+open import UF.FunExt
+module Pot₁ (fe : Fun-Ext) {fc' : Pot} where
+
+ open Final-CoAlgebra Fpot fc'
+
+ _at_ : Fn ⟨ fc ⟩ → ℕ → Fn ⟨ fc ⟩
+ (a , pa , fca) at zero = a , pa , fca
+ (a , pa , fca) at succ n = ((fc ⟶) a) at n
+
+ open import Final-CoAlgebra-Properties fe Fpot fc'
+ open CoAlgebra₂ Fpot f-co fc
+ open Morphism
+
+ replace_at_ : Fn ⟨ fc ⟩ → ℕ → Fn ⟨ fc ⟩ → Fn ⟨ fc ⟩
+ replace_at_ a@(na , pa , fca) zero b = b
+ replace_at_ a@(na , pa , fca) (succ n) b = (inv ↓ ) ((replace ((fc ⟶) na) at n) b) , pa , fca
 
 
 ```

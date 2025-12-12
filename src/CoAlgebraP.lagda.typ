@@ -34,6 +34,7 @@ module CoAlgebra func (co : CoAlgebra {𝓤} func) where
  _⟶ : ⟨_⟩ → Fn ⟨_⟩
  _⟶ = co .pr₂
 
+
 module CoAlgebra₂ func (a b : CoAlgebra {𝓤} func) where
  open Functor func
 
