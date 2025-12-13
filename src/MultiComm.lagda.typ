@@ -5,13 +5,12 @@
 #show: init-color-my-agda
 
 
-= Operators
+= Multiple Communication
 /*
 ```agda
 {-# OPTIONS --polarity --safe --without-K --exact-split --guardedness #-}
 
-open import MLTT.Spartan renaming (_+_ to _or_)
-open import Naturals.Addition
+open import MLTT.Spartan
 open import UF.FunExt
 open import UF.PropTrunc
 open import Naturals.Order
@@ -42,9 +41,6 @@ open P Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
 open Functor Fpot
 open CoAlgebra Fpot
 open Final-CoAlgebra Fpot fc-pot
-open import Final-CoAlgebra-Properties fe Fpot fc-pot
-open CoAlgebra₂ Fpot f-co fc
-open Morphism
 
 open import FCP Msg Secret 𝓥 ⟨ fc ⟩
 open FC
@@ -80,7 +76,7 @@ module _ where
       , let fd = foc (i at n)
         in Σ msg ꞉ S×Msg
       ,   ((Σ bsm ꞉ < Mp fd > msg , X ((fc ⟶) (fm fd msg bsm)))
-        or (Σ bsa ꞉ < Ap fd > msg , X ((fc ⟶) (fa fd msg bsa)))))
+        + (Σ bsa ꞉ < Ap fd > msg , X ((fc ⟶) (fa fd msg bsa)))))
       , (λ { f i (n , msg , inl (bsm , v)) → n , msg , inl (bsm , f _ v)
            ; f i (n , msg , inr (bsa , v)) → n , msg , inr (bsa , (f _ v))})
   , (λ f g → dfunext fe λ i → dfunext fe λ { (n , msg , inl x) → refl
@@ -104,7 +100,7 @@ module _ where
 
    𝟙' = 𝟙 {(𝓤 ⁺) ⊔ ((𝓥 ⁺) ⁺) ⊔ (𝓦 ⁺) ⊔ (𝓠 ⁺)}
 
-   g : Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x or 𝟙') → Fn (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x or 𝟙'))
+   g : Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙') → Fn (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙'))
    -- We just stop changing things when we get 𝟙
    g (pt@(nx , ps , foc) , inr _) = ((fc ⟶) nx , inr ⋆) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
    -- We perform the communication step
@@ -113,5 +109,17 @@ module _ where
    -- We move up to the next state
    g (pt@(nx , ps , foc) , inl (succ n , msg , d)) = (((fc ⟶) nx) , inl (n , msg , d)) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
 
+   g-co : CoAlgebra Fpot
+   g-co = (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙')) , g
+
+
+   module _ where
+   
+    open CoAlgebra₂ Fpot g-co fc
+    open Morphism
+
+    inf-comm : ∀ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ d → ⟨ fc ⟩
+    inf-comm d cond = ((uni g-co .pr₁) ↓) (d , inl cond)
+   
 
 ```

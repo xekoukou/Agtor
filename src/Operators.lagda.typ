@@ -94,20 +94,6 @@ module _ (pot : Pot) where
  _at_ : Fn ⟨ fc ⟩ → ℕ → Fn ⟨ fc ⟩
  (a , pa , fca) at zero = a , pa , fca
  (a , pa , fca) at succ n = ((fc ⟶) a) at n
-
- data SS (a : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
-   am : (n : ℕ) → let fca : FC
-                      fca = (a at n) .pr₂ .pr₂
-                  in (v : Σ < Mp fca >) → SS ((fc ⟶) (fm fca (v .pr₁) (v .pr₂))) → SS a
-   aa : (n : ℕ) → let fca : FC
-                      fca = (a at n) .pr₂ .pr₂
-                  in (v : Σ < Ap fca >) → SS ((fc ⟶) (fa fca (v .pr₁) (v .pr₂))) → SS a
-   here : (n : ℕ) → SS a
-
- goTo : {a : Fn ⟨ fc ⟩} → SS a → Fn ⟨ fc ⟩
- goTo (am n v ss) = goTo ss
- goTo (aa n v ss) = goTo ss
- goTo {a} (here n) = a at n
   
 
 --  Liveness1 : (&PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) → 𝓣 ̇) → PotSet₂ 𝓣
@@ -118,50 +104,4 @@ module _ (pot : Pot) where
 --    rr : (iv : Σ (λ x → Σ Increasing × Σ Increasing)) → (k : ℕ) → 𝓣 ̇
 --    rr (q , f , g) k = rra k (q +₂ (div₂ k .pr₂)) (intV q < f > < g > k)
 
---  Liveness2 : (&PSet 𝓥 _ → &PSet 𝓥 _ → 𝓣 ̇) → PotSet₂ (𝓤 ⊔ 𝓥 ⊔ 𝓣)
---  Liveness2 R a b = (sa : SS a) → (sb : SS b) → Liveness1 R (goTo sa) (goTo sb) 
-
-
---  record CC (a : Fn ⟨ fc ⟩) : {!!} where
---   coinductive
---   field
---    n : ℕ
---    bs : Σ < Mp ((a at n) .pr₂ .pr₂) >
---    nc : CC ((fc ⟶) (fm ((a at n) .pr₂ .pr₂) (bs .pr₁) (bs .pr₂)))
-
---  F : Functor {!!}
---  F = (λ X → X × (Σ a ꞉ Fn ⟨ fc ⟩ , Σ n ꞉ ℕ , let fca : FC
---                                                  fca = (a at n) .pr₂ .pr₂
---                                              in Σ < Mp fca >)) , {!!} , {!!} , {!!}
-
--- --  Liveness2 : (&PSet 𝓥 _ → &PSet 𝓥 _ → 𝓣 ̇) → PotSet₂ {!!}
--- --  Liveness2 R a b = ∀ k m → fcm1 × {!!} where
--- --    fca : ∀ k → FC
--- --    fca k = (a at k) .pr₂ .pr₂
--- --    fcb : ∀ m → FC
--- --    fcb m = (b at m) .pr₂ .pr₂
-
--- --    fcm1 = ∀ k m x → (bs : < Mp (fca k) > x) → Liveness1 R ((fc ⟶) (fm (fca k) x bs)) (b at m) × Liveness2 R ((fc ⟶) (fm (fca k) x bs)) (b at m)
--- --    fcm2 = ∀ k m x → (bs : < Mp (fcb m) > x) → Liveness1 R ((fc ⟶) (fm (fcb m) x bs)) (a at k) × Liveness2 R ((fc ⟶) (fm (fcb m) x bs)) (a at k)
-
--- --    fca1 = ∀ k m x → (bs : < Ap (fca k) > x) → Liveness1 R ((fc ⟶) (fa (fca k) x bs)) (b at m) × Liveness2 R ((fc ⟶) (fa (fca k) x bs)) (b at m)
--- --    fca2 = ∀ k m x → (bs : < Ap (fcb m) > x) → Liveness1 R ((fc ⟶) (fa (fcb m) x bs)) (a at k) × Liveness2 R ((fc ⟶) (fa (fcb m) x bs)) (a at k)
-
-
--- -- -- 
--- -- -- -- Interleaving Pot
--- -- --  ss :  (ℕ → ℕ × ℕ) → Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩ × ℕ × ℕ → Fn (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩ × ℕ × ℕ)
--- -- --  ss w (a , b , n , zero)
--- -- --   = let wa = w n .pr₁
--- -- --         wb = w n .pr₂
--- -- --         (na , pa , fca) = a at wa
--- -- --         (nb , pb , fcb) = b at wb
--- -- --        --(na , pa , fca) = a at wa
--- -- --        -- (nb , pb , fcb) = b at wb
--- -- --     in   ((fc ⟶) na , (fc ⟶) nb , n , succ zero)
--- -- --        , (pa || pb) , ((Mp fca ∨ Mp fcb)
--- -- --        , λ { x (inl bs) → {!fm!} ;
--- -- --              x (inr bs) → {!!}}) , {!!}
--- -- --  ss w ((na , pa , fca) , (nb , pb , fcb) , n , succ m) = {!!}
--- -- -- 
--- -- ```
+```

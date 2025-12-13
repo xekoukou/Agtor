@@ -1,4 +1,5 @@
 *.agdai
 *.agda~
 *.lagda.typ~
+*.pdf
 MAlonzo/**
