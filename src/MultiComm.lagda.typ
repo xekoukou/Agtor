@@ -30,7 +30,7 @@ import PotP as P
 open import PredP
 open Pred
 
-module MultiComm (fe : Fun-Ext) (pt : propositional-truncations-exist) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) where
+module MultiComm (fe : Fun-Ext) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) where
 
 open import Definitions Msg Secret
 
@@ -63,6 +63,11 @@ fin-comm : {d : Fn ⟨ fc ⟩} → FinComm d → Fn ⟨ fc ⟩
 fin-comm {d} (←m n msg bsm x) = (replace d at n) (fin-comm x)
 fin-comm {d} (→a n msg bsa x) = (replace d at n) (fin-comm x)
 fin-comm {d} here = d
+
+fin-comm' : {d : Fn ⟨ fc ⟩} → FinComm d → Fn ⟨ fc ⟩
+fin-comm' {d} (←m n msg bsm x) = fin-comm x
+fin-comm' {d} (→a n msg bsa x) = fin-comm x
+fin-comm' {d} here = d
 
 
 

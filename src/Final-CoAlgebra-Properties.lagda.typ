@@ -39,6 +39,8 @@ module Final-CoAlgebra-Properties (fe : Fun-Ext) func (fc' : Final-CoAlgebra {�
  inv : co-morphism f-co fc
  inv = uni f-co .pr₁
 
+ module _ where
+ 
  open Morphism f-co fc
  open Morphism fc fc renaming (_↓ to _↓' ; _comm to _comm')
 

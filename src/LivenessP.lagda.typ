@@ -25,7 +25,7 @@ open import MLTT.Two-Properties
 
 ```agda
 
-module Liveness (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) 𝓥 𝓦 𝓠 where
+module Liveness (fe : Fun-Ext) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) 𝓥 𝓦 𝓠 where
 
 open import Interleaving
 
@@ -45,6 +45,7 @@ open import StreamP
 
 module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) where
  open Interleave Msg Secret 𝓥 𝓦 𝓠 fc-pot
+ open import MultiComm fe Msg Secret 𝓥 𝓦 𝓠 fc-pot
  
  module _ (sfc' : Stream PSet×PSet) where
   open DD sfc'
@@ -53,19 +54,20 @@ module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) wher
   open Functor (FStream PSet×PSet) renaming (Fn to Fnₛ)
   open CoAlgebra (FStream PSet×PSet)renaming (⟨_⟩ to ⟨_⟩ₛ ; _⟶ to _⟶ₛ)
   open Final-CoAlgebra (FStream PSet×PSet) sfc' renaming (fc to fcₛ ; uni to uniₛ)
-  
-  liveness-fiber : (R : PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → 𝓣 ̇  ) → Fnₛ ⟨ fcₛ ⟩ₛ → 𝓣 ̇
-  liveness-fiber R e = (k : ℕ) → Σ n ꞉ ℕ , k ≤ n × let ((a , b) , _ ) = e atₛ n in R a b
- 
-  open P Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
-  open Functor Fpot
-  open CoAlgebra Fpot
-  open Final-CoAlgebra Fpot fc-pot
-  open import FCP Msg Secret 𝓥 ⟨ fc ⟩
-  open FC
-  open Pot {fc-pot}
 
+  module Liveness (R : PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → 𝓣 ̇  ) where
+   liveness-fiber : Fnₛ ⟨ fcₛ ⟩ₛ → 𝓣 ̇
+   liveness-fiber e = (k : ℕ) → Σ n ꞉ ℕ , k ≤ n × let ((a , b) , _ ) = e atₛ n in R a b
   
-  Liveness : (R : PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → 𝓣 ̇  )
-             → (a b : Fn ⟨ fc ⟩) → 𝓣 ̇
-  Liveness R a b = ∀ two k f g → liveness-fiber R ((fcₛ ⟶ₛ) (interleave f g two k a b))
+   open P Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
+   open Functor Fpot
+   open CoAlgebra Fpot
+   open Final-CoAlgebra Fpot fc-pot
+   open import FCP Msg Secret 𝓥 ⟨ fc ⟩
+   open FC
+   open Pot {fc-pot}
+ 
+   
+   Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ̇
+   Liveness a b = ∀ f g two k → liveness-fiber ((fcₛ ⟶ₛ) (interleave f g two k a b))
+

@@ -95,13 +95,3 @@ module _ (pot : Pot) where
  (a , pa , fca) at zero = a , pa , fca
  (a , pa , fca) at succ n = ((fc ⟶) a) at n
   
-
---  Liveness1 : (&PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) → &PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) → 𝓣 ̇) → PotSet₂ 𝓣
---  Liveness1 {𝓣 = 𝓣} R a b = (iv : 𝟚 × Σ Increasing × Σ Increasing) → (n : ℕ) → Σ k ꞉ ℕ , n ≤ k × rr iv k where
---    rra : (k : ℕ) → (r : 𝟚) → IV r → 𝓣 ̇
---    rra k t (x [ y1 , y2 ]) = Σ m ꞉ ℕ , (m ≤ y2) × (y1 ≤ m) × R ((a at x) .pr₂ .pr₁) ((b at m) .pr₂ .pr₁)
---    rra k t ([ x2 , x1 ] y) = Σ m ꞉ ℕ , (m ≤ x2) × (x1 ≤ m) × R ((a at m) .pr₂ .pr₁) ((b at y) .pr₂ .pr₁)
---    rr : (iv : Σ (λ x → Σ Increasing × Σ Increasing)) → (k : ℕ) → 𝓣 ̇
---    rr (q , f , g) k = rra k (q +₂ (div₂ k .pr₂)) (intV q < f > < g > k)
-
-```
