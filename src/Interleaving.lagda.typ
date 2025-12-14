@@ -100,12 +100,12 @@ module Interleave  (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot 
  open Pot {fc-pot}
  open import StreamP
 
- PSet×PSet = PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 × PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
- module DD (sfc' : Stream PSet×PSet) where
+ PSet×PSet' = PSet×PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
+ module DD (sfc' : Stream PSet×PSet') where
   open Stream sfc' renaming (next to nextₛ)
-  open Functor (FStream PSet×PSet) renaming (Fn to Fnₛ)
-  open CoAlgebra (FStream PSet×PSet)renaming (⟨_⟩ to ⟨_⟩ₛ ; _⟶ to _⟶ₛ)
-  open Final-CoAlgebra (FStream PSet×PSet) sfc' renaming (fc to fcₛ ; uni to uniₛ)
+  open Functor (FStream PSet×PSet') renaming (Fn to Fnₛ)
+  open CoAlgebra (FStream PSet×PSet')renaming (⟨_⟩ to ⟨_⟩ₛ ; _⟶ to _⟶ₛ)
+  open Final-CoAlgebra (FStream PSet×PSet') sfc' renaming (fc to fcₛ ; uni to uniₛ)
   
   d : (ℕ → ℕ) × (ℕ → ℕ) → Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩ × 𝟚 × ℕ × ℕ × ℕ → Fnₛ (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩ × 𝟚 × ℕ × ℕ × ℕ)
   d (f , g) (a , b , ₀ , nf , ng , zero) = (pset a , pset b) , (a , (fc ⟶) (next b) , ₁ , succ nf , ng , f nf)
@@ -113,7 +113,7 @@ module Interleave  (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot 
   d (f , g) (a , b , ₀ , nf , ng , succ rn) = (pset a , pset b) , (a , (fc ⟶) (next b) , ₀ , nf , ng , rn)
   d (f , g) (a , b , ₁ , nf , ng , succ rn) = (pset a , pset b) , ((fc ⟶) (next a) , b , ₁ , nf , ng , rn)
   
-  d-co : ∀ f g → CoAlgebra (FStream PSet×PSet)
+  d-co : ∀ f g → CoAlgebra (FStream PSet×PSet')
   d-co f g =  (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩ × 𝟚 × ℕ × ℕ × ℕ) , d (f , g)
 
   interleave : ∀ f g → 𝟚 → ∀ k → (a b : Fn ⟨ fc ⟩) → ⟨ fcₛ ⟩ₛ

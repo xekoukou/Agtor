@@ -71,6 +71,8 @@ fin-comm' {d} here = d
 
 
 
+
+
 module _ where
  open import Indexed-FunctorP (Fn ⟨ fc ⟩)
 
@@ -90,41 +92,40 @@ module _ where
                                   ; (n , msg , inr x) → refl}
 
 
+ open import Indexed-CoAlgebraP (Fn ⟨ fc ⟩)
+ open import Indexed-Final-CoAlgebraP (Fn ⟨ fc ⟩)
 
- module InfCommP where
-
-  open import Indexed-CoAlgebraP (Fn ⟨ fc ⟩)
-  open import Indexed-Final-CoAlgebraP (Fn ⟨ fc ⟩)
-
-  open IFunctor FInfComm
-  open ICoAlgebra FInfComm renaming (⟨_⟩ to ⟨_⟩ᵢ)
-  InfComm = IFinal-CoAlgebra FInfComm
-
-  module _ (fc' : InfComm) where
-   open IFinal-CoAlgebra FInfComm fc'
-
-   𝟙' = 𝟙 {(𝓤 ⁺) ⊔ ((𝓥 ⁺) ⁺) ⊔ (𝓦 ⁺) ⊔ (𝓠 ⁺)}
-
-   g : Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙') → Fn (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙'))
-   -- We just stop changing things when we get 𝟙
-   g (pt@(nx , ps , foc) , inr _) = ((fc ⟶) nx , inr ⋆) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
-   -- We perform the communication step
-   g (pt@(nx , ps , foc) , inl (zero , msg , inl (bs , d))) = ((fc ⟶) ((fm foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , (((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆)
-   g (pt@(nx , ps , foc) , inl (zero , msg , inr (bs , d))) = ((fc ⟶) ((fa foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , ((((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆))
-   -- We move up to the next state
-   g (pt@(nx , ps , foc) , inl (succ n , msg , d)) = (((fc ⟶) nx) , inl (n , msg , d)) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
-
-   g-co : CoAlgebra Fpot
-   g-co = (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙')) , g
+ open IFunctor FInfComm
+ open ICoAlgebra FInfComm renaming (⟨_⟩ to ⟨_⟩ᵢ)
+ InfComm = IFinal-CoAlgebra FInfComm
 
 
-   module _ where
-   
-    open CoAlgebra₂ Fpot g-co fc
-    open Morphism
+ module InfCommP (fc' : InfComm) where
 
-    inf-comm : ∀ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ d → ⟨ fc ⟩
-    inf-comm d cond = ((uni g-co .pr₁) ↓) (d , inl cond)
-   
+  open IFinal-CoAlgebra FInfComm fc'
+
+  𝟙' = 𝟙 {(𝓤 ⁺) ⊔ ((𝓥 ⁺) ⁺) ⊔ (𝓦 ⁺) ⊔ (𝓠 ⁺)}
+
+  g : Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙') → Fn (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙'))
+  -- We just stop changing things when we get 𝟙
+  g (pt@(nx , ps , foc) , inr _) = ((fc ⟶) nx , inr ⋆) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
+  -- We perform the communication step
+  g (pt@(nx , ps , foc) , inl (zero , msg , inl (bs , d))) = ((fc ⟶) ((fm foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , (((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆)
+  g (pt@(nx , ps , foc) , inl (zero , msg , inr (bs , d))) = ((fc ⟶) ((fa foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , ((((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆))
+  -- We move up to the next state
+  g (pt@(nx , ps , foc) , inl (succ n , msg , d)) = (((fc ⟶) nx) , inl (n , msg , d)) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
+
+  g-co : CoAlgebra Fpot
+  g-co = (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙')) , g
+
+
+  module _ where
+  
+   open CoAlgebra₂ Fpot g-co fc
+   open Morphism
+
+   inf-comm : ∀ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ d → ⟨ fc ⟩
+   inf-comm d cond = ((uni g-co .pr₁) ↓) (d , inl cond)
+  
 
 ```

@@ -102,6 +102,9 @@ module |ΣPred₂ {𝓥} {𝓦} {𝓣} = ΣPred₂ {C = Cp 𝓥 𝓦 𝓣} (λ s
 open |ΣPred₂ public renaming (_||_ to _∣_ ; _&&_ to _&_)
 
 
+PSet×PSet : ∀ 𝓥 𝓦 𝓠 → _
+PSet×PSet 𝓥 𝓦 𝓠 = PSet 𝓥 𝓦 𝓠 × PSet 𝓥 𝓦 𝓠
+
 
 ```
 

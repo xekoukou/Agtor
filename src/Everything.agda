@@ -9,7 +9,6 @@ import Final-CoAlgebraP
 import Final-CoAlgebra-Properties
 import FunctorP
 import Lists
-import Operators
 import PotP
 import PotP-Rel
 import PredP
@@ -20,4 +19,5 @@ import Indexed-CoAlgebraP
 import Indexed-Final-CoAlgebraP
 import Indexed-Final-CoAlgebra-Properties
 import MultiComm
-import Liveness
+import LivenessP
+import OperatorsP

@@ -22,7 +22,7 @@ open import PredP
 open Pred
 open Pred₂
 
-module PW-Reducible (dfunext : ∀{𝓤 𝓥} → DN-funext 𝓤 𝓥) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) where
+module PW-Reducible (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) where
 
 open import Definitions Msg Secret
 
