@@ -77,7 +77,9 @@ module _ (fc' : InfComm) where
                          → (bsmb : < Mp fb > msg)
            → FinComm× ((fc ⟶) (fa fd msg bsad)) ((fc ⟶) (fm fb msg bsmb)) → FinComm× d b
   ex-comm : (dcomm : FinComm d) → (bcomm : FinComm b) → FinComm× (fin-comm' dcomm) (fin-comm' bcomm) → FinComm× d b
-  ex-inf : Fnᵢ ⟨ fcᵢ ⟩ᵢ d + 𝟙 {𝓤 ⊔ 𝓥} → Fnᵢ ⟨ fcᵢ ⟩ᵢ b + 𝟙 {𝓤 ⊔ 𝓥} → FinComm× d b
+  ex-inf-x : Fnᵢ ⟨ fcᵢ ⟩ᵢ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ b → FinComm× d b
+  ex-inf-l : Fnᵢ ⟨ fcᵢ ⟩ᵢ d → FinComm× d b
+  ex-inf-r : Fnᵢ ⟨ fcᵢ ⟩ᵢ b → FinComm× d b
   here : FinComm× d b
  module _ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
   open Liveness fc-pot stream PSet-PSet-reducible
@@ -86,75 +88,14 @@ module _ (fc' : InfComm) where
   Fin-Liveness d b (c← nd nb msg bsmd bsab x) = Fin-Liveness _ _ x
   Fin-Liveness d b (c→ nd nb msg bsad bsmb x) = Fin-Liveness _ _ x
   Fin-Liveness d b (ex-comm dcomm bcomm x) = Fin-Liveness _ _ x
-  Fin-Liveness d b (ex-inf x x₁) = {!!}
+  -- TODO Maybe here we need to take into account the infinite conditions that
+  -- are posed by a and b
+  -- Also introduce fairness in the case that both are infinite
+  Fin-Liveness d b (ex-inf-x x y) = Liveness ((fc ⟶) (inf-comm d x)) ((fc ⟶) (inf-comm b y)) × 𝟙 {𝓤}
+  Fin-Liveness d b (ex-inf-l x) = Liveness ((fc ⟶) (inf-comm d x)) b
+  Fin-Liveness d b (ex-inf-r y) = Liveness d ((fc ⟶) (inf-comm b y))
   Fin-Liveness d b here = Liveness d b
- 
- -- -- fin-comm : {d : Fn ⟨ fc ⟩} → FinComm d → Fn ⟨ fc ⟩
- -- -- fin-comm {d} (←m n msg bsm x) = (replace d at n) (fin-comm x)
- -- -- fin-comm {d} (→a n msg bsa x) = (replace d at n) (fin-comm x)
- -- -- fin-comm {d} here = d
- 
- -- -- fin-comm' : {d : Fn ⟨ fc ⟩} → FinComm d → Fn ⟨ fc ⟩
- -- -- fin-comm' {d} (←m n msg bsm x) = fin-comm x
- -- -- fin-comm' {d} (→a n msg bsa x) = fin-comm x
- -- -- fin-comm' {d} here = d
- 
- 
- 
- -- -- module _ where
- -- --  open import Indexed-FunctorP (Fn ⟨ fc ⟩)
- 
- -- --  FInfComm : IFunctor (𝓤 ⊔ 𝓥)
- -- --  FInfComm =
- -- --   (λ X i →
- -- --     Σ n ꞉ ℕ
- -- --       , let fd = foc (i at n)
- -- --         in Σ msg ꞉ S×Msg
- -- --       ,   ((Σ bsm ꞉ < Mp fd > msg , X ((fc ⟶) (fm fd msg bsm)))
- -- --         + (Σ bsa ꞉ < Ap fd > msg , X ((fc ⟶) (fa fd msg bsa)))))
- -- --       , (λ { f i (n , msg , inl (bsm , v)) → n , msg , inl (bsm , f _ v)
- -- --            ; f i (n , msg , inr (bsa , v)) → n , msg , inr (bsa , (f _ v))})
- -- --   , (λ f g → dfunext fe λ i → dfunext fe λ { (n , msg , inl x) → refl
- -- --                                            ; (n , msg , inr x) → refl})
- -- --   , dfunext fe λ i → dfunext fe λ { (n , msg , inl x) → refl
- -- --                                   ; (n , msg , inr x) → refl}
- 
- 
- 
- -- --  module InfCommP where
- 
- -- --   open import Indexed-CoAlgebraP (Fn ⟨ fc ⟩)
- -- --   open import Indexed-Final-CoAlgebraP (Fn ⟨ fc ⟩)
- 
- -- --   open IFunctor FInfComm
- -- --   open ICoAlgebra FInfComm renaming (⟨_⟩ to ⟨_⟩ᵢ)
- -- --   InfComm = IFinal-CoAlgebra FInfComm
- 
- -- --   module _ (fc' : InfComm) where
- -- --    open IFinal-CoAlgebra FInfComm fc'
- 
- -- --    𝟙' = 𝟙 {(𝓤 ⁺) ⊔ ((𝓥 ⁺) ⁺) ⊔ (𝓦 ⁺) ⊔ (𝓠 ⁺)}
- 
- -- --    g : Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙') → Fn (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙'))
- -- --    -- We just stop changing things when we get 𝟙
- -- --    g (pt@(nx , ps , foc) , inr _) = ((fc ⟶) nx , inr ⋆) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
- -- --    -- We perform the communication step
- -- --    g (pt@(nx , ps , foc) , inl (zero , msg , inl (bs , d))) = ((fc ⟶) ((fm foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , (((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆)
- -- --    g (pt@(nx , ps , foc) , inl (zero , msg , inr (bs , d))) = ((fc ⟶) ((fa foc) msg bs) , inl ((fcᵢ ⟶ᵢ) _ d)) , ps , ((((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆))
- -- --    -- We move up to the next state
- -- --    g (pt@(nx , ps , foc) , inl (succ n , msg , d)) = (((fc ⟶) nx) , inl (n , msg , d)) , ps , ((Mp foc) , λ msg bs → (fc ⟶) (fm foc msg bs) , inr ⋆) , (Ap foc) , λ msg bs → (fc ⟶) (fa foc msg bs) , inr ⋆
- 
- -- --    g-co : CoAlgebra Fpot
- -- --    g-co = (Σ (λ x → Fnᵢ ⟨ fcᵢ ⟩ᵢ x + 𝟙')) , g
- 
- 
- -- --    module _ where
-    
- -- --     open CoAlgebra₂ Fpot g-co fc
- -- --     open Morphism
- 
- -- --     inf-comm : ∀ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ d → ⟨ fc ⟩
- -- --     inf-comm d cond = ((uni g-co .pr₁) ↓) (d , inl cond)
-    
- 
- -- -- ```
+
+
+
+```
