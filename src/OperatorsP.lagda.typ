@@ -77,10 +77,8 @@ module _ (fc' : InfComm) where
                          → (bsmb : < Mp fb > msg)
            → FinComm× ((fc ⟶) (fa fd msg bsad)) ((fc ⟶) (fm fb msg bsmb)) → FinComm× d b
   ex-comm : (dcomm : FinComm d) → (bcomm : FinComm b) → FinComm× (fin-comm' dcomm) (fin-comm' bcomm) → FinComm× d b
-  ex-inf-x : Fnᵢ ⟨ fcᵢ ⟩ᵢ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ b → FinComm× d b
-  ex-inf-l : Fnᵢ ⟨ fcᵢ ⟩ᵢ d → FinComm× d b
-  ex-inf-r : Fnᵢ ⟨ fcᵢ ⟩ᵢ b → FinComm× d b
-  here : FinComm× d b
+  tail : Fnᵢ ⟨ fcᵢ ⟩ᵢ d + 𝟙 → Fnᵢ ⟨ fcᵢ ⟩ᵢ b + 𝟙 → FinComm× d b
+
  module _ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
   open Liveness fc-pot stream PSet-PSet-reducible
  
@@ -91,11 +89,10 @@ module _ (fc' : InfComm) where
   -- TODO Maybe here we need to take into account the infinite conditions that
   -- are posed by a and b
   -- Also introduce fairness in the case that both are infinite
-  Fin-Liveness d b (ex-inf-x x y) = Liveness ((fc ⟶) (inf-comm d x)) ((fc ⟶) (inf-comm b y)) × 𝟙 {𝓤}
-  Fin-Liveness d b (ex-inf-l x) = Liveness ((fc ⟶) (inf-comm d x)) b
-  Fin-Liveness d b (ex-inf-r y) = Liveness d ((fc ⟶) (inf-comm b y))
-  Fin-Liveness d b here = Liveness d b
-
+  Fin-Liveness d b (tail (inl x) (inl y)) = Cond-Liveness ((fc ⟶) (inf-comm d x)) ((fc ⟶) (inf-comm b y)) × 𝟙 {𝓤}
+  Fin-Liveness d b (tail (inl x) (inr y)) = Cond-Liveness ((fc ⟶) (inf-comm d x)) b
+  Fin-Liveness d b (tail (inr x) (inl y)) = Cond-Liveness d ((fc ⟶) (inf-comm b y))
+  Fin-Liveness d b (tail (inr x) (inr y)) = Cond-Liveness d b
 
 
 ```

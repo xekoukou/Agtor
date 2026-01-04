@@ -45,7 +45,6 @@ open import StreamP
 
 module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) where
  open Interleave Msg Secret 𝓥 𝓦 𝓠 fc-pot
- open import MultiComm fe Msg Secret 𝓥 𝓦 𝓠 fc-pot
  module _ (sfc' : Stream PSet×PSet') where
   open DD sfc'
   open Stream sfc' renaming (next to nextₛ)
@@ -66,7 +65,11 @@ module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) wher
    open FC
    open Pot {fc-pot}
  
-   
+   Interleaved-Condition : ∀ 𝓣  → 𝓣 ⁺ ̇
+   Interleaved-Condition 𝓣 = ∀ (f g : ℕ → ℕ) → (two : 𝟚) → (k : ℕ) → 𝓣 ̇
+
+   Cond-Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ⊔ 𝓦 ⁺ ̇  
+   Cond-Liveness a b = Σ IC ꞉ Interleaved-Condition 𝓦 , ∀ f g two k → IC f g two k → liveness-fiber ((fcₛ ⟶ₛ) (interleave f g two k a b))
+
    Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ̇
    Liveness a b = ∀ f g two k → liveness-fiber ((fcₛ ⟶ₛ) (interleave f g two k a b))
-
