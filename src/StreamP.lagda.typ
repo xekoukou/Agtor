@@ -38,21 +38,16 @@ module _  {A : 𝓤 ̇ } where
  open Functor (FStream A)
  open CoAlgebra (FStream A)
  
- module Stream (fc' : Stream A) (a : Fn < fc' .pr₁ >) where
+ module Stream (fc' : Stream A) where
  
   open Final-CoAlgebra (FStream A) fc'
  
-  next : < fc >
-  next = a .pr₂
+  next : Fn ⟨ fc ⟩ → < fc >
+  next a = a .pr₂
  
-  value : A
-  value = a .pr₁
-
- module Stream₁ (fc' : Stream A) where
- 
-  open Final-CoAlgebra (FStream A) fc'
+  value : Fn ⟨ fc ⟩ → A
+  value a = a .pr₁
 
   _at_ : Fn ⟨ fc ⟩ → ℕ → Fn ⟨ fc ⟩
   d at zero = d
   (a , d) at succ n = ((fc ⟶) d) at n
-

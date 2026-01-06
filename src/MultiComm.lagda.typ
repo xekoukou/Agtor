@@ -24,6 +24,7 @@ open import Naturals.Properties
 
 ```agda
 
+open import Interleaving2
 open import StreamP
 import Indexed-FunctorP
 import Indexed-CoAlgebraP
@@ -169,6 +170,9 @@ data SingleInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
                         → (bsmb : < Mp fb > msg)
                         → SingleInComm× d b
 
+SInt :  {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → 𝓤₀ ̇
+SInt (c← nd nb msg bsmd bsab) = Σ n ꞉ ℕ , BFun n nd nb
+SInt (c→ nd nb msg bsad bsmb) = Σ n ꞉ ℕ , BFun n nd nb
 
 sIn→sEx× : {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → SingleExComm d × SingleExComm b
 sIn→sEx× {d} {b} (c← nd nb msg bsmd bsab) = (←m nd msg bsmd) , (→a nb msg bsab)
@@ -185,6 +189,9 @@ data FinInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
  more : (step : SingleInComm× d b) → let nd , nb = commIn step in FinInComm× nd nb → FinInComm× d b
  lastOne : (step : SingleInComm× d b) → FinInComm× d b
 
+FInt :  {d b : Fn ⟨ fc ⟩} → FinInComm× d b → 𝓤₀ ̇
+FInt (more step g) = SInt step × FInt g
+FInt (lastOne step) = SInt step
 
 finIn→finEx× : {d b : Fn ⟨ fc ⟩} → FinInComm× d b → FinExComm d × FinExComm b
 finIn→finEx× {d} {b} (more step x)
@@ -269,11 +276,10 @@ module _ (fc' : InfComm) where
 
 
 
---  module F₂ = Indexed-FunctorP ((Σ d ꞉ Fn ⟨ fc ⟩ , (Fnᵢ ⟨ fcᵢ ⟩ᵢ d → 𝓠 ̇)) × (Σ d ꞉ Fn ⟨ fc ⟩ , (Fnᵢ ⟨ fcᵢ ⟩ᵢ d → 𝓠 ̇)))
 
  module _ where
   module IFP× = Indexed-FunctorP (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩)
-
+-- TODO This is an IStream
   FInfInComm× : IFP×.IFunctor (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
   FInfInComm× =
      (λ X i → Σ step ꞉ SingleInComm× (i .pr₁) (i .pr₂) , X (commIn step))
@@ -327,6 +333,9 @@ module _ (fc' : InfComm) where
     infIn×→infEx₂ : D₂ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ) ⟼ ⟨ fcᵢ ⟩ᵢ 
     infIn×→infEx₂ d cond = (uniᵢ q₂-co .pr₁ ↓ᵢ) d cond
 
+   indexₛ = (Σ d ꞉ _ , Σ b ꞉ _ , IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ (d , b))
+   open import IStreamP indexₛ
+                        (λ x → SInt (x .pr₂ .pr₂ .pr₁))
+                        (λ x → let dd , bb = commIn (x .pr₂ .pr₂ .pr₁) in _ , _ , (IFC×.fcᵢ IC×.⟶ᵢ) (_ , _) (x .pr₂ .pr₂ .pr₂))
 
-
-```
+   INFInt = IStream

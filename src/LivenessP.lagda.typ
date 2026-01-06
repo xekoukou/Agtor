@@ -47,8 +47,7 @@ module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) wher
  open Interleave Msg Secret 𝓥 𝓦 𝓠 fc-pot
  module _ (sfc' : Stream PSet×PSet') where
   open DD sfc'
-  open Stream sfc' renaming (next to nextₛ)
-  open Stream₁ sfc' renaming (_at_ to _atₛ_)
+  open Stream sfc' renaming (next to nextₛ ; _at_ to _atₛ_)
   open Functor (FStream PSet×PSet') renaming (Fn to Fnₛ)
   open CoAlgebra (FStream PSet×PSet')renaming (⟨_⟩ to ⟨_⟩ₛ ; _⟶ to _⟶ₛ)
   open Final-CoAlgebra (FStream PSet×PSet') sfc' renaming (fc to fcₛ ; uni to uniₛ)
