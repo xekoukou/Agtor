@@ -15,28 +15,30 @@ open import MLTT.Spartan
 ]
 
 ```agda
-module Indexed-FunctorP (I : 𝓥 ̇ ) where
+module Indexed-FunctorP where
 
-ISet : ∀ 𝓤 → 𝓥 ⊔ 𝓤 ⁺ ̇   
-ISet 𝓤 = I → 𝓤 ̇
+ISet : (I : 𝓥 ̇ ) → ∀ 𝓤 → 𝓥 ⊔ 𝓤 ⁺ ̇   
+ISet I 𝓤 = I → 𝓤 ̇
+ 
+ 
+module _ {I : 𝓥 ̇ } where
 
+ _⟼_ : (A B : ISet I 𝓤) → 𝓥 ⊔ 𝓤 ̇
+ A ⟼ B = ∀ i → A i → B i
+ 
+ 
+ _∘ᵢ_ : ∀{A B D : ISet I 𝓤} → A ⟼ B → D ⟼ A → D ⟼ B
+ f ∘ᵢ g = λ i z → f i (g i z) 
+ 
+ idᵢ : ∀{X : ISet I 𝓤} → X ⟼ X
+ idᵢ = λ i x → x
 
-_⟼_ : (A B : ISet 𝓤) → 𝓥 ⊔ 𝓤 ̇
-A ⟼ B = ∀ i → A i → B i
+IFunctor : (I : 𝓥 ̇ ) → ∀ 𝓤 → 𝓥 ⊔ 𝓤 ⁺ ̇
+IFunctor I 𝓤 = Σ Fn ꞉ (ISet I 𝓤 → ISet I 𝓤 ) , Σ Fm ꞉ (∀{X Y} → (f : X ⟼ Y) → (Fn X) ⟼ (Fn Y)) , (∀{X Y Z} → (f : X ⟼ Y) → (g : Z ⟼ X) → ((Fm f) ∘ᵢ (Fm g) ＝ Fm (f ∘ᵢ g))) × (∀{X} → Fm idᵢ ＝ idᵢ {X = Fn X}) 
 
+module IFunctor {I : 𝓥 ̇ } {𝓤} (func : IFunctor I 𝓤) where
 
-_∘ᵢ_ : ∀{A B D : ISet 𝓤} → A ⟼ B → D ⟼ A → D ⟼ B
-f ∘ᵢ g = λ i z → f i (g i z) 
-
-idᵢ : ∀{X : ISet 𝓤} → X ⟼ X
-idᵢ = λ i x → x
-
-IFunctor : ∀ 𝓤 → 𝓥 ⊔ 𝓤 ⁺ ̇
-IFunctor 𝓤 = Σ Fn ꞉ (ISet 𝓤 → ISet 𝓤 ) , Σ Fm ꞉ (∀{X Y} → (f : X ⟼ Y) → (Fn X) ⟼ (Fn Y)) , (∀{X Y Z} → (f : X ⟼ Y) → (g : Z ⟼ X) → ((Fm f) ∘ᵢ (Fm g) ＝ Fm (f ∘ᵢ g))) × (∀{X} → Fm idᵢ ＝ idᵢ {X = Fn X}) 
-
-module IFunctor (func : IFunctor 𝓤) where
-
- Fnᵢ : ISet 𝓤 → ISet 𝓤
+ Fnᵢ : ISet I 𝓤 → ISet I 𝓤
  Fnᵢ = func .pr₁
 
  Fmᵢ : _
@@ -47,5 +49,10 @@ module IFunctor (func : IFunctor 𝓤) where
 
  Fm-idᵢ : _
  Fm-idᵢ = func .pr₂ .pr₂ .pr₂
+
+module IFunctor₁ {𝓥} {I : 𝓥 ̇} {𝓤} (func : IFunctor I 𝓤) = IFunctor func renaming (Fnᵢ to Fnᵢ₁ ; Fmᵢ to Fmᵢ₁ ; Fm-compᵢ to Fm-compᵢ₁ ; Fm-idᵢ to Fm-idᵢ₁)
+module IFunctor₂ {𝓥} {I : 𝓥 ̇} {𝓤} (func : IFunctor I 𝓤) = IFunctor func renaming (Fnᵢ to Fnᵢ₂ ; Fmᵢ to Fmᵢ₂ ; Fm-compᵢ to Fm-compᵢ₂ ; Fm-idᵢ to Fm-idᵢ₂)
+module IFunctor₃ {𝓥} {I : 𝓥 ̇} {𝓤} (func : IFunctor I 𝓤) = IFunctor func renaming (Fnᵢ to Fnᵢ₃ ; Fmᵢ to Fmᵢ₃ ; Fm-compᵢ to Fm-compᵢ₃ ; Fm-idᵢ to Fm-idᵢ₃)
+module IFunctor₄ {𝓥} {I : 𝓥 ̇} {𝓤} (func : IFunctor I 𝓤) = IFunctor func renaming (Fnᵢ to Fnᵢ₄ ; Fmᵢ to Fmᵢ₄ ; Fm-compᵢ to Fm-compᵢ₄ ; Fm-idᵢ to Fm-idᵢ₄)
 
 ```

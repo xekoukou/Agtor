@@ -6,6 +6,7 @@
 
 
 = Multiple Communication
+
 /*
 ```agda
 {-# OPTIONS --polarity --safe --without-K --exact-split --guardedness #-}
@@ -26,9 +27,9 @@ open import Naturals.Properties
 
 open import Interleaving2
 open import StreamP
-import Indexed-FunctorP
-import Indexed-CoAlgebraP
-import Indexed-Final-CoAlgebraP
+open import Indexed-FunctorP
+open import Indexed-CoAlgebraP
+open import Indexed-Final-CoAlgebraP
 
 open import FunctorP
 open import CoAlgebraP
@@ -107,26 +108,20 @@ x ++ₘ inr y = x
 
 
 module _ where
- open Indexed-FunctorP (Fn ⟨ fc ⟩)
 
- FInfExComm : IFunctor (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
+ FInfExComm : IFunctor (Fn ⟨ fc ⟩) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
  FInfExComm =
   (λ X i → Σ step ꞉ SingleExComm i , X (commEx step))
   , (λ f i v → v .pr₁ , f (commEx (v .pr₁)) (v .pr₂))
   , (λ {X} {Y} {Z} f g → refl)
   , λ {X} → refl
  
-
- open Indexed-CoAlgebraP (Fn ⟨ fc ⟩)
- open Indexed-Final-CoAlgebraP (Fn ⟨ fc ⟩)
-
- open IFunctor FInfExComm
- open ICoAlgebra FInfExComm renaming (⟨_⟩ to ⟨_⟩ᵢ)
  InfComm = IFinal-CoAlgebra FInfExComm
-
 
  module InfCommP (fc' : InfComm) where
 
+  open IFunctor FInfExComm
+  open ICoAlgebra FInfExComm
   open IFinal-CoAlgebra FInfExComm fc'
 
   𝟙' = 𝟙 {(𝓤 ⁺) ⊔ ((𝓥 ⁺) ⁺) ⊔ (𝓦 ⁺) ⊔ (𝓠 ⁺)}
@@ -217,125 +212,115 @@ fin-in-comm' {d} {b} (lastOne step) = commIn' step
 
 
 
-module _ (fc' : InfComm) where
-
- open Indexed-CoAlgebraP (Fn ⟨ fc ⟩)
- open Indexed-Final-CoAlgebraP (Fn ⟨ fc ⟩)
- open Indexed-FunctorP (Fn ⟨ fc ⟩)
-
- open IFunctor FInfExComm
- open ICoAlgebra FInfExComm renaming (⟨_⟩ to ⟨_⟩ᵢ)
-
- open InfCommP fc'
- open IFinal-CoAlgebra FInfExComm fc'
-
- data FinLivC : 𝓤₀ ̇ where
-  start : FinLivC
-  sIn : FinLivC
-  fEx× : FinLivC
-  fEx← : FinLivC
-  fEx→ : FinLivC
+data FinLivC : 𝓤₀ ̇ where
+ start : FinLivC
+ sIn : FinLivC
+ fEx× : FinLivC
+ fEx← : FinLivC
+ fEx→ : FinLivC
 
 
- data FinLivComm× (d b : Fn ⟨ fc ⟩) (k : FinLivC) : 𝓤 ⊔ 𝓥 ̇  where
-   sIn : (step : FinInComm× d b) →
-              let dd , bb = fin-in-comm step
-              in FinLivComm× dd bb sIn → (eq : ¬ (k ＝ sIn)) → FinLivComm× d b k
-   fEx× : (fxd : FinExComm d) → (fxb : FinExComm b) → FinLivComm× (fin-ex-comm fxd) (fin-ex-comm fxb) fEx× → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
-   fEx← : (fxd : FinExComm d) → FinLivComm× (fin-ex-comm fxd) b fEx← → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
-   fEx→ : (fxb : FinExComm b) → FinLivComm× d (fin-ex-comm fxb) fEx→ → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
-   here : FinLivComm× d b k
+data FinLivComm× (d b : Fn ⟨ fc ⟩) (k : FinLivC) : 𝓤 ⊔ 𝓥 ̇  where
+  sIn : (step : FinInComm× d b) →
+             let dd , bb = fin-in-comm step
+             in FinLivComm× dd bb sIn → (eq : ¬ (k ＝ sIn)) → FinLivComm× d b k
+  fEx× : (fxd : FinExComm d) → (fxb : FinExComm b) → FinLivComm× (fin-ex-comm fxd) (fin-ex-comm fxb) fEx× → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
+  fEx← : (fxd : FinExComm d) → FinLivComm× (fin-ex-comm fxd) b fEx← → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
+  fEx→ : (fxb : FinExComm b) → FinLivComm× d (fin-ex-comm fxb) fEx→ → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
+  here : FinLivComm× d b k
 
- FinLivComm×' : (d b : Fn ⟨ fc ⟩) → 𝓤 ⊔ 𝓥 ̇
- FinLivComm×' d b = FinLivComm× d b start
+FinLivComm×' : (d b : Fn ⟨ fc ⟩) → 𝓤 ⊔ 𝓥 ̇
+FinLivComm×' d b = FinLivComm× d b start
 
- finLiv→finEx× : {d b : Fn ⟨ fc ⟩} → ∀{k} → FinLivComm× d b k → (FinExComm d + 𝟙 {𝓤₀}) × (FinExComm b + 𝟙 {𝓤₀})
- finLiv→finEx× (sIn step x eq)
-  = let nx , ny = finLiv→finEx× x
-        fxd , fxb = finIn→finEx× step
-    in inl (fxd ++ₘ nx) , inl (fxb ++ₘ ny)
- finLiv→finEx× (fEx× fxd fxb x eq)
-  = let nx , ny = finLiv→finEx× x
-    in inl (fxd ++ₘ nx) , inl (fxb ++ₘ ny)
- finLiv→finEx× (fEx← fxd x eq)
-  = let nx , ny = finLiv→finEx× x
-    in inl (fxd ++ₘ nx) , ny
- finLiv→finEx× (fEx→ fxb x eq)
-  = let nx , ny = finLiv→finEx× x
-    in nx , inl (fxb ++ₘ ny)
- finLiv→finEx× here = inr ⋆ , inr ⋆
+finLiv→finEx× : {d b : Fn ⟨ fc ⟩} → ∀{k} → FinLivComm× d b k → (FinExComm d + 𝟙 {𝓤₀}) × (FinExComm b + 𝟙 {𝓤₀})
+finLiv→finEx× (sIn step x eq)
+ = let nx , ny = finLiv→finEx× x
+       fxd , fxb = finIn→finEx× step
+   in inl (fxd ++ₘ nx) , inl (fxb ++ₘ ny)
+finLiv→finEx× (fEx× fxd fxb x eq)
+ = let nx , ny = finLiv→finEx× x
+   in inl (fxd ++ₘ nx) , inl (fxb ++ₘ ny)
+finLiv→finEx× (fEx← fxd x eq)
+ = let nx , ny = finLiv→finEx× x
+   in inl (fxd ++ₘ nx) , ny
+finLiv→finEx× (fEx→ fxb x eq)
+ = let nx , ny = finLiv→finEx× x
+   in nx , inl (fxb ++ₘ ny)
+finLiv→finEx× here = inr ⋆ , inr ⋆
 
- module _ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
-  open Liveness fc-pot stream PSet-PSet-reducible
+module _ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
+ open Liveness fc-pot stream PSet-PSet-reducible
 
-  Fin-Liveness : {d b : Fn ⟨ fc ⟩} → FinLivComm×' d b → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇
-  Fin-Liveness {d} {b} x = let a , b = finLiv→finEx× x
-                           in Cond-Liveness (fin-ex-comm-m a) (fin-ex-comm-m b)
+ Fin-Liveness : {d b : Fn ⟨ fc ⟩} → FinLivComm×' d b → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇
+ Fin-Liveness {d} {b} x = let a , b = finLiv→finEx× x
+                          in Cond-Liveness (fin-ex-comm-m a) (fin-ex-comm-m b)
 
 
 
 
 
 
- module _ where
-  module IFP× = Indexed-FunctorP (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩)
--- TODO This is an IStream
-  FInfInComm× : IFP×.IFunctor (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
-  FInfInComm× =
-     (λ X i → Σ step ꞉ SingleInComm× (i .pr₁) (i .pr₂) , X (commIn step))
-   , (λ f i x → (x .pr₁) , (f (commIn (x .pr₁)) (x .pr₂)))
+module _ where
+
+ FInfInComm× : IFunctor (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
+ FInfInComm× =
+    (λ X i → Σ step ꞉ SingleInComm× (i .pr₁) (i .pr₂) , X (commIn step))
+  , (λ f i x → (x .pr₁) , (f (commIn (x .pr₁)) (x .pr₂)))
+  , (λ f g → refl)
+  , refl
+
+ open IFunctor₁ FInfInComm×
+ open ICoAlgebra₁ FInfInComm×
+ InfInComm× = IFinal-CoAlgebra FInfInComm×
+
+
+ module InfInComm×P (fc' : InfComm) (fc'₁ : InfInComm×) where
+
+  open IFinal-CoAlgebra₁ FInfInComm× fc'₁
+  open IFunctor FInfExComm
+  open ICoAlgebra FInfExComm
+  open IFinal-CoAlgebra FInfExComm fc'
+
+
+  D₁ : ISet _ (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)  → ISet (Fn ⟨ fc ⟩) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
+  D₁ x = λ i → Σ v ꞉ Fn ⟨ fc ⟩ , x (i , v) 
+
+  D₂ : ISet _ (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)  → ISet (Fn ⟨ fc ⟩) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
+  D₂ x = λ i → Σ v ꞉ Fn ⟨ fc ⟩ , x (v , i) 
+
+  q₁ : D₁ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁) ⟼ Fnᵢ (D₁ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁))
+  q₁ d (b , step , nx) = let sd , sb = sIn→sEx× step in sd , (commEx sb) , (fcᵢ₁ ⟶ᵢ₁) (commEx sd , commEx sb) nx
+
+  q₂ : D₂ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁) ⟼ Fnᵢ (D₂ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁))
+  q₂ b (d , step , nx) = let sd , sb = sIn→sEx× step in sb , (commEx sd) , (fcᵢ₁ ⟶ᵢ₁) (commEx sd , commEx sb) nx
+
+  q₁-co : ICoAlgebra FInfExComm
+  q₁-co = (D₁ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁)) , q₁
+
+  q₂-co : ICoAlgebra FInfExComm
+  q₂-co = (D₂ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁)) , q₂
+
+  module _ where
+ 
+   open IMorphism FInfExComm q₁-co fcᵢ
+
+   infIn×→infEx₁ : D₁ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁) ⟼ ⟨ fcᵢ ⟩ᵢ 
+   infIn×→infEx₁ d cond = (uniᵢ q₁-co .pr₁ ↓ᵢ) d cond
+
+   open IMorphism₁ FInfExComm q₂-co fcᵢ
+
+   infIn×→infEx₂ : D₂ (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁) ⟼ ⟨ fcᵢ ⟩ᵢ 
+   infIn×→infEx₂ d cond = (uniᵢ q₂-co .pr₁ ↓ᵢ₁) d cond
+
+
+ module _ (fc'₁ : InfInComm×) where
+  open IFinal-CoAlgebra₁ FInfInComm× fc'₁
+
+  FInfInt : IFunctor (Σ d ꞉ _ , Σ b ꞉ _ , (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b))) 𝓤
+  FInfInt =
+     (λ X i → SInt (i .pr₂ .pr₂ .pr₁) × let dd , bb = commIn (i .pr₂ .pr₂ .pr₁) in X (_ , _ , (fcᵢ₁ ⟶ᵢ₁) (_ , _) (i .pr₂ .pr₂ .pr₂)))
+   , (λ f i (sint , x) → sint , (f _ x))
    , (λ f g → refl)
    , refl
- 
-  module ICP× = Indexed-CoAlgebraP (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩)
-  module IFCP× = Indexed-Final-CoAlgebraP (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩)
- 
-  module IF× = IFP×.IFunctor FInfInComm×
-  module IC× = ICP×.ICoAlgebra FInfInComm× renaming (⟨_⟩ to ⟨_⟩ᵢ)
-  InfInComm× = IFCP×.IFinal-CoAlgebra FInfInComm×
- 
- 
-  module InfInComm×P (fc' : InfInComm×) where
- 
-   module IFC× = IFCP×.IFinal-CoAlgebra FInfInComm× fc'
 
-   D₁ : IFP×.ISet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)  → ISet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
-   D₁ x = λ i → Σ v ꞉ Fn ⟨ fc ⟩ , x (i , v) 
-
-   D₂ : IFP×.ISet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)  → ISet (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
-   D₂ x = λ i → Σ v ꞉ Fn ⟨ fc ⟩ , x (v , i) 
-
-   q₁ : D₁ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ) ⟼ Fnᵢ (D₁ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ))
-   q₁ d (b , step , nx) = let sd , sb = sIn→sEx× step in sd , (commEx sb) , (IFC×.fcᵢ IC×.⟶ᵢ) (commEx sd , commEx sb) nx
-
-   q₂ : D₂ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ) ⟼ Fnᵢ (D₂ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ))
-   q₂ b (d , step , nx) = let sd , sb = sIn→sEx× step in sb , (commEx sd) , (IFC×.fcᵢ IC×.⟶ᵢ) (commEx sd , commEx sb) nx
-
-   q₁-co : ICoAlgebra FInfExComm
-   q₁-co = (D₁ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ)) , q₁
-
-   q₂-co : ICoAlgebra FInfExComm
-   q₂-co = (D₂ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ)) , q₂
-
-   module _ where
-  
-    open ICoAlgebra₂ FInfExComm q₁-co fcᵢ
-    open IMorphism
-
-    infIn×→infEx₁ : D₁ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ) ⟼ ⟨ fcᵢ ⟩ᵢ 
-    infIn×→infEx₁ d cond = (uniᵢ q₁-co .pr₁ ↓ᵢ) d cond
-
-   module _ where
-  
-    open ICoAlgebra₂ FInfExComm q₂-co fcᵢ
-    open IMorphism
-
-    infIn×→infEx₂ : D₂ (IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ) ⟼ ⟨ fcᵢ ⟩ᵢ 
-    infIn×→infEx₂ d cond = (uniᵢ q₂-co .pr₁ ↓ᵢ) d cond
-
-   indexₛ = (Σ d ꞉ _ , Σ b ꞉ _ , IF×.Fnᵢ IC×.⟨ IFC×.fcᵢ ⟩ᵢ (d , b))
-   open import IStreamP indexₛ
-                        (λ x → SInt (x .pr₂ .pr₂ .pr₁))
-                        (λ x → let dd , bb = commIn (x .pr₂ .pr₂ .pr₁) in _ , _ , (IFC×.fcᵢ IC×.⟶ᵢ) (_ , _) (x .pr₂ .pr₂ .pr₂))
-
-   INFInt = IStream
+  InfInt = IFinal-CoAlgebra FInfInt

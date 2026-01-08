@@ -13,27 +13,32 @@
 open import MLTT.Spartan
 open import UF.Subsingletons
 
-module Indexed-Final-CoAlgebraP (I : 𝓥 ̇ ) where
+module Indexed-Final-CoAlgebraP where
 
-open import Indexed-FunctorP I
-open import Indexed-CoAlgebraP I
+open import Indexed-FunctorP
+open import Indexed-CoAlgebraP
 ```
 ]
 
 ```agda
-IFinal-CoAlgebra : IFunctor 𝓤 → 𝓥 ⊔ 𝓤 ⁺ ̇
-IFinal-CoAlgebra func =
- Σ fc ꞉ ICoAlgebra func ,
-  (∀ co → let open ICoAlgebra₂ func co fc
-              open IMorphism in
-                Σ f ꞉ ico-morphism , ((c : ico-morphism) → f ↓ᵢ ＝ c ↓ᵢ ))
-module IFinal-CoAlgebra func (fc' : IFinal-CoAlgebra {𝓤 = 𝓤} func) where
+module _ {I : 𝓥 ̇ } where
 
- fcᵢ = fc' .pr₁
+ IFinal-CoAlgebra : IFunctor I 𝓤 → 𝓥 ⊔ 𝓤 ⁺ ̇
+ IFinal-CoAlgebra func =
+  Σ fc ꞉ ICoAlgebra func ,
+   (∀ co → let open IMorphism func co fc in
+                 Σ f ꞉ co-morphismᵢ func co fc , ((c : co-morphismᵢ func co fc) → f ↓ᵢ ＝ c ↓ᵢ ))
+ module IFinal-CoAlgebra func (fc' : IFinal-CoAlgebra {𝓤 = 𝓤} func) where
+ 
+  fcᵢ = fc' .pr₁
+ 
+  uniᵢ : (∀ co → Σ f ꞉ co-morphismᵢ func co fcᵢ , ((c : co-morphismᵢ func co fcᵢ)
+   → let open IMorphism func co fcᵢ in f ↓ᵢ ＝ c ↓ᵢ ))
+  uniᵢ = fc' .pr₂
 
- uniᵢ : (∀ co → let open ICoAlgebra₂ func co fcᵢ
-                    open IMorphism in Σ f ꞉ ico-morphism , ((c : ico-morphism)
-  → f ↓ᵢ ＝ c ↓ᵢ ))
- uniᵢ = fc' .pr₂
+ module IFinal-CoAlgebra₁ {𝓤} func (fc' : IFinal-CoAlgebra {𝓤 = 𝓤} func) = IFinal-CoAlgebra func fc' renaming (fcᵢ to fcᵢ₁ ; uniᵢ to uniᵢ₁)
+ module IFinal-CoAlgebra₂ {𝓤} func (fc' : IFinal-CoAlgebra {𝓤 = 𝓤} func) = IFinal-CoAlgebra func fc' renaming (fcᵢ to fcᵢ₂ ; uniᵢ to uniᵢ₂)
+ module IFinal-CoAlgebra₃ {𝓤} func (fc' : IFinal-CoAlgebra {𝓤 = 𝓤} func) = IFinal-CoAlgebra func fc' renaming (fcᵢ to fcᵢ₃ ; uniᵢ to uniᵢ₃)
+ module IFinal-CoAlgebra₄ {𝓤} func (fc' : IFinal-CoAlgebra {𝓤 = 𝓤} func) = IFinal-CoAlgebra func fc' renaming (fcᵢ to fcᵢ₄ ; uniᵢ to uniᵢ₄)
 ```
 

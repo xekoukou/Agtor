@@ -5,7 +5,9 @@
 #show: init-color-my-agda
 
 
-= Interleaving
+= Indexed-Stream
+
+-- TODO Remove this as unnessary.
 /*
 ```agda
 {-# OPTIONS --polarity --safe --without-K --exact-split #-}
