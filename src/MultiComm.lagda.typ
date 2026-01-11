@@ -184,9 +184,9 @@ data FinInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
  more : (step : SingleInComm× d b) → let nd , nb = commIn step in FinInComm× nd nb → FinInComm× d b
  lastOne : (step : SingleInComm× d b) → FinInComm× d b
 
-FInt :  {d b : Fn ⟨ fc ⟩} → FinInComm× d b → 𝓤₀ ̇
-FInt (more step g) = SInt step × FInt g
-FInt (lastOne step) = SInt step
+FInt :  (d b : Fn ⟨ fc ⟩) → FinInComm× d b → 𝓤₀ ̇
+FInt d b (more step g) = SInt step × FInt _ _ g
+FInt d b (lastOne step) = SInt step
 
 finIn→finEx× : {d b : Fn ⟨ fc ⟩} → FinInComm× d b → FinExComm d × FinExComm b
 finIn→finEx× {d} {b} (more step x)
@@ -313,7 +313,7 @@ module _ where
    infIn×→infEx₂ d cond = (uniᵢ q₂-co .pr₁ ↓ᵢ₁) d cond
 
 
- module _ (fc'₁ : InfInComm×) where
+ module InfIntP (fc'₁ : InfInComm×) where
   open IFinal-CoAlgebra₁ FInfInComm× fc'₁
 
   FInfInt : IFunctor (Σ d ꞉ _ , Σ b ꞉ _ , (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b))) 𝓤
@@ -324,3 +324,5 @@ module _ where
    , refl
 
   InfInt = IFinal-CoAlgebra FInfInt
+
+
