@@ -57,7 +57,7 @@ open FC
 open Pot {fc-pot}
 open Pot₁ fe {fc-pot}
 
-
+-- TODO Maybe simplify this?? only bsm/a changes. Why should we have two cases.
 data SingleExComm (d : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
  ←m : (n : ℕ) → let fd = foc (d at n)
                 in (msg : S×Msg) → (bsm : < Mp fd > msg)
@@ -65,6 +65,11 @@ data SingleExComm (d : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
  →a : (n : ℕ) → let fd = foc (d at n)
                 in (msg : S×Msg) → (bsa : < Ap fd > msg)
                 → SingleExComm d
+
+
+nEx : {d : Fn ⟨ fc ⟩} → SingleExComm d → ℕ
+nEx (←m n msg bsm) = n
+nEx (→a n msg bsa) = n
 
 commEx : {d : Fn ⟨ fc ⟩} → SingleExComm d → Fn ⟨ fc ⟩
 commEx {d} (←m n msg bsm) = let fd = foc (d at n)
@@ -164,6 +169,10 @@ data SingleInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
        in (msg : S×Msg) → (bsad : < Ap fd > msg)
                         → (bsmb : < Mp fb > msg)
                         → SingleInComm× d b
+
+nIn : {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → ℕ × ℕ
+nIn (c← nd nb msg bsmd bsab) = nd , nb
+nIn (c→ nd nb msg bsad bsmb) = nd , nd
 
 SInt :  {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → 𝓤₀ ̇
 SInt (c← nd nb msg bsmd bsab) = Σ n ꞉ ℕ , BFun n nd nb
