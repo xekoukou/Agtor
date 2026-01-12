@@ -67,16 +67,24 @@ module _ (fc'₁ : InfInComm×) where
 
   open FF
 
-  fcn : {d b : Fn ⟨ fc ⟩} → (q : FinInComm× d b) → FinInComm× d b → let dd , bb = finIn→finEx× q in SingleExComm (fin-ex-comm dd) × SingleExComm (fin-ex-comm bb) → 𝓤 ⊔ 𝓥 ̇ 
-  fcn (more step₁ s) (more step d) r = Σ eq ꞉ (step ＝ step₁) , (fcn s (transport (λ z → FinInComm× (commIn z .pr₁) (commIn z .pr₂)) eq d) r)
-  fcn (lastOne step₁) (more step (more nstep d)) (g , h) = (step ＝ step₁) × (nIn nstep ＝ nEx g , nEx h)
+  fcn : {d b : Fn ⟨ fc ⟩} → (q : FinInComm× d b) → FinInComm× d b →
+   let dd , bb = finIn→finEx× q
+   in SingleExComm (fin-ex-comm dd) × SingleExComm (fin-ex-comm bb) → 𝓤 ⊔ 𝓥 ̇ 
+  fcn (more step₁ s) (more step d) r
+   = Σ eq ꞉ (step ＝ step₁) , (fcn s (transport (λ z → FinInComm× (commIn z .pr₁) (commIn z .pr₂)) eq d) r)
+  fcn (lastOne step₁) (more step (more nstep d)) (g , h)
+   = (step ＝ step₁) × (nIn nstep ＝ nEx g , nEx h)
   fcn (lastOne step₁) (more step (lastOne nstep)) (g , h) = (step ＝ step₁) × (nIn nstep ＝ nEx g , nEx h)
   fcn (more step₁ s) (lastOne step) _ = 𝟘
   fcn (lastOne step₁) (lastOne step) _ = step ＝ step₁
   
-  ifcn : {d b : Fn ⟨ fc ⟩} → (q : FinInComm× d b) → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) → let dd , bb = finIn→finEx× q in SingleExComm (fin-ex-comm dd) × SingleExComm (fin-ex-comm bb) → 𝓤 ⊔ 𝓥 ̇ 
-  ifcn (more step₁ s) (step , next) r = Σ eq ꞉ (step ＝ step₁) ,(ifcn s (transport (λ z → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (commIn z)) eq ((fcᵢ₁ ⟶ᵢ₁) (commIn step) next)) r)
-  ifcn (lastOne step₁) (step , next) (g , h) = (step ＝ step₁) × (nIn (((fcᵢ₁ ⟶ᵢ₁) (commIn step) next) .pr₁) ＝ (nEx g) , (nEx h))
+  ifcn : {d b : Fn ⟨ fc ⟩} → (q : FinInComm× d b) → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) →
+   let dd , bb = finIn→finEx× q
+   in SingleExComm (fin-ex-comm dd) × SingleExComm (fin-ex-comm bb) → 𝓤 ⊔ 𝓥 ̇ 
+  ifcn (more step₁ s) (step , next) r
+   = Σ eq ꞉ (step ＝ step₁) ,(ifcn s (transport (λ z → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (commIn z)) eq ((fcᵢ₁ ⟶ᵢ₁) (commIn step) next)) r)
+  ifcn (lastOne step₁) (step , next) (g , h)
+   = (step ＝ step₁) × (nIn (((fcᵢ₁ ⟶ᵢ₁) (commIn step) next) .pr₁) ＝ (nEx g) , (nEx h))
    
   _⊆_ : {d b : Fn ⟨ fc ⟩} → FF d b → Σ (FInt d b)  + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i)) → 𝓤 ⊔ 𝓥 ̇
   f ⊆ inl x = fcn (f .fin) (x .pr₁) (f .sEx)

@@ -220,49 +220,11 @@ fin-in-comm' {d} {b} (more (c→ nd nb msg bsad bsmb) x)
 fin-in-comm' {d} {b} (lastOne step) = commIn' step
 
 
-
-data FinLivC : 𝓤₀ ̇ where
- start : FinLivC
- sIn : FinLivC
- fEx× : FinLivC
- fEx← : FinLivC
- fEx→ : FinLivC
-
-
-data FinLivComm× (d b : Fn ⟨ fc ⟩) (k : FinLivC) : 𝓤 ⊔ 𝓥 ̇  where
-  sIn : (step : FinInComm× d b) →
-             let dd , bb = fin-in-comm step
-             in FinLivComm× dd bb sIn → (eq : ¬ (k ＝ sIn)) → FinLivComm× d b k
-  fEx× : (fxd : FinExComm d) → (fxb : FinExComm b) → FinLivComm× (fin-ex-comm fxd) (fin-ex-comm fxb) fEx× → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
-  fEx← : (fxd : FinExComm d) → FinLivComm× (fin-ex-comm fxd) b fEx← → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
-  fEx→ : (fxb : FinExComm b) → FinLivComm× d (fin-ex-comm fxb) fEx→ → (eq : (k ＝ sIn) + (k ＝ start)) → FinLivComm× d b k
-  here : FinLivComm× d b k
-
-FinLivComm×' : (d b : Fn ⟨ fc ⟩) → 𝓤 ⊔ 𝓥 ̇
-FinLivComm×' d b = FinLivComm× d b start
-
-finLiv→finEx× : {d b : Fn ⟨ fc ⟩} → ∀{k} → FinLivComm× d b k → (FinExComm d + 𝟙 {𝓤₀}) × (FinExComm b + 𝟙 {𝓤₀})
-finLiv→finEx× (sIn step x eq)
- = let nx , ny = finLiv→finEx× x
-       fxd , fxb = finIn→finEx× step
-   in inl (fxd ++ₘ nx) , inl (fxb ++ₘ ny)
-finLiv→finEx× (fEx× fxd fxb x eq)
- = let nx , ny = finLiv→finEx× x
-   in inl (fxd ++ₘ nx) , inl (fxb ++ₘ ny)
-finLiv→finEx× (fEx← fxd x eq)
- = let nx , ny = finLiv→finEx× x
-   in inl (fxd ++ₘ nx) , ny
-finLiv→finEx× (fEx→ fxb x eq)
- = let nx , ny = finLiv→finEx× x
-   in nx , inl (fxb ++ₘ ny)
-finLiv→finEx× here = inr ⋆ , inr ⋆
-
 module _ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
  open Liveness fc-pot stream PSet-PSet-reducible
 
- Fin-Liveness : {d b : Fn ⟨ fc ⟩} → FinLivComm×' d b → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇
- Fin-Liveness {d} {b} x = let a , b = finLiv→finEx× x
-                          in Cond-Liveness (fin-ex-comm-m a) (fin-ex-comm-m b)
+ Fin-Liveness : (d b : Fn ⟨ fc ⟩) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇ 
+ Fin-Liveness d b = (x : (FinExComm d + 𝟙)) → (y : (FinExComm b + 𝟙)) → Cond-Liveness (fin-ex-comm-m x) (fin-ex-comm-m y)
 
 
 

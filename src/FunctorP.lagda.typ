@@ -34,4 +34,8 @@ module Functor (func : Functor 𝓤) where
  Fm-id : ∀{X} → Fm id ＝ id {X = Fn X}
  Fm-id = func .pr₂ .pr₂ .pr₂
 
+
+module Functor₁ {𝓤} (func : Functor 𝓤) = Functor func renaming (Fn to Fn₁ ; Fm to Fm₁ ; Fm-comp to Fm-comp₁ ; Fm-id to Fm-id₁)
+
+
 ```

@@ -49,5 +49,10 @@ module CoAlgebra₂ func (a b : CoAlgebra {𝓤} func) where
 
   _comm : Fm _↓ ∘ (a ⟶) ＝ (b ⟶) ∘ _↓
   _comm = m .pr₂
- 
+
+
+
+module CoAlgebra₁ {𝓤} func (co : CoAlgebra {𝓤} func) = CoAlgebra func co renaming (⟨_⟩ to ⟨_⟩₁ ; _⟶ to _⟶₁)
+
+
 ```

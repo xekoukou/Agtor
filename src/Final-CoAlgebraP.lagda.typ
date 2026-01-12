@@ -35,5 +35,8 @@ module Final-CoAlgebra func (fc' : Final-CoAlgebra {𝓤 = 𝓤} func) where
                    open Morphism in Σ f ꞉ co-morphism , ((c : co-morphism)
   → f ↓ ＝ c ↓ ))
  uni = fc' .pr₂
+
+
+module Final-CoAlgebra₁ {𝓤} func (fc' : Final-CoAlgebra {𝓤 = 𝓤} func) = Final-CoAlgebra func fc' renaming (fc to fc₁ ; uni to uni₁)
 ```
 

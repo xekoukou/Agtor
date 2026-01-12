@@ -27,7 +27,7 @@ open import MLTT.Two-Properties
 
 module LivenessP (fe : Fun-Ext) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  ) 𝓥 𝓦 𝓠 where
 
-open import Interleaving
+open import Interleaving2
 
 open import PredP
 open ΣPred
@@ -47,28 +47,30 @@ module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) wher
  open Interleave Msg Secret 𝓥 𝓦 𝓠 fc-pot
  module _ (sfc' : Stream PSet×PSet') where
   open DD sfc'
+
   open Stream sfc' renaming (next to nextₛ ; _at_ to _atₛ_)
-  open Functor (FStream PSet×PSet') renaming (Fn to Fnₛ)
-  open CoAlgebra (FStream PSet×PSet')renaming (⟨_⟩ to ⟨_⟩ₛ ; _⟶ to _⟶ₛ)
-  open Final-CoAlgebra (FStream PSet×PSet') sfc' renaming (fc to fcₛ ; uni to uniₛ)
+  open Functor₁ (FStream PSet×PSet')
+  open CoAlgebra₁ (FStream PSet×PSet')
+  open Final-CoAlgebra₁ (FStream PSet×PSet') sfc' 
 
   module Liveness (R : <PSet> 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → <PSet> 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠 → 𝓣 ̇  ) where
-   liveness-fiber : Fnₛ ⟨ fcₛ ⟩ₛ → 𝓣 ̇
+   liveness-fiber : Fn₁ ⟨ fc₁ ⟩₁ → 𝓣 ̇
    liveness-fiber e = (k : ℕ) → Σ n ꞉ ℕ , k ≤ n × let ((a , b) , _ ) = e atₛ n in R < a > < b >
-  
+
    open P Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
    open Functor Fpot
    open CoAlgebra Fpot
    open Final-CoAlgebra Fpot fc-pot
+
    open import FCP Msg Secret 𝓥 ⟨ fc ⟩
    open FC
    open Pot {fc-pot}
  
    Interleaved-Condition : ∀ 𝓣  → 𝓣 ⁺ ̇
-   Interleaved-Condition 𝓣 = ∀ (f g : ℕ → ℕ) → (two : 𝟚) → (k : ℕ) → 𝓣 ̇
+   Interleaved-Condition 𝓣 = ∀ (f : ℕ → ℕ) → (two : 𝟚) → 𝓣 ̇
 
    Cond-Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ⊔ 𝓦 ⁺ ̇  
-   Cond-Liveness a b = Σ IC ꞉ Interleaved-Condition 𝓦 , ∀ f g two k → IC f g two k → liveness-fiber ((fcₛ ⟶ₛ) (interleave f g two k a b))
+   Cond-Liveness a b = Σ IC ꞉ Interleaved-Condition 𝓦 , ∀ f two → IC f two → liveness-fiber ((fc₁ ⟶₁) (interleave f two a b))
 
    Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ̇
-   Liveness a b = ∀ f g two k → liveness-fiber ((fcₛ ⟶ₛ) (interleave f g two k a b))
+   Liveness a b = ∀ f two → liveness-fiber ((fc₁ ⟶₁) (interleave f two a b))
