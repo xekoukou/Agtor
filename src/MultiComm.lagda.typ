@@ -220,11 +220,11 @@ fin-in-comm' {d} {b} (more (c→ nd nb msg bsad bsmb) x)
 fin-in-comm' {d} {b} (lastOne step) = commIn' step
 
 
-module _ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
+module LL (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
  open Liveness fc-pot stream PSet-PSet-reducible
 
- Fin-Liveness : (d b : Fn ⟨ fc ⟩) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇ 
- Fin-Liveness d b = (x : (FinExComm d + 𝟙)) → (y : (FinExComm b + 𝟙)) → Cond-Liveness (fin-ex-comm-m x) (fin-ex-comm-m y)
+ Fin-Liveness : (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇ 
+ Fin-Liveness (d , b) = (x : (FinExComm d + 𝟙)) → (y : (FinExComm b + 𝟙)) → Cond-Liveness (fin-ex-comm-m x) (fin-ex-comm-m y)
 
 
 
