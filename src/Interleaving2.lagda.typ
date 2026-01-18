@@ -39,7 +39,7 @@ last {n} f v = l1 n (≤-refl n) v where
  l1 (succ x) rl ₀ = l1 x (≤-trans x (succ x) n (≤-succ x) rl) ₁
 
 BFun : (n : ℕ) → ℕ → ℕ → 𝓤₀ ̇
-BFun n k l = Σ f ꞉ (Fin n → ℕ) , (last f ₀ ＝ k) × (last f ₁ ＝ l)
+BFun n k l = Σ f ꞉ (Fin n → ℕ) , Σ s ꞉ 𝟚 , (last f ₀ ＝ k) × (last f ₁ ＝ l)
 
 
 
@@ -63,6 +63,7 @@ module Interleave  (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot 
  open Pot {fc-pot}
  open import StreamP
 
+
  PSet×PSet' = PSet×PSet 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
  module DD (sfc' : Stream PSet×PSet') where
   open Stream sfc' renaming (next to nextₛ)
@@ -79,7 +80,7 @@ module Interleave  (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot 
   d-co : ∀ f → CoAlgebra (FStream PSet×PSet')
   d-co f =  (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩ × 𝟚 × ℕ × ℕ) , d f
 
-  interleave : ∀ f → 𝟚 → (a b : Fn ⟨ fc ⟩) → ⟨ fcₛ ⟩ₛ
-  interleave f o a b = (uniₛ (d-co f) .pr₁ ↓) (a , b , o , 0 , f 0) where
+  interleave : (ℕ → ℕ) × 𝟚 → (a b : Fn ⟨ fc ⟩) → ⟨ fcₛ ⟩ₛ
+  interleave (f , o) a b = (uniₛ (d-co f) .pr₁ ↓) (a , b , o , 0 , f 0) where
    open CoAlgebra₂ (FStream _) (d-co f) fcₛ
    open Morphism

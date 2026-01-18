@@ -67,10 +67,10 @@ module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) wher
    open Pot {fc-pot}
  
    Interleaved-Condition : ∀ 𝓣  → 𝓣 ⁺ ̇
-   Interleaved-Condition 𝓣 = ∀ (f : ℕ → ℕ) → (two : 𝟚) → 𝓣 ̇
+   Interleaved-Condition 𝓣 = (ℕ → ℕ) × 𝟚 → 𝓣 ̇
 
    Cond-Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ⊔ 𝓦 ⁺ ̇  
-   Cond-Liveness a b = Σ IC ꞉ Interleaved-Condition 𝓦 , ∀ f two → IC f two → liveness-fiber ((fc₁ ⟶₁) (interleave f two a b))
+   Cond-Liveness a b = Σ IC ꞉ Interleaved-Condition 𝓦 , ∀ r → IC r → liveness-fiber ((fc₁ ⟶₁) (interleave r a b))
 
    Liveness : (a b : Fn ⟨ fc ⟩) → 𝓣 ̇
-   Liveness a b = ∀ f two → liveness-fiber ((fc₁ ⟶₁) (interleave f two a b))
+   Liveness a b = ∀ r → liveness-fiber ((fc₁ ⟶₁) (interleave r a b))

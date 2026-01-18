@@ -1,4 +1,3 @@
-
 #import "@preview/color-my-agda:0.2.0": init-color-my-agda
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
@@ -39,6 +38,8 @@ open Pred
 
 module OperatorsP (fe : Fun-Ext) (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) where
 
+open import PW-Reducible Msg Secret
+open import LivenessP fe Msg Secret 𝓥 𝓦 𝓠
 open import Definitions Msg Secret
 open P Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠
 
@@ -70,17 +71,18 @@ module _ (fc'₁ : InfInComm×) where
 
   module QQ (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
    open LL stream
+   open Liveness fc-pot stream PSet-PSet-reducible
 
    nFinLiv : {d b : Fn ⟨ fc ⟩} → (c : FF d b) → Fin-Liveness (d , b) →
     let dd , bb = fin-in-comm (c .fin)
-        ddx = commEx (c .sEx .pr₁)
-        bbx = commEx (c .sEx .pr₂)
+        ddx = fin-ex-comm ((finIn→finEx× (c .fin) .pr₁) ++ (lastOne (c .sEx .pr₁)))
+        bbx = fin-ex-comm ((finIn→finEx× (c .fin) .pr₂) ++ (lastOne (c .sEx .pr₂)))
     in Fin-Liveness (dd , bbx) × Fin-Liveness (ddx , bb)
    nFinLiv c fLiv =
     let dd , bb = finIn→finEx× (c .fin)
         ddx = c .sEx .pr₁
         bbx = c .sEx .pr₂
-    in {!!}
+    in (λ x y → transport (λ z → Cond-Liveness z (fin-ex-comm-m y)) (fin-ex-comm-++ₘ dd x) (transport (λ z → Cond-Liveness (fin-ex-comm (dd ++ₘ x)) z) (fin-ex-comm-++ₘ (bb ++ lastOne bbx) y) (fLiv (inl (dd ++ₘ x)) (inl ((bb ++ lastOne bbx) ++ₘ y))))) , (λ x y → transport (λ z → Cond-Liveness z (fin-ex-comm-m y)) (fin-ex-comm-++ₘ (dd ++ lastOne ddx) x) (transport (λ z → Cond-Liveness (fin-ex-comm ((dd ++ lastOne ddx) ++ₘ x)) z) (fin-ex-comm-++ₘ bb y) ((fLiv (inl ((dd ++ lastOne ddx) ++ₘ x)) (inl (bb ++ₘ y))))))
 
 
 
@@ -107,19 +109,39 @@ module _ (fc'₁ : InfInComm×) where
   f ⊆ inl x = fcn (f .fin) (x .pr₁) (f .sEx)
   f ⊆ inr x = ifcn (f .fin) (x .pr₁) (f .sEx)
 
-  CC : {d b : Fn ⟨ fc ⟩} → (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) → {!!}
 
-  module RR (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
+  module RR (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) (fc' : InfExComm) where
    open LL stream
+   open QQ stream
+   open InfCommP fc'
+   open InfInComm×P fc' fc'₁
 
-   FFunctor : IFunctor (Σ Fin-Liveness) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
+   open IFunctor FInfExComm
+   open ICoAlgebra FInfExComm
+   open IFinal-CoAlgebra FInfExComm fc'
+
+
+   CC : {d b : Fn ⟨ fc ⟩}
+    → Fin-Liveness (d , b) → Inf-Liveness d → Inf-Liveness b
+    → (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) → 𝓦 ̇
+   CC finL infd infb (inl (x , _ , inf)) = let (dd , bb) = finIn→finEx× x in ¬ (finL (inl dd) (inl bb) .pr₁ inf)
+   CC {d} {b} finL infd infb (inr x)
+    =   ¬ infd ((fcᵢ ⟶ᵢ) d (infIn×→infEx₁ d (b , x .pr₁)))
+      × ¬ infb ((fcᵢ ⟶ᵢ) b (infIn×→infEx₂ b (d , x .pr₁)))
+
+   FFunctor : IFunctor (Σ e ꞉ _ , Fin-Liveness e × (Inf-Liveness (e .pr₁)) × (Inf-Liveness (e .pr₂))) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
    FFunctor =
-      (λ X ((d , b) , finL) → Σ intv ꞉ (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) , {!!} ×
+      (λ X ((d , b) , (finL , infLd , infLb)) → Σ intv ꞉ (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) , (CC finL infLd infLb intv) ×
       ((c : FF d b) → (rl : c ⊆ intv) →
       let dd , bb = fin-in-comm (c .fin)
-          ddx = commEx (c .sEx .pr₁)
-          bbx = commEx (c .sEx .pr₂)
-      in X ((ddx , bb) , {!!}) × X ((dd , bbx) , {!!})))
+          ddx = fin-ex-comm ((finIn→finEx× (c .fin) .pr₁) ++ (lastOne (c .sEx .pr₁)))
+          bbx = fin-ex-comm ((finIn→finEx× (c .fin) .pr₂) ++ (lastOne (c .sEx .pr₂)))
+        -- Not this, because the proofs are more difficult
+ --         ddx = commEx (c .sEx .pr₁)
+ --         bbx = commEx (c .sEx .pr₂)
+          (nfinL₁ , nfinL₂) = nFinLiv c finL
+      in   X ((dd , bbx) , nfinL₁ , infL++ infLd (finIn→finEx× (c .fin) .pr₁) , infL++ infLb ((finIn→finEx× (c .fin) .pr₂) ++ (lastOne (c .sEx .pr₂))))
+         × X ((ddx , bb) , nfinL₂ , (infL++ infLd ((finIn→finEx× (c .fin) .pr₁) ++ (lastOne (c .sEx .pr₁)))) , (infL++ infLb (finIn→finEx× (c .fin) .pr₂)))))
     , (λ f i (g , w , r) → g , w , λ c rl → f _ (r c rl .pr₁) , f _ (r c rl .pr₂))
     , (λ {X} {Y} {Z} f g → refl)
     , λ {X} → refl

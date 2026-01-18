@@ -107,9 +107,19 @@ more step x ++ y = let v = x ++ y in more step v
 lastOne step ++ y = more step y
 
 
+fin-ex-comm-++ : {d : Fn ⟨ fc ⟩} → (x : FinExComm d) → (y : FinExComm (fin-ex-comm x))
+ → fin-ex-comm (x ++ y) ＝ fin-ex-comm y
+fin-ex-comm-++ (more step x) y = fin-ex-comm-++ x y
+fin-ex-comm-++ (lastOne step) y = refl
+
 _++ₘ_ : {d : Fn ⟨ fc ⟩} → (x : FinExComm d) → (y : FinExComm (fin-ex-comm x) + 𝟙 {𝓤₀})  → FinExComm d
 x ++ₘ inl y = x ++ y
 x ++ₘ inr y = x
+
+fin-ex-comm-++ₘ : {d : Fn ⟨ fc ⟩} → (x : FinExComm d) → (y : FinExComm (fin-ex-comm x) + 𝟙 {𝓤₀})
+ → fin-ex-comm (x ++ₘ y) ＝ fin-ex-comm-m y
+fin-ex-comm-++ₘ x (inl y) = fin-ex-comm-++ x y
+fin-ex-comm-++ₘ x (inr y) = refl
 
 
 module _ where
@@ -121,13 +131,38 @@ module _ where
   , (λ {X} {Y} {Z} f g → refl)
   , λ {X} → refl
  
- InfComm = IFinal-CoAlgebra FInfExComm
+ InfExComm = IFinal-CoAlgebra FInfExComm
 
- module InfCommP (fc' : InfComm) where
+ module InfCommP (fc' : InfExComm) where
 
   open IFunctor FInfExComm
   open ICoAlgebra FInfExComm
   open IFinal-CoAlgebra FInfExComm fc'
+
+
+  -- The syntax here could be better
+  ++ᵢ' : (λ d → (Σ x ꞉ FinExComm d , Fnᵢ ⟨ fcᵢ ⟩ᵢ (fin-ex-comm x)) + Fnᵢ ⟨ fcᵢ ⟩ᵢ d) ⟼ Fnᵢ ((λ d → (Σ x ꞉ FinExComm d , Fnᵢ ⟨ fcᵢ ⟩ᵢ (fin-ex-comm x)) + Fnᵢ ⟨ fcᵢ ⟩ᵢ d))
+  ++ᵢ' d (inl (more step x , y)) = step , (inl (x , y))
+  ++ᵢ' d (inl (lastOne step , y)) = step , inr y
+  ++ᵢ' d (inr (step , v))
+   = step , inr ((fcᵢ ⟶ᵢ) (commEx step) v)
+          
+
+  module _ where
+   
+
+   ++-ico : ICoAlgebra FInfExComm
+   ++-ico =   (λ d → (Σ x ꞉ FinExComm d , Fnᵢ ⟨ fcᵢ ⟩ᵢ (fin-ex-comm x)) + Fnᵢ ⟨ fcᵢ ⟩ᵢ d)
+            , ++ᵢ'
+
+
+   open IMorphism FInfExComm ++-ico fcᵢ
+
+   _++ᵢ_ : ∀{d} → (x : FinExComm d) → Fnᵢ ⟨ fcᵢ ⟩ᵢ (fin-ex-comm x) → ⟨ fcᵢ ⟩ᵢ d
+   _++ᵢ_ {d = d} a b = (uniᵢ ++-ico .pr₁ ↓ᵢ) d (inl (a , b))
+
+
+
 
   𝟙' = 𝟙 {(𝓤 ⁺) ⊔ ((𝓥 ⁺) ⁺) ⊔ (𝓦 ⁺) ⊔ (𝓠 ⁺)}
 
@@ -149,7 +184,16 @@ module _ where
 
    inf-comm : ∀ d → Fnᵢ ⟨ fcᵢ ⟩ᵢ d → ⟨ fc ⟩
    inf-comm d cond = ((uni g-co .pr₁) ↓) (d , inl cond)
-  
+
+
+
+
+
+   Inf-Liveness : ∀ d → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺ ̇
+   Inf-Liveness d = (q : Fnᵢ ⟨ fcᵢ ⟩ᵢ d) → 𝓦 ̇
+
+   infL++ : ∀ {d} → Inf-Liveness d → (q : FinExComm d) → Inf-Liveness (fin-ex-comm q)
+   infL++ {d} infL q z = infL ((fcᵢ ⟶ᵢ) d (q ++ᵢ z))
 
 ```
 
@@ -193,9 +237,12 @@ data FinInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
  more : (step : SingleInComm× d b) → let nd , nb = commIn step in FinInComm× nd nb → FinInComm× d b
  lastOne : (step : SingleInComm× d b) → FinInComm× d b
 
+FInt' :  (d b : Fn ⟨ fc ⟩) → FinInComm× d b → 𝓤₀ ̇
+FInt' d b (more step g) = SInt step × FInt' _ _ g
+FInt' d b (lastOne step) = SInt step
+
 FInt :  (d b : Fn ⟨ fc ⟩) → FinInComm× d b → 𝓤₀ ̇
-FInt d b (more step g) = SInt step × FInt _ _ g
-FInt d b (lastOne step) = SInt step
+FInt d b x = FInt' d b x × (ℕ → ℕ) × 𝟚
 
 finIn→finEx× : {d b : Fn ⟨ fc ⟩} → FinInComm× d b → FinExComm d × FinExComm b
 finIn→finEx× {d} {b} (more step x)
@@ -245,7 +292,7 @@ module _ where
  InfInComm× = IFinal-CoAlgebra FInfInComm×
 
 
- module InfInComm×P (fc' : InfComm) (fc'₁ : InfInComm×) where
+ module InfInComm×P (fc' : InfExComm) (fc'₁ : InfInComm×) where
 
   open IFinal-CoAlgebra₁ FInfInComm× fc'₁
   open IFunctor FInfExComm
@@ -296,4 +343,16 @@ module _ where
 
   InfInt = IFinal-CoAlgebra FInfInt
 
+  -- module _ (ii : InfInt) where
+  --  open IFunctor₂ FInfInt
+  --  open ICoAlgebra₂ FInfInt
+  --  open IFinal-CoAlgebra₂ FInfInt ii
 
+  --  qq : ∀ d → Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ d → ℕ → ℕ → ℕ × 𝟚
+  --  qq (_ , _ , c← nd nb msg bsmd bsab , _) ((e , f , r , eq) , _) k zero = f (0 , ⋆) , r
+  --  qq (_ , _ , c→ nd nb msg bsad bsmb , _) ((e , f , r , eq) , _) k zero = f (0 , ⋆) , r
+  --  qq (d , b , c← nd nb msg bsmd bsab , x) ((e , f , r , eq) , y) k (succ n)
+  --   = let (pn , pr) = qq (_ , _ , ((fcᵢ₁ ⟶ᵢ₁) _ x)) ((fcᵢ₂ ⟶ᵢ₂) _ y) k n
+  --     in {!!}
+  --  qq (_ , _ , c→ nd nb msg bsad bsmb , _) ((e , f , r , eq) , _) k (succ n) = {!!}
+  
