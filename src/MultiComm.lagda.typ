@@ -237,6 +237,17 @@ data FinInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
  more : (step : SingleInComm× d b) → let nd , nb = commIn step in FinInComm× nd nb → FinInComm× d b
  lastOne : (step : SingleInComm× d b) → FinInComm× d b
 
+-- If N is biger that necessary we just take it all.
+finIn-cut' : {d b : Fn ⟨ fc ⟩} → FinInComm× d b → ℕ → FinInComm× d b
+finIn-cut' (more step x) zero = lastOne step
+finIn-cut' (lastOne step) zero = lastOne step
+finIn-cut' (more step x) (succ y) = more step (finIn-cut' x y)
+finIn-cut' (lastOne step) (succ y) = lastOne step
+
+finIn-cut : {d b : Fn ⟨ fc ⟩} → FinInComm× d b → ℕ → FinInComm× d b + 𝟙 {𝓤₀}
+finIn-cut x zero = inr ⋆
+finIn-cut x (succ n) = inl (finIn-cut' x n)
+
 FInt' :  (d b : Fn ⟨ fc ⟩) → FinInComm× d b → 𝓤₀ ̇
 FInt' d b (more step g) = SInt step × FInt' _ _ g
 FInt' d b (lastOne step) = SInt step
@@ -267,13 +278,18 @@ fin-in-comm' {d} {b} (more (c→ nd nb msg bsad bsmb) x)
 fin-in-comm' {d} {b} (lastOne step) = commIn' step
 
 
-module LL (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
+module Fin-Liveness (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
  open Liveness fc-pot stream PSet-PSet-reducible
 
  Fin-Liveness : (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇ 
  Fin-Liveness (d , b) = (x : (FinExComm d + 𝟙)) → (y : (FinExComm b + 𝟙)) → Cond-Liveness (fin-ex-comm-m x) (fin-ex-comm-m y)
 
-
+ finL-fnEx : {d b : Fn ⟨ fc ⟩} → (cd : FinExComm d) → (cb : FinExComm b)
+   → Fin-Liveness (d , b) →
+  let dd = fin-ex-comm cd
+      bb = fin-ex-comm cb
+  in Fin-Liveness (dd , bb)
+ finL-fnEx {d} {b} cd cb fLiv x y = transport (λ z → Cond-Liveness z (fin-ex-comm-m y)) (fin-ex-comm-++ₘ cd x) (transport (λ z → Cond-Liveness (fin-ex-comm (cd ++ₘ x)) z) (fin-ex-comm-++ₘ cb y) (fLiv (inl (cd ++ₘ x)) (inl (cb ++ₘ y))))
 
 
 
@@ -331,7 +347,7 @@ module _ where
    infIn×→infEx₂ d cond = (uniᵢ q₂-co .pr₁ ↓ᵢ₁) d cond
 
 
- module InfIntP (fc'₁ : InfInComm×) where
+ module InfInComm×P' (fc'₁ : InfInComm×) where
   open IFinal-CoAlgebra₁ FInfInComm× fc'₁
 
   FInfInt : IFunctor (Σ d ꞉ _ , Σ b ꞉ _ , (Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b))) 𝓤
@@ -342,6 +358,14 @@ module _ where
    , refl
 
   InfInt = IFinal-CoAlgebra FInfInt
+
+  infIn-cut' :  {d b : Fn ⟨ fc ⟩} → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) → ℕ → FinInComm× d b
+  infIn-cut' (step , x) zero = lastOne step
+  infIn-cut' (step , x) (succ n) = more step (infIn-cut' ((fcᵢ₁ ⟶ᵢ₁) _ x) n)
+
+  infIn-cut :  {d b : Fn ⟨ fc ⟩} → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) → ℕ → FinInComm× d b + 𝟙 {𝓤₀}
+  infIn-cut x zero = inr ⋆
+  infIn-cut x (succ n) = inl (infIn-cut' x n)
 
   -- module _ (ii : InfInt) where
   --  open IFunctor₂ FInfInt
