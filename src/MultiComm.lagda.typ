@@ -93,7 +93,7 @@ fin-ex-comm (more step s) = fin-ex-comm s
 fin-ex-comm (lastOne step) = commEx step
 
 fin-ex-comm-m : {d : Fn ⟨ fc ⟩} → FinExComm d + 𝟙 {𝓤₀} → Fn ⟨ fc ⟩
-fin-ex-comm-m {d} x = x >>ₘ'' d ∣ λ x → fin-ex-comm x
+fin-ex-comm-m {d} x = x >>ₘ' d ∣ λ x → fin-ex-comm x
 
 fin-ex-comm' : {d : Fn ⟨ fc ⟩} → FinExComm d → Fn ⟨ fc ⟩
 fin-ex-comm' {d} (more (←m n msg bsm) x) = (replace d at n) (fin-ex-comm' x)
@@ -112,7 +112,7 @@ fin-ex-comm-++ (more step x) y = fin-ex-comm-++ x y
 fin-ex-comm-++ (lastOne step) y = refl
 
 _++ₘ_ : {d : Fn ⟨ fc ⟩} → (x : FinExComm d) → (y : FinExComm (fin-ex-comm x) + 𝟙 {𝓤₀})  → FinExComm d
-x ++ₘ y = y >>ₘ'' x ∣ λ y → x ++ y
+x ++ₘ y = y >>ₘ' x ∣ λ y → x ++ y
 
 fin-ex-comm-++ₘ : {d : Fn ⟨ fc ⟩} → (x : FinExComm d) → (y : FinExComm (fin-ex-comm x) + 𝟙 {𝓤₀})
  → fin-ex-comm (x ++ₘ y) ＝ fin-ex-comm-m y
@@ -305,7 +305,7 @@ module Fin-Liveness (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ �
 
  finL-fnEx-mT : {d b : Fn ⟨ fc ⟩} → (cd : FinExComm d + 𝟙 {𝓤₀}) → (cb : FinExComm b + 𝟙 {𝓤₀})
    → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇
- finL-fnEx-mT {d} {b} x y = x >>ₘ'' (y >>ₘ'' Fin-Liveness (d , b) ∣ (λ y → Fin-Liveness (d , fin-ex-comm y))) ∣ λ x → (y >>ₘ'' Fin-Liveness (fin-ex-comm x , b) ∣ λ y → Fin-Liveness (fin-ex-comm x , fin-ex-comm y))
+ finL-fnEx-mT {d} {b} x y = x >>ₘ' (y >>ₘ' Fin-Liveness (d , b) ∣ (λ y → Fin-Liveness (d , fin-ex-comm y))) ∣ λ x → (y >>ₘ' Fin-Liveness (fin-ex-comm x , b) ∣ λ y → Fin-Liveness (fin-ex-comm x , fin-ex-comm y))
 
 --  finL-fnEx-mT {d} {b} (inl x) (inl y) = Fin-Liveness (fin-ex-comm x , fin-ex-comm y)
 --  finL-fnEx-mT {d} {b} (inl x) (inr _) = Fin-Liveness (fin-ex-comm x , b)
