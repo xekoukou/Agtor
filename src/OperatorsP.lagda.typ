@@ -65,10 +65,9 @@ module _ (fc'₁ : InfInComm×) where
 
   fcn' : {d b : Fn ⟨ fc ⟩} → FinInComm× d b → ℕ → ℕ → ℕ → 𝓤₀ ̇
   fcn' (more step q) zero lk rk = (lk ≤ (nIn step .pr₁)) × (rk ≤ (nIn step .pr₂))
-  fcn' (lastOne step) zero lk rk = (lk ≤ (nIn step .pr₁)) × (rk ≤ (nIn step .pr₂))
+  fcn' none zero lk rk = 𝟙
   fcn' (more step q) (succ n) lk rk = fcn' q n lk rk
-  fcn' (lastOne step) (succ zero) lk rk = 𝟙
-  fcn' (lastOne step) (succ (succ n)) lk rk = 𝟘
+  fcn' none (succ k) lk rk = 𝟘
 
   ifcn' : {d b : Fn ⟨ fc ⟩} → Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) → ℕ → ℕ → ℕ → 𝓤₀ ̇
   ifcn' (step , _) zero lk rk = (lk ≤ (nIn step .pr₁)) × (rk ≤ (nIn step .pr₂))
@@ -82,8 +81,8 @@ module _ (fc'₁ : InfInComm×) where
   record OneEx (d : Fn ⟨ fc ⟩) (b : Fn ⟨ fc ⟩) (c : FinInComm× d b + Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b)) : 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺ ̇  where
    field
     nmb : ℕ
-    sd : SingleExComm (in-cut c nmb >>ₘ' d ∣ (λ r → fin-ex-comm (finIn→finEx× r .pr₁)))
-    sb : SingleExComm (in-cut c nmb >>ₘ' b ∣ (λ r → fin-ex-comm (finIn→finEx× r .pr₂)))
+    sd : SingleExComm (fin-ex-comm (finIn→finEx× (in-cut c nmb) .pr₁))
+    sb : SingleExComm (fin-ex-comm (finIn→finEx× (in-cut c nmb) .pr₂))
     cnd : CN c nmb (nEx sd) (nEx sb)
 
   open OneEx
@@ -98,76 +97,59 @@ module _ (fc'₁ : InfInComm×) where
 
   open Fin-Liveness stream
 
--- TODO Try to simplify further
   nFinLivT : (d b : Fn ⟨ fc ⟩) → ∀ q → (c : OneEx d b q) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇
   nFinLivT d b q c =
    let inc = in-cut q (nmb c)
-       dd , bb = inc >>ₘ' (d , b) ∣ λ inc → fin-in-comm inc
-       ddx , bbx = (inc >⟨ (λ inc → (SingleExComm (inc >>ₘ' d ∣ (λ r → fin-ex-comm (finIn→finEx× r .pr₁))) → SingleExComm (inc >>ₘ' b ∣ (λ r → fin-ex-comm (finIn→finEx× r .pr₂))) → Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩)) ⟩>ₘ (λ sdc sbc → fin-ex-comm (lastOne sdc) , fin-ex-comm (lastOne sbc)) ∣ λ inc → λ sdc sbc → (fin-ex-comm (finIn→finEx× inc .pr₁ ++ lastOne sdc)) , (fin-ex-comm (finIn→finEx× inc .pr₂ ++ lastOne sbc))) (sd c) (sb c)
+       dd , bb = fin-in-comm inc
+       ddx = fin-ex-comm (finIn→finEx× inc .pr₁ ++ (more (sd c) none))
+       bbx = fin-ex-comm (finIn→finEx× inc .pr₂ ++ (more (sb c) none))
    in Fin-Liveness (dd , bbx) × Fin-Liveness (ddx , bb)
 
--- -- -- TODO Try to simplify further
--- --   nFinLivT : (d b : Fn ⟨ fc ⟩) → ∀ q → (c : OneEx d b q) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇
--- --   nFinLivT d b q (noIn sd sb x) = Fin-Liveness (d , fin-ex-comm (lastOne sb)) × Fin-Liveness (fin-ex-comm (lastOne sd) , b)
--- --   nFinLivT d b q (someIn n sd sb x)
--- --    = let inc = in-cut' q n
--- --          dd , bb = fin-in-comm inc
--- --          ddx = fin-ex-comm ((finIn→finEx× inc .pr₁) ++ (lastOne sd))
--- --          bbx = fin-ex-comm ((finIn→finEx× inc .pr₂) ++ (lastOne sb))
--- --      in Fin-Liveness (dd , bbx) × Fin-Liveness (ddx , bb)
- 
   nFinLiv : {d b : Fn ⟨ fc ⟩} → ∀{q} → (c : OneEx d b q) → Fin-Liveness (d , b) → nFinLivT d b q c
-  nFinLiv (noIn sd sb x) fLiv = (finL-fnEx-m (inr _) (inl (lastOne sb)) fLiv) , (finL-fnEx-m (inl (lastOne sd)) (inr ⋆) fLiv)
-  nFinLiv {d} {b} {q} (someIn n sd sb x) fLiv
-   = let inc = in-cut' q n
-     in (finL-fnEx-m (inl (finIn→finEx× inc .pr₁)) (inl ((finIn→finEx× inc .pr₂) ++ lastOne sb)) fLiv) , (finL-fnEx-m (inl ((finIn→finEx× inc .pr₁) ++ lastOne sd)) (inl ((finIn→finEx× inc .pr₂))) fLiv)
-
-
- --  nFinLiv : {d b : Fn ⟨ fc ⟩} → ∀{q} → (c : OneEx d b q) → Fin-Liveness (d , b) → nFinLivT d b q c
- --  nFinLiv (noIn sd sb x) fLiv = (finL-fnEx-m (inr _) (inl (lastOne sb)) fLiv) , (finL-fnEx-m (inl (lastOne sd)) (inr ⋆) fLiv)
- --  nFinLiv {d} {b} {q} (someIn n sd sb x) fLiv
- --   = let inc = in-cut' q n
- --     in (finL-fnEx-m (inl (finIn→finEx× inc .pr₁)) (inl ((finIn→finEx× inc .pr₂) ++ lastOne sb)) fLiv) , (finL-fnEx-m (inl ((finIn→finEx× inc .pr₁) ++ lastOne sd)) (inl ((finIn→finEx× inc .pr₂))) fLiv)
-
- --  module RR (fc' : InfExComm) where
- --   open InfCommP fc'
- --   open InfInComm×P fc' fc'₁
- --   open IFunctor FInfExComm
- --   open ICoAlgebra FInfExComm
- --   open IFinal-CoAlgebra FInfExComm fc'
-
-
- --   CC : {d b : Fn ⟨ fc ⟩}
- --    → Fin-Liveness (d , b) → Inf-Liveness d → Inf-Liveness b
- --    → (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) → 𝓦 ̇
- --   CC finL infd infb (inl (x , _ , inf)) =
- --    let (dd , bb) = finIn→finEx× x
- --    in ¬ (finL (inl dd) (inl bb) .pr₁ inf)
- --   CC {d} {b} finL infd infb (inr x)
- --    =   ¬ infd ((fcᵢ ⟶ᵢ) d (infIn×→infEx₁ d (b , x .pr₁)))
- --      × ¬ infb ((fcᵢ ⟶ᵢ) b (infIn×→infEx₂ b (d , x .pr₁)))
-
- --   I = (Σ e ꞉ _ , Fin-Liveness e × (Inf-Liveness (e .pr₁)) × (Inf-Liveness (e .pr₂)))
-   
- --   DD :  {d b : Fn ⟨ fc ⟩} → ∀{q} → (c : OneEx d b q) → (X : ISet I (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)) → {!!} ̇
- --   DD {d} {b} {q} (noIn sd sb x) X = X {!!} × X {!!}
- --   DD {d} {b} {q} (someIn n sd sb x) X = X {!!} × X {!!}
-
- -- --   FFunctor : IFunctor (Σ e ꞉ _ , Fin-Liveness e × (Inf-Liveness (e .pr₁)) × (Inf-Liveness (e .pr₂))) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
- -- --   FFunctor =
- -- --      (λ X ((d , b) , (finL , infLd , infLb)) → Σ intv ꞉ (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) , (CC finL infLd infLb intv) ×
- -- --      ((c : OneEx d b ?) →
- -- --      let inc = in-cut' q n
- -- --          dd , bb = fin-in-comm inc
- -- --          ddx = fin-ex-comm ((finIn→finEx× inc .pr₁) ++ (lastOne sd))
- -- --          bbx = fin-ex-comm ((finIn→finEx× inc .pr₂) ++ (lastOne sb))
- -- --          (nfinL₁ , nfinL₂) = nFinLiv c finL
- -- --      in   X ((dd , bbx) , nfinL₁ , infL++ infLd (finIn→finEx× (c .fin) .pr₁) , infL++ infLb ((finIn→finEx× (c .fin) .pr₂) ++ (lastOne (c .sEx .pr₂))))
- -- --         × X ((ddx , bb) , nfinL₂ , (infL++ infLd ((finIn→finEx× (c .fin) .pr₁) ++ (lastOne (c .sEx .pr₁)))) , (infL++ infLb (finIn→finEx× (c .fin) .pr₂)))))
- -- --    , (λ f i (g , w , r) → g , w , λ c rl → f _ (r c rl .pr₁) , f _ (r c rl .pr₂))
- -- --    , (λ {X} {Y} {Z} f g → refl)
- -- --    , λ {X} → refl
+  nFinLiv {d} {b} {q} c fLiv
+   = let inc = in-cut q (nmb c)
+         dd , bb = finIn→finEx× inc
+     in (finL-fnEx dd (bb ++ more (sb c) none) fLiv) , finL-fnEx (dd ++ more (sd c) none) bb fLiv
  
-  
+  module RR (fc' : InfExComm) where
+   open InfCommP fc'
+   open InfInComm×P fc' fc'₁
+   open IFunctor FInfExComm
+   open ICoAlgebra FInfExComm
+   open IFinal-CoAlgebra FInfExComm fc'
 
- -- -- ```
+
+   CC : {d b : Fn ⟨ fc ⟩}
+    → Fin-Liveness (d , b) → Inf-Liveness d → Inf-Liveness b
+    → (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) → 𝓦 ̇
+   CC finL infd infb (inl (x , _ , f𝕟)) =
+    let (dd , bb) = finIn→finEx× x
+    in ¬ (finL dd bb .pr₁ f𝕟)
+   CC {d} {b} finL infd infb (inr x)
+    =   ¬ infd ((fcᵢ ⟶ᵢ) d (infIn×→infEx₁ d (b , x .pr₁)))
+      × ¬ infb ((fcᵢ ⟶ᵢ) b (infIn×→infEx₂ b (d , x .pr₁)))
+
+   I = (Σ e ꞉ _ , Fin-Liveness e × (Inf-Liveness (e .pr₁)) × (Inf-Liveness (e .pr₂)))
+
+   tt : ∀{d b} → (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) → FinInComm× d b + Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b)
+   tt (inl x) = inl (x .pr₁)
+   tt (inr x) = inr (x .pr₁)
+
+
+   FFunctor : IFunctor (Σ e ꞉ _ , Fin-Liveness e × (Inf-Liveness (e .pr₁)) × (Inf-Liveness (e .pr₂))) (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ⁺)
+   FFunctor =
+      (λ X ((d , b) , (finL , infLd , infLb)) → Σ intv ꞉ (Σ (FInt d b) + (Σ i ꞉ Fnᵢ₁ ⟨ fcᵢ₁ ⟩ᵢ₁ (d , b) , Fnᵢ₂ ⟨ fcᵢ₂ ⟩ᵢ₂ (d , b , i))) , (CC finL infLd infLb intv) ×
+      ((c : OneEx d b (tt intv)) →
+        let inc = in-cut (tt intv) (nmb c)
+            dd , bb = fin-in-comm inc
+            fdd , fbb = finIn→finEx× inc
+            fddx , fbbx = fdd ++ more (sd c) none , fbb ++ more (sb c) none
+            ddx = fin-ex-comm fddx
+            bbx = fin-ex-comm fbbx
+            (nfinL₁ , nfinL₂) = nFinLiv c finL
+        in X ((dd , bbx) , nfinL₁ , infL++ infLd fdd , infL++ infLb fbbx) × X ((ddx , bb) , nfinL₂ , infL++ infLd fddx , infL++ infLb fbb) ))
+    , (λ f i ((g , w , r)) → g , w , λ c → f _ (r c .pr₁) , f _ (r c .pr₂))
+    , (λ {X} {Y} {Z} f g → refl)
+    , λ {X} → refl 
+
+```
