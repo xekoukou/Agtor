@@ -62,10 +62,10 @@ module _ (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) 𝓠) wher
    open CoAlgebra Fpot
    open Final-CoAlgebra Fpot fc-pot
 
-   open import FCP Msg Secret 𝓥 ⟨ fc ⟩
+   open import FCP Msg Secret 𝓥
    open FC
    open Pot {fc-pot}
- 
+
    Interleaved-Condition : ∀ 𝓣  → 𝓣 ⁺ ̇
    Interleaved-Condition 𝓣 = (ℕ → ℕ) × 𝟚 → 𝓣 ̇
 

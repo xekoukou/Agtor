@@ -25,7 +25,7 @@ module PotP (Msg : 𝓤 ̇ ) (Secret : 𝓤 ̇  ) 𝓥 𝓦 𝓣 where
 
 open import Definitions Msg Secret
 
-open import FCP {𝓦 = 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺} Msg Secret 𝓥
+open import FCP Msg Secret 𝓥
 
 open ΣPred
 
@@ -43,7 +43,7 @@ open import Final-CoAlgebraP
 
 Fpot : Functor (𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺)
 Fpot =
-    (λ X → X × PSet 𝓥 𝓦 𝓣 × FC X)
+    (λ X → X × PSet 𝓥 𝓦 𝓣 × FC {_} {X})
   , (λ f (   x , &ps , ((mp ,         fm        ) , (ap ,          fa       ))) →
            f x , &ps ,  (mp , λ x c → f (fm x c)) , (ap , λ x c → f (fa x c)))
   , (λ f g x → refl)
@@ -65,7 +65,7 @@ module Pot {fc' : Pot} (a : Fn < fc' .pr₁ >) where
  pset : PSet 𝓥 𝓦 𝓣
  pset = a .pr₂ .pr₁
 
- foc : FC _
+ foc : FC
  foc = a .pr₂ .pr₂
 
 open import UF.FunExt

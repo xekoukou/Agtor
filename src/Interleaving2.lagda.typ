@@ -30,18 +30,72 @@ module Interleaving2 where
 Fin : (n : ℕ) → 𝓤₀ ̇
 Fin n = Σ x ꞉ ℕ , x ≤ n
 
-last : ∀ {n} → (Fin n → ℕ) → 𝟚 → ℕ
-last {n} f v = l1 n (≤-refl n) v where
- l1 : (x : ℕ) → (x ≤ n) → 𝟚 → ℕ
- l1 zero rl ₁ = succ (f (zero , rl))
- l1 zero rl ₀ = 0
- l1 (succ x) rl ₁ = succ (f (succ x , rl)) + l1 x (≤-trans x (succ x) n (≤-succ x) rl) ₀
- l1 (succ x) rl ₀ = l1 x (≤-trans x (succ x) n (≤-succ x) rl) ₁
+-- last : ∀ {n} → (Fin n → ℕ) → 𝟚 → ℕ
+-- last {n} f v = l1 n (≤-refl n) v where
+--  l1 : (x : ℕ) → (x ≤ n) → 𝟚 → ℕ
+--  l1 zero rl ₁ = succ (f (zero , rl))
+--  l1 zero rl ₀ = 0
+--  l1 (succ x) rl ₁ = succ (f (succ x , rl)) + l1 x (≤-trans x (succ x) n (≤-succ x) rl) ₀
+--  l1 (succ x) rl ₀ = l1 x (≤-trans x (succ x) n (≤-succ x) rl) ₁
+
+-- index , index + 1 total elements
+index : ∀{n} → (Fin n → ℕ) → ℕ
+index {zero} f = f (0 , ⋆)
+index {succ n} f = (index {n = n} λ (r , rl) → f ((succ r) , rl)) + succ (f (0 , ⋆))
+
+-- ₁ is left , ₀ is right
+succ× : 𝟚 × ℕ × ℕ → ℕ × ℕ
+succ× (₀ , a , b) = a , succ b
+succ× (₁ , a , b) = succ a , b
+
+n-succ× : (n : ℕ) → 𝟚 → ℕ × ℕ → (Fin n → ℕ × ℕ)
+n-succ× n two q (zero , rl) = succ× (two , q)
+n-succ× (succ n) two q (succ r , rl) = n-succ× n two (succ× (two , q)) (r , rl)
+
+_+ᶠ_ : ∀{𝓦} → {A : 𝓦 ̇ } → ∀{n k} → (Fin n → A) → (Fin k → A) → Fin (n + (succ k)) → A
+_+ᶠ_ {A = A} {n} {k} f1 f2 (zero , rl) = f2 (0 , ⋆)
+_+ᶠ_ {A = A} {n} {zero} f1 f2 (succ r , rl) = f1 (r , rl)
+_+ᶠ_ {A = A} {n} {succ k} f1 f2 (succ r , rl) = _+ᶠ_ {n = n} {k = k} f1 (λ (r , rl) → f2 (succ r , rl)) (r , rl)
+
+-- TODO Can we simplify this?
+enum'-fin : ∀{n} → (f : Fin n → ℕ) → 𝟚 → ℕ × ℕ → Fin (index f) → ℕ × ℕ
+enum'-fin {zero} f two q = n-succ× (f (0 , ⋆)) two q
+enum'-fin {succ n} f two q
+ = let r2 = n-succ× (f (0 , _)) two q
+       r1 = enum'-fin (λ (r , rl) → f (succ r , rl)) (complement two) (r2 (f (0 , _) , ≤-refl (f (0 , _))))
+   in r1 +ᶠ r2
+
+enum-fin : ∀{n} → (f : Fin n → ℕ) → 𝟚 → Fin (index f) → ℕ × ℕ
+enum-fin f two = enum'-fin f two (0 , 0)
+
 
 BFun : (n : ℕ) → ℕ → ℕ → 𝓤₀ ̇
-BFun n k l = Σ f ꞉ (Fin n → ℕ) , Σ s ꞉ 𝟚 , (last f ₀ ＝ k) × (last f ₁ ＝ l)
+BFun n l r = Σ f ꞉ (Fin n → ℕ) , Σ two ꞉ 𝟚 , let last = enum-fin f two (index f , ≤-refl (index f)) in (last .pr₁ ＝ l) × (last .pr₂ ＝ r)
 
 
+_+ⁱᶠ_ : ∀{𝓦} → {A : 𝓦 ̇ } → ∀{k} → (ℕ → A) → (Fin k → A) → ℕ → A
+_+ⁱᶠ_ {A = A} {k} f1 f2 zero = f2 (0 , ⋆)
+_+ⁱᶠ_ {A = A} {zero} f1 f2 (succ r) = f1 r
+_+ⁱᶠ_ {A = A} {succ k} f1 f2 (succ r) = _+ⁱᶠ_ {k = k} f1 (λ (r , rl) → f2 (succ r , rl)) r
+
+
+ind-succ× : (f : ℕ → ℕ) → ((𝟚 × ℕ × ℕ) × ℕ × ℕ) → (𝟚 × ℕ × ℕ) × ℕ × ℕ
+ind-succ× f ((two , nf , zero) , r) = (complement two , succ nf , f nf) , succ× (two , r)
+ind-succ× f ((two , nf , succ q) , r) = (two , nf , q) , succ× (two , r)
+
+enum'-inf : (f : ℕ → ℕ) → (𝟚 × ℕ × ℕ) × ℕ × ℕ → ℕ → (𝟚 × ℕ × ℕ) × ℕ × ℕ
+enum'-inf f e zero = ind-succ× f e
+enum'-inf f e (succ r) = let w = ind-succ× f e in enum'-inf f w r 
+
+enum-inf : (f : ℕ → ℕ) → 𝟚 → ℕ → ℕ × ℕ
+enum-inf f two r = enum'-inf f ((two , 0 , f 0 ) , 0 , 0) r .pr₂
+
+
+_∈ₚ_ : (ℕ × ℕ) → ∀{n l r} → BFun n l r → 𝓤₀ ̇
+x ∈ₚ (f , two , lc , rc) = Σ i ꞉ Fin (index f) , enum-fin f two i ＝ x
+
+_∈ₚᵢ_ : (ℕ × ℕ) → (ℕ →  ℕ) × 𝟚 → 𝓤₀ ̇
+x ∈ₚᵢ (f , two) = Σ i ꞉ ℕ , enum-inf f two i ＝ x
 
 open import PredP
 open ΣPred
@@ -58,7 +112,7 @@ module Interleave  (Msg : 𝓤 ̇) (Secret : 𝓤 ̇  )  𝓥 𝓦 𝓠 (fc-pot 
  open Functor Fpot
  open CoAlgebra Fpot
  open Final-CoAlgebra Fpot fc-pot
- open import FCP Msg Secret 𝓥 ⟨ fc ⟩
+ open import FCP Msg Secret 𝓥
  open FC
  open Pot {fc-pot}
  open import StreamP

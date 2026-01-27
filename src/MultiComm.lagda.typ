@@ -52,7 +52,7 @@ open Functor Fpot
 open CoAlgebra Fpot
 open Final-CoAlgebra Fpot fc-pot
 
-open import FCP Msg Secret 𝓥 ⟨ fc ⟩
+open import FCP Msg Secret 𝓥
 open FC
 open Pot {fc-pot}
 open Pot₁ fe {fc-pot}
@@ -199,11 +199,10 @@ data SingleInComm× (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
 
 nIn : {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → ℕ × ℕ
 nIn (c← nd nb msg bsmd bsab) = nd , nb
-nIn (c→ nd nb msg bsad bsmb) = nd , nd
+nIn (c→ nd nb msg bsad bsmb) = nd , nb
 
 SInt :  {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → 𝓤₀ ̇
-SInt (c← nd nb msg bsmd bsab) = Σ n ꞉ ℕ , BFun n nd nb
-SInt (c→ nd nb msg bsad bsmb) = Σ n ꞉ ℕ , BFun n nd nb
+SInt s = let nd , nb = nIn s in Σ n ꞉ ℕ , BFun n nd nb
 
 sIn→sEx× : {d b : Fn ⟨ fc ⟩} → SingleInComm× d b → SingleExComm d × SingleExComm b
 sIn→sEx× {d} {b} (c← nd nb msg bsmd bsab) = (←m nd msg bsmd) , (→a nb msg bsab)
