@@ -13,6 +13,7 @@
 
 open import MLTT.Spartan
 open import UF.FunExt
+open import UF.Base
 open import UF.PropTrunc
 open import Naturals.Order
 open import Notation.Order
@@ -99,7 +100,7 @@ fin-ex-comm' {d} none = d
 
 
 _++_ : {d : Fn ⟨ fc ⟩} → (x : FinExComm d) → (y : FinExComm (fin-ex-comm x))  → FinExComm d
-more step x ++ y = let v = x ++ y in more step v
+more step x ++ y = more step (x ++ y)
 none ++ y = y
 
 
@@ -256,10 +257,47 @@ fin-in-comm' {d} {b} none = d , b
 
 
 module Fin-Liveness (stream : Stream (PSet×PSet 𝓥 (𝓤 ⊔ (𝓥 ⁺) ⊔ 𝓦) 𝓠)) where
- open Liveness fc-pot stream PSet-PSet-reducible
+ open Liveness fc-pot PSet-PSet-reducible
 
+-- With this approach, we cannot unify the secrets.
  Fin-Liveness : (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇ 
  Fin-Liveness (d , b) = (x : FinExComm d) → (y : FinExComm b) → Cond-Liveness (fin-ex-comm x) (fin-ex-comm y)
+
+ data FinInEx (d b : Fn ⟨ fc ⟩) : 𝓤 ⊔ 𝓥 ̇  where
+  more :   (fin : FinInComm× d b)
+         → let (fd , fb) = fin-in-comm fin
+               (fxd , fxb) = finIn→finEx× fin
+           in (xd : FinExComm fd) → (xb : FinExComm fb) → FinInEx (fin-ex-comm (fxd ++ xd)) (fin-ex-comm (fxb ++ xb)) → FinInEx d b
+  none : FinInEx d b
+
+ fin-in-ex-comm : {d b : Fn ⟨ fc ⟩} → FinInEx d b → Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩
+ fin-in-ex-comm {d} {b} (more fin xd xb x) = fin-in-ex-comm x
+ fin-in-ex-comm {d} {b} none = d , b
+
+ _++ᵢₓ_ : {d b : Fn ⟨ fc ⟩} → (x : FinInEx d b) → let dd , bb = fin-in-ex-comm x in (y : FinInEx dd bb)  → FinInEx d b
+ more fin xd xb x ++ᵢₓ y = more fin xd xb (x ++ᵢₓ y)
+ none ++ᵢₓ y = y
+
+ fin-in-ex-comm-++ : {d b : Fn ⟨ fc ⟩} → (x : FinInEx d b) → let dd , bb = fin-in-ex-comm x in (y : FinInEx dd bb)
+  → fin-in-ex-comm (x ++ᵢₓ y) ＝ fin-in-ex-comm y
+ fin-in-ex-comm-++ (more fin xd xb x) y = fin-in-ex-comm-++ x y
+ fin-in-ex-comm-++ none y = refl
+
+-- TODO Also, the introduction of scope here, would also limit the need for information
+-- in the cases which are not possible.
+ Fin-Liveness' : (Fn ⟨ fc ⟩ × Fn ⟨ fc ⟩) → 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓠 ̇ 
+ Fin-Liveness' (d , b) =   (fix : FinInEx d b)
+                         → let (nd , nb) = fin-in-ex-comm fix
+                           in Cond-Liveness nd nb
+
+ finL-fnEx' : {d b : Fn ⟨ fc ⟩} → (cd : FinInEx d b)
+   → Fin-Liveness' (d , b) →
+  let dd = fin-in-ex-comm cd
+  in Fin-Liveness' dd
+ finL-fnEx' {d} {b} cd fLiv x = transport (λ z → Cond-Liveness (z .pr₁) (z .pr₂)) (fin-in-ex-comm-++ cd x) (fLiv (cd ++ᵢₓ x))
+
+
+
 
  finL-fnEx-l : {d b : Fn ⟨ fc ⟩} → (cd : FinExComm d)
    → Fin-Liveness (d , b) →
