@@ -48,7 +48,6 @@ n-succ× (succ n) two q (succ r , rl) = n-succ× n two (succ× (two , q)) (r , r
 λsuccᶠ : ∀{𝓦} → {A : 𝓦 ̇ } → ∀{n} → (Fin (succ n) → A) → (Fin n → A)
 λsuccᶠ f (r , rl) = f (succ r , rl)
 
-
 _+ᶠ_ : ∀{𝓦} → {A : 𝓦 ̇ } → ∀{n k} → (Fin n → A) → (Fin k → A) → Fin (n + (succ k)) → A
 _+ᶠ_ {A = A} {n} {k} f1 f2 (zero , rl) = f2 (0 , ⋆)
 _+ᶠ_ {A = A} {n} {zero} f1 f2 (succ r , rl) = f1 (r , rl)
