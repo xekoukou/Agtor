@@ -29,7 +29,7 @@ module PotP-Rel (Msg : 𝓤 ̇ ) (Secret : 𝓤 ̇  ) 𝓥 𝓦 𝓣 where
 
 open import Definitions Msg Secret
 
-open import FCP {𝓦 = 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺} Msg Secret 𝓥
+open import FCP Msg Secret 𝓥
 
 open ΣPred
 open import FunctorP
@@ -48,11 +48,11 @@ record PotR : 𝓤 ⁺ ⊔ 𝓥 ⁺⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇  where
  field
   nextR : PotR
   psetR : PSet 𝓥 𝓦 𝓣
-  focR : FC PotR
+  focR : FC {B = PotR}
   
 open PotR
 
-open FC PotR renaming (Mp to Mpr ; fm to fmr ; Ap to Apr ; fa to far)
+open FC {B = PotR} renaming (Mp to Mpr ; fm to fmr ; Ap to Apr ; fa to far)
 
 
 record PotEq (a b : PotR) : 𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦 ⁺ ⊔ 𝓣 ⁺ ̇  where
@@ -101,7 +101,7 @@ potEq→eq a b peq i .focR .pr₂ .pr₂ m bs = gg where
 cr : CoAlgebra Fpot
 cr = PotR , λ x → (nextR x) , ((psetR x) , (x .focR))
 
-inv : PotR × PSet 𝓥 𝓦 𝓣 × FC PotR → PotR
+inv : PotR × PSet 𝓥 𝓦 𝓣 × FC {B = PotR} → PotR
 inv (a , b , c) .nextR = a
 inv (a , b , c) .psetR = b
 inv (a , b , c) .focR = c

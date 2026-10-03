@@ -15,6 +15,7 @@ open import Naturals.Addition
 open import UF.FunExt
 open import UF.PropTrunc
 open import Naturals.Order
+open import Naturals.Subtraction
 open import Notation.Order
 open import Naturals.Properties
 open import MLTT.Two-Properties
