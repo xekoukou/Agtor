@@ -45,13 +45,21 @@ We are interested in theories that are specific, because we are interested in th
 
 
 
+#diagram({
+  node((0,0) , [user] , name: "user")
+  edge("->")
+  node((0,1) , [environment] , name: "environment")
+  node((0.7,0.5) , [developers])
+  edge("-->" , (0,0.6))
+  edge("-->" , (-0.2,0.5))
+  edge(<environment> , <user> , "->" , bend: +40deg )
+  edge(<environment> , <user> , "<=>" , bend: +70deg )
+})
 
 
-
-#note[Here I need to decribe what it means to have a theory ,
-how it is created and how can we democratically produce new theories.
+#note[How can we democratically produce new theories.
 How would one describe a system that uses an application?]
 
-#note[An application as an artifact tha alters the system, both the environment and the user]
+#cite(label("10.3389/fphys.2020.00069"))
 
-#note[A new theory that represents the new state of the system]
+#bibliography("bibliography.bib")
