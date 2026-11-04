@@ -84,25 +84,25 @@ module Liveness (fc-pot : P.Pot Msg Secret 𝓥 (𝓤 ⊔ 𝓥 ⁺ ⊔ 𝓦) �
          erl = addition-associativity e m l ∙ erl' 
      in e + m + k , transport (λ z → z) (ap (λ z → m ≤ℕ z) (addition-associativity m e k ⁻¹ ∙ (ap (λ z → z + k) (addition-commutativity m e)))) (≤-+ m (e + k)) , transport (λ z → R < pset (a at z .pr₁) > < pset (b at z .pr₂) >) (ap (2ℕ-inf f) erl ⁻¹ ∙ c (e + m)) lc
 
- gg1' :  ∀{a b} → (f : (ℕ → ℕ) × 𝟚) → liveness-fiber a b f
-         →  ∀ t → let (l , r) = 2ℕ-inf f t
-                  in ∀ k → 2ℕ-inf (f2ℕ-red f t) k ＝ 2ℕ-inf f (t + k)
- gg1' f2@(f , tw) lv t k = {!!} where
-  e = 2ℕ-inf-s f2 t
-  two = e .pr₁ .pr₁
-  nf = e .pr₁ .pr₂ .pr₁
-  rem = e .pr₁ .pr₂ .pr₂
-  l = e .pr₂ .pr₁
-  r = e .pr₂ .pr₂
-  l2 : (n : ℕ) →
-      f (succ (nf + n)) ＝
-      f2ℕ-red (f , tw) t .pr₁ (succ (0 + n))
-  l2 n = transport (λ z → f (succ (nf + n)) ＝
-      f2ℕ-red (f , tw) t .pr₁ (succ z)) (zero-left-neutral n ⁻¹) refl
-  l1 = 2ℕ-inf'-l+n=k+n f (f2ℕ-red (f , tw) t .pr₁)
-        (nf , 0 , l2) 0 two rem (l , r) k
-  l3 = {!l1!}
+ -- gg1' :  ∀{a b} → (f : (ℕ → ℕ) × 𝟚) → liveness-fiber a b f
+ --         →  ∀ t → let (l , r) = 2ℕ-inf f t
+ --                  in ∀ k → 2ℕ-inf (f2ℕ-red f t) k ＝ 2ℕ-inf f (t + k)
+ -- gg1' f2@(f , tw) lv t k = {!!} where
+ --  e = 2ℕ-inf-s f2 t
+ --  two = e .pr₁ .pr₁
+ --  nf = e .pr₁ .pr₂ .pr₁
+ --  rem = e .pr₁ .pr₂ .pr₂
+ --  l = e .pr₂ .pr₁
+ --  r = e .pr₂ .pr₂
+ --  l2 : (n : ℕ) →
+ --      f (succ (nf + n)) ＝
+ --      f2ℕ-red (f , tw) t .pr₁ (succ (0 + n))
+ --  l2 n = transport (λ z → f (succ (nf + n)) ＝
+ --      f2ℕ-red (f , tw) t .pr₁ (succ z)) (zero-left-neutral n ⁻¹) refl
+ --  l1 = 2ℕ-inf'-l+n=k+n f (f2ℕ-red (f , tw) t .pr₁)
+ --        (nf , 0 , l2) 0 two rem (l , r) k
+ --  l3 = {!l1!}
 
- gg1 : ∀{a b} → (f : (ℕ → ℕ) × 𝟚) → ∀ l r
-       → liveness-fiber (a at l) (b at r) f → liveness-fiber a b (f2ℕ-ext l r f)
- gg1 f l r lv k = {!!}
+ -- gg1 : ∀{a b} → (f : (ℕ → ℕ) × 𝟚) → ∀ l r
+ --       → liveness-fiber (a at l) (b at r) f → liveness-fiber a b (f2ℕ-ext l r f)
+ -- gg1 f l r lv k = {!!}

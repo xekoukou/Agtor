@@ -20,6 +20,6 @@ import Indexed-Final-CoAlgebraP
 import Indexed-Final-CoAlgebra-Properties
 import MultiComm
 import LivenessP
--- import OperatorsP
+import OperatorsP
 import Interleaving
 import Interleaving2

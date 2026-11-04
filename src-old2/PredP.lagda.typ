@@ -3,60 +3,31 @@
 
 #show: init-color-my-agda
 
-#set document(
-  title: [Predicates]
-)
 
-#title()
+= Predicate
 
-= Definition
 
-#let i = 1
-#emph[ #i ]
-#set text(lang: "de")
-#context text.lang
-#set heading(numbering: "1.a)")
-#let dear = [= Dear]
-#dear.fields()
-#dear
-#dear.fields()
-
-#let task(body, critical: false) = {
-  set text(red) if critical
-  body
-}
-
-#task(critical: true)[Food today?]
-#task(critical: false)[Work deadline]
 /*
 ```agda
 {-# OPTIONS --safe --without-K --exact-split #-}
 
 open import MLTT.Spartan
-
-module PredP where
 ```
 */
-#show emph: it => {
- text(fill: blue , style: "italic" , it.body)
-}
 
-A predicate defines a property that a term of a specific type _A_ must have.
+This is a general module on Predicates.
 
 ```agda
+module PredP where
+
 module Pred (A : 𝓤 ̇) where
 
  Pred : ∀ 𝓥 → 𝓤 ⊔ 𝓥 ⁺ ̇
  Pred 𝓥 = (x : A) → 𝓥 ̇ 
 
-```
-/*
-```agda
-open Pred
-```
-*/
 
-```agda
+open Pred
+
 module Pred₂ {A : 𝓤 ̇} (a : Pred A 𝓥) (b : Pred A 𝓦) where
  _&&ₚ_ : Pred A (𝓥 ⊔ 𝓦)
  _&&ₚ_ x = a x × b x
