@@ -27,5 +27,6 @@ book: false,
 #include "Introduction.typ"
 #include "TheoryAndPractice.typ"
 #include "InformalModel.typ"
+#include "CompositionLevels.typ"
 
 #bibliography("bibliography.bib")
