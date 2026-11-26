@@ -13,7 +13,7 @@ thus, we need to have these properties:
 - adaptiveness: theories should be able to allow to react to change without requiring a change in theory.
 - Open system: No ontology can capture all possible theories, thus we need to allow for full flxibility to construct any theory.
 ]
-What does it mean to construct a theory of the world? Living beings construct theories that will help them cope with the world, that helps them survive. In that regard, the theory is subject dependent, what is important for one living organism is different that another. What is more, changes in the environment or the organism itself can have unpredictable consequences. It is not possible to predict beforehand of all the possible states that the world will be, because the world is complex. Any formal description of the world will not be able to describe all the properties of the world.
+What does it mean to construct a theory of the world? Living beings construct theories that will help them cope with the world, that helps them survive. In that regard, the theory is subject dependent, what is important for one living organism is different than another. What is more, changes in the environment or the organism itself can have unpredictable consequences. It is not possible to predict beforehand of all the possible states that the world will be, because the world is complex. Any formal description of the world will not be able to describe all the properties of the world.
 
 #note[Enactivism / temporality / contextuality / interactivity]
 It is for this reason that one cannot seperate the theory from the practice, or the theory from the organism who made the theory. Theories are temporal and can only be understood / created inside a specific context. Theories are interactive, meaning that they continually change as we interact with the environment in context. This philosophical perspective is called Enactivism.
@@ -34,7 +34,7 @@ We are interested in theories that are specific, because we are interested in th
 
 An informal description of a human being interacting with the world is defined at @inf-m.
 
-A formal model is a mathematical model that describes part of our informal theory , that can enable us to infer interesting properties of our system. These properties can then be used to identify possible ways of acting with the environment.
+A formal model is a mathematical model that describes part of our informal theory , that can enable us to infer interesting properties of our system. These properties can then be used to identify possible ways of acting in the environment.
 
 #figure(
  diagram(

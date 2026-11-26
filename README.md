@@ -1,2 +1,3 @@
-# Agtor, the god of asynchronous communication
+# Agtor (change of name pending)
 
+[documentation](src/book.pdf)

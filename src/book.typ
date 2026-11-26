@@ -12,7 +12,7 @@ book: false,
 #show: init-color-my-agda
 #import "@preview/ilm:3.0.0": *
 
-#set text(lang: "en")
+#set text(lang: "en", font: "mononoki" , style: "normal", weight: "regular")
 
 #show: ilm.with(
   title: [A good title],
